@@ -3,26 +3,207 @@ import { CONFIG } from "./config";
 import { recordCost } from "./costs";
 import type { Tool, ToolCall } from "./types";
 
-let client: OpenAI | null = null;
+// ─── Provider detection ───────────────────────────────────────────────────────
 
+type Provider = "openai" | "anthropic" | "groq" | "gemini" | "openrouter" | "mistral" | "xai" | "together" | "azure";
+
+interface ProviderConfig {
+  name: Provider;
+  apiKey: string;
+  baseURL: string;
+  defaultHeaders?: Record<string, string>;
+  defaultQuery?: Record<string, string>;
+  models: {
+    fast: string;
+    standard: string;
+    advanced: string;
+    reasoning: string;
+  };
+}
+
+const PROVIDER_CONFIGS: Record<Provider, Omit<ProviderConfig, "apiKey">> = {
+  openai: {
+    name: "openai",
+    baseURL: "https://api.openai.com/v1",
+    models: {
+      fast:      "gpt-5-mini",
+      standard:  "gpt-5.2",
+      advanced:  "gpt-5.2",
+      reasoning: "o3",
+    },
+  },
+  anthropic: {
+    name: "anthropic",
+    baseURL: "https://api.anthropic.com/v1",
+    defaultHeaders: { "anthropic-version": "2023-06-01" },
+    models: {
+      fast:      "claude-haiku-3-5",
+      standard:  "claude-sonnet-4-5",
+      advanced:  "claude-sonnet-4-5",
+      reasoning: "claude-opus-4",
+    },
+  },
+  groq: {
+    name: "groq",
+    baseURL: "https://api.groq.com/openai/v1",
+    models: {
+      fast:      "llama-3.1-8b-instant",
+      standard:  "llama-3.3-70b-versatile",
+      advanced:  "llama-3.3-70b-versatile",
+      reasoning: "llama-3.3-70b-versatile",
+    },
+  },
+  gemini: {
+    name: "gemini",
+    baseURL: "https://generativelanguage.googleapis.com/openai/",
+    models: {
+      fast:      "gemini-2.0-flash",
+      standard:  "gemini-2.0-flash",
+      advanced:  "gemini-2.5-pro",
+      reasoning: "gemini-2.5-pro",
+    },
+  },
+  openrouter: {
+    name: "openrouter",
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: { "HTTP-Referer": "https://github.com/vncsleal/grist" },
+    models: {
+      // OpenRouter users set their own models via LLM_MODEL_* env vars
+      fast:      process.env.LLM_MODEL_FAST     || "google/gemini-2.0-flash-001",
+      standard:  process.env.LLM_MODEL          || "google/gemini-2.0-flash-001",
+      advanced:  process.env.LLM_MODEL_RESEARCH || "anthropic/claude-sonnet-4-5",
+      reasoning: process.env.LLM_MODEL_REASONING || "anthropic/claude-opus-4",
+    },
+  },
+  mistral: {
+    name: "mistral",
+    baseURL: "https://api.mistral.ai/v1",
+    models: {
+      fast:      "mistral-small-latest",
+      standard:  "mistral-medium-latest",
+      advanced:  "mistral-large-latest",
+      reasoning: "mistral-large-latest",
+    },
+  },
+  xai: {
+    name: "xai",
+    baseURL: "https://api.x.ai/v1",
+    models: {
+      fast:      "grok-3-mini",
+      standard:  "grok-3",
+      advanced:  "grok-3",
+      reasoning: "grok-3",
+    },
+  },
+  together: {
+    name: "together",
+    baseURL: "https://api.together.xyz/v1",
+    models: {
+      fast:      "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      standard:  "meta-llama/Meta-Llama-3.3-70B-Instruct-Turbo",
+      advanced:  "meta-llama/Meta-Llama-3.3-70B-Instruct-Turbo",
+      reasoning: "meta-llama/Meta-Llama-3.3-70B-Instruct-Turbo",
+    },
+  },
+  azure: {
+    name: "azure",
+    // Azure baseURL: set AZURE_OPENAI_ENDPOINT in .env (e.g. https://my-resource.openai.azure.com)
+    baseURL: `${(process.env.AZURE_OPENAI_ENDPOINT || "").replace(/\/$/, "")}/openai`,
+    defaultHeaders: { "api-key": process.env.AZURE_OPENAI_API_KEY || "" },
+    defaultQuery: { "api-version": process.env.AZURE_OPENAI_API_VERSION || "2025-01-01-preview" },
+    models: {
+      // Azure uses deployment names — override via LLM_MODEL_* env vars
+      fast:      process.env.LLM_MODEL_FAST     || "gpt-4o-mini",
+      standard:  process.env.LLM_MODEL          || "gpt-4o",
+      advanced:  process.env.LLM_MODEL_RESEARCH || "gpt-4o",
+      reasoning: process.env.LLM_MODEL_REASONING || "o3",
+    },
+  },
+};
+
+function detectProvider(): Provider {
+  const explicit = (process.env.LLM_PROVIDER || "").toLowerCase() as Provider;
+  if (explicit && PROVIDER_CONFIGS[explicit]) return explicit;
+
+  // Auto-detect from key presence
+  if (process.env.OPENAI_API_KEY)        return "openai";
+  if (process.env.ANTHROPIC_API_KEY)     return "anthropic";
+  if (process.env.GROQ_API_KEY)          return "groq";
+  if (process.env.GOOGLE_API_KEY)        return "gemini";
+  if (process.env.OPENROUTER_API_KEY)    return "openrouter";
+  if (process.env.MISTRAL_API_KEY)       return "mistral";
+  if (process.env.XAI_API_KEY)           return "xai";
+  if (process.env.TOGETHER_API_KEY)      return "together";
+  if (process.env.AZURE_OPENAI_API_KEY)  return "azure";
+
+  return "openai"; // will fail at getClient() with a clear error
+}
+
+function getApiKey(provider: Provider): string {
+  const keys: Record<Provider, string | undefined> = {
+    openai:      process.env.OPENAI_API_KEY,
+    anthropic:   process.env.ANTHROPIC_API_KEY,
+    groq:        process.env.GROQ_API_KEY,
+    gemini:      process.env.GOOGLE_API_KEY,
+    openrouter:  process.env.OPENROUTER_API_KEY,
+    mistral:     process.env.MISTRAL_API_KEY,
+    xai:         process.env.XAI_API_KEY,
+    together:    process.env.TOGETHER_API_KEY,
+    azure:       process.env.AZURE_OPENAI_API_KEY,
+  };
+  return keys[provider] || "";
+}
+
+let client: OpenAI | null = null;
+let activeProvider: Provider | null = null;
+
+/** Returns true if any supported LLM key is configured */
+export function hasLLMKey(): boolean {
+  return Boolean(
+    process.env.OPENAI_API_KEY ||
+    process.env.ANTHROPIC_API_KEY ||
+    process.env.GROQ_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.OPENROUTER_API_KEY ||
+    process.env.MISTRAL_API_KEY ||
+    process.env.XAI_API_KEY ||
+    process.env.TOGETHER_API_KEY ||
+    process.env.AZURE_OPENAI_API_KEY,
+  );
+}
+
+/** @deprecated use hasLLMKey() */
 export function hasOpenAIKey(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY);
+  return hasLLMKey();
 }
 
 function getClient(): OpenAI {
   if (client) return client;
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const provider = detectProvider();
+  const apiKey = getApiKey(provider);
+
   if (!apiKey) {
-    throw new Error("Missing OPENAI_API_KEY environment variable");
+    throw new Error(
+      `No API key found. Set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, GROQ_API_KEY, GOOGLE_API_KEY, OPENROUTER_API_KEY, MISTRAL_API_KEY, XAI_API_KEY, TOGETHER_API_KEY, AZURE_OPENAI_API_KEY`,
+    );
   }
 
+  const cfg = PROVIDER_CONFIGS[provider];
   client = new OpenAI({
     apiKey,
+    baseURL: cfg.baseURL,
+    defaultHeaders: cfg.defaultHeaders,
+    defaultQuery: (cfg as any).defaultQuery,
     timeout: CONFIG.LLM.REQUEST_TIMEOUT_MS,
   });
+  activeProvider = provider;
 
   return client;
+}
+
+export function getActiveProvider(): Provider {
+  return activeProvider ?? detectProvider();
 }
 
 export interface LLMMessage {
@@ -51,44 +232,43 @@ export interface LLMCallResult {
 let callStats = { total: 0, failed: 0 };
 
 function modelSupportsTemperature(model: string): boolean {
-  // Models that DON'T support custom temperature
-  const noTempModels = ["gpt-4o", "gpt-4-mini"];
-  
-  // Check if model matches any of the no-temperature models
-  for (const noTempModel of noTempModels) {
-    if (model.toLowerCase().includes(noTempModel)) {
-      return false;
-    }
-  }
-  
-  // All other models (gpt-4-turbo, gpt-5.2, gpt-5-mini, o3, o4) support temperature
-  return true;
+  // OpenAI reasoning models don't support temperature
+  const noTempModels = ["o1", "o3", "o4"];
+  return !noTempModels.some((m) => model.toLowerCase().startsWith(m));
+}
+
+/** Providers that support OpenAI's response_format: json_object */
+function providerSupportsJsonMode(provider: Provider): boolean {
+  return provider === "openai" || provider === "groq" || provider === "openrouter";
 }
 
 /**
- * Select the appropriate model based on task complexity
- * 2026 Models: gpt-5.2 (latest), gpt-5-mini (fast), o3 (reasoning), gpt-5.2-pro (complex)
+ * Select the appropriate model based on task complexity.
+ * Uses provider-specific defaults unless overridden by LLM_MODEL_* env vars.
  */
 export function selectModel(
   taskType: "fast" | "standard" | "advanced" | "reasoning" | "pro" = "standard"
 ): string {
+  const provider = detectProvider();
+  const providerModels = PROVIDER_CONFIGS[provider].models;
+
   switch (taskType) {
     case "fast":
-      return CONFIG.LLM.MODEL_FAST; // gpt-5-mini - economical, fast
+      return process.env.LLM_MODEL_FAST      || providerModels.fast;
     case "advanced":
-      return CONFIG.LLM.MODEL_ADVANCED; // gpt-5.2 - best quality
+      return process.env.LLM_MODEL_RESEARCH  || providerModels.advanced;
     case "reasoning":
-      return CONFIG.LLM.MODEL_REASONING; // o3 - highest reasoning
+      return process.env.LLM_MODEL_REASONING || providerModels.reasoning;
     case "pro":
-      return CONFIG.LLM.MODEL_PRO || CONFIG.LLM.MODEL_ADVANCED; // gpt-5.2-pro - extended compute
+      return process.env.LLM_MODEL_PRO       || providerModels.advanced;
     case "standard":
     default:
-      return CONFIG.LLM.MODEL_STANDARD; // gpt-5.2 - general purpose
+      return process.env.LLM_MODEL           || providerModels.standard;
   }
 }
 
 /**
- * Call OpenAI with optional tool definitions
+ * Call the configured LLM provider with optional tool definitions
  */
 export async function callLLM(options: LLMCallOptions): Promise<LLMCallResult> {
   const {
@@ -97,17 +277,24 @@ export async function callLLM(options: LLMCallOptions): Promise<LLMCallResult> {
     tools,
     jsonMode = false,
     temperature = CONFIG.LLM.TEMPERATURE_ANALYTICAL,
-    model = CONFIG.LLM.MODEL_STANDARD,
+    model = selectModel("standard"),
     stage = "unknown",
   } = options;
 
+  const provider = getActiveProvider();
+  const useJsonMode = jsonMode && providerSupportsJsonMode(provider);
+
+  // For providers that don't support response_format, inject a JSON instruction
+  const effectiveSystem = jsonMode && !useJsonMode
+    ? `${systemPrompt}\n\nRespond with valid JSON only. No markdown, no explanation.`
+    : systemPrompt;
+
   const messages: LLMMessage[] = [
-    { role: "system", content: systemPrompt },
+    { role: "system", content: effectiveSystem },
     { role: "user", content: userMessage },
   ];
 
   const useTemperature = modelSupportsTemperature(model);
-
   const openai = getClient();
 
   for (let attempt = 1; attempt <= CONFIG.LLM.RETRY_ATTEMPTS; attempt++) {
@@ -117,7 +304,7 @@ export async function callLLM(options: LLMCallOptions): Promise<LLMCallResult> {
         messages: messages as OpenAI.ChatCompletionMessageParam[],
         temperature: useTemperature ? temperature : undefined,
         tools: tools ? tools.map((t) => ({ type: "function" as const, function: t.function })) : undefined,
-        response_format: jsonMode ? { type: "json_object" } : undefined,
+        response_format: useJsonMode ? { type: "json_object" } : undefined,
       });
 
       callStats.total++;

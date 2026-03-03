@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
 import { CONFIG } from "./config";
-import { callLLM, hasOpenAIKey, selectModel } from "./llm";
+import { callLLM, hasLLMKey, selectModel } from "./llm";
 import { fetchURL, extractTextFromHTML } from "./extractors/content";
 import { getCostStats } from "./costs";
 import * as cli from "./cli";
@@ -208,9 +208,9 @@ export async function runInit(_flags: Record<string, string>) {
   const sourcesPath = resolveWorkspacePath(CONFIG.FILES.SOURCES);
   const alreadyInitialized = fs.existsSync(contextPath);
 
-  // ── No API key: fallback path ───────────────────────────────────────────────
-  if (!hasOpenAIKey()) {
-    cli.printStageStart("No OpenAI key found — copying templates");
+  // ── No LLM key: fallback path ───────────────────────────────────────────────
+  if (!hasLLMKey()) {
+    cli.printStageStart("No LLM key found — copying templates");
     const ctxStatus = copyTemplate(CONFIG.FILES.CONTEXT, "config/context.example.md");
     const srcStatus = copyTemplate(CONFIG.FILES.SOURCES, "config/rss_sources.example.txt");
     cli.printResult("context.md", ctxStatus === "created" ? 1 : 0, 1, ctxStatus);
@@ -219,7 +219,8 @@ export async function runInit(_flags: Record<string, string>) {
     cli.printMessage("Next steps:", "info");
     cli.printMessage("1. Fill in config/context.md with your identity, stack, and writing style", "muted");
     cli.printMessage("2. Add your RSS feeds to config/rss_sources.txt", "muted");
-    cli.printMessage("3. Set OPENAI_API_KEY in .env and re-run `npm run init` for AI personalization", "muted");
+    cli.printMessage("3. Set an API key in .env and re-run `npm run init` for AI personalization", "muted");
+    cli.printMessage("   Supported: OPENAI_API_KEY, ANTHROPIC_API_KEY, GROQ_API_KEY, GOOGLE_API_KEY, OPENROUTER_API_KEY, MISTRAL_API_KEY, XAI_API_KEY, TOGETHER_API_KEY, AZURE_OPENAI_API_KEY", "muted");
     return;
   }
 

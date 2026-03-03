@@ -14,7 +14,7 @@ npm install
 # Initialize local private files (context, sources, and prompt overrides)
 npm run init
 
-# Copy .env.example and add your OpenAI API key
+# Copy .env.example and add an API key for your preferred provider
 cp .env.example .env
 
 # Copy personal context template and customize it
@@ -55,7 +55,7 @@ src/
   index.ts              # Orchestrator
   config.ts             # Configuration
   types.ts              # TypeScript types & schemas
-  llm.ts                # OpenAI client & tool calling
+  llm.ts                # Multi-provider LLM client (OpenAI, Anthropic, Groq, Gemini, OpenRouter)
   
   extractors/
     rss.ts              # RSS feed fetching
@@ -144,29 +144,41 @@ Then push to GitHub and enable:
 - Discussions (optional)
 - Security Advisories
 
-## Models (2026 Latest)
+## LLM Providers
 
-**Current (Stable):**
-- **Fast:** `gpt-4o-mini` — Cost-effective, fast filtering & scoring
-- **Standard:** `gpt-4o-mini` — General purpose agent tasks
-- **Research:** `gpt-4-turbo` — Deep analysis & reasoning
+GRIST auto-detects which provider to use based on the key you set in `.env`.
 
-**Upgrade Path (when available in your account):**
-- **Fast:** `gpt-5-mini` — Latest economical model
-- **Standard:** `gpt-5.2` — Best overall quality, broad world knowledge
-- **Advanced:** `gpt-5.2` — Research & content generation
-- **Reasoning:** `o3` — Highest reasoning level for complex analysis
-- **Pro:** `gpt-5.2-pro` — Extended compute for hardest problems
+| Provider | Key | Free tier |
+|---|---|---|
+| OpenAI | `OPENAI_API_KEY` | No |
+| Anthropic Claude | `ANTHROPIC_API_KEY` | No |
+| Groq | `GROQ_API_KEY` | Yes |
+| Google Gemini | `GOOGLE_API_KEY` | Yes |
+| OpenRouter | `OPENROUTER_API_KEY` | Pay-per-use, 100+ models |
+| Mistral AI | `MISTRAL_API_KEY` | No |
+| xAI (Grok) | `XAI_API_KEY` | No |
+| Together AI | `TOGETHER_API_KEY` | Pay-per-use, cheapest open models |
+| Azure OpenAI | `AZURE_OPENAI_API_KEY` + `AZURE_OPENAI_ENDPOINT` | Enterprise |
 
-**Embeddings:**
-- `text-embedding-3-large` — 3072-dimensional vectors for semantic search
+Only one key is needed. To force a specific provider: `LLM_PROVIDER=groq`
 
-Change models in `.env`:
+Default models per provider:
+- **OpenAI** — `gpt-5-mini` / `gpt-5.2` / `o3`
+- **Anthropic** — `claude-haiku-3-5` / `claude-sonnet-4-5` / `claude-opus-4`
+- **Groq** — `llama-3.1-8b-instant` / `llama-3.3-70b-versatile`
+- **Gemini** — `gemini-2.0-flash` / `gemini-2.5-pro`
+- **OpenRouter** — configurable via `LLM_MODEL_*` env vars
+- **Mistral** — `mistral-small-latest` / `mistral-medium-latest` / `mistral-large-latest`
+- **xAI** — `grok-3-mini` / `grok-3`
+- **Together AI** — `Meta-Llama-3.1-8B-Instruct-Turbo` / `Meta-Llama-3.3-70B-Instruct-Turbo`
+- **Azure** — deployment names via `LLM_MODEL_*` env vars
+
+Override any model tier in `.env`:
 ```bash
-LLM_MODEL_FAST=gpt-4o-mini      # or gpt-5-mini
-LLM_MODEL=gpt-4o-mini            # or gpt-5.2
-LLM_MODEL_RESEARCH=gpt-4-turbo   # or gpt-5.2
-LLM_MODEL_REASONING=o1-mini      # or o3
+LLM_MODEL_FAST=     # filtering & scoring
+LLM_MODEL=          # general purpose
+LLM_MODEL_RESEARCH= # analysis & personalization
+LLM_MODEL_REASONING=# deep reasoning
 ```
 
 ## Advanced Features

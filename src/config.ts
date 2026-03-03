@@ -29,32 +29,25 @@ export const CONFIG = {
     RETRIES: 2,
   },
   LLM: {
-    // Model selection by task complexity (2026 latest models)
-    MODEL_FAST: process.env.LLM_MODEL_FAST || "gpt-5-mini", // Filtering & scoring - fast, economical
-    MODEL_STANDARD: process.env.LLM_MODEL || "gpt-5.2", // General tasks - latest GPT-5
-    MODEL_ADVANCED: process.env.LLM_MODEL_RESEARCH || "gpt-5.2", // Research & analysis - best quality
-    MODEL_REASONING: process.env.LLM_MODEL_REASONING || "o3", // Deep reasoning - highest reasoning level
-    MODEL_PRO: process.env.LLM_MODEL_PRO || "gpt-5.2-pro", // Complex multi-step analysis (optional)
-    
     // Temperature for different tasks
     TEMPERATURE_ANALYTICAL: 0.1, // Low variance for scoring
-    TEMPERATURE_CREATIVE: 0.4, // Moderate for content generation
-    
+    TEMPERATURE_CREATIVE: 0.4,   // Moderate for content generation
+
     // Concurrency & batching
     PARALLEL_WORKERS: parseInt(process.env.PARALLEL_WORKERS || "4", 10),
     BATCH_SIZE: parseInt(process.env.BATCH_SIZE || "10", 10),
-    
+
     // Retry & timeout
     RETRY_ATTEMPTS: 3,
     REQUEST_TIMEOUT_MS: 30000,
-    
+
     // Advanced features
-    USE_STREAMING: true, // Enable streaming for long operations
-    USE_BATCH_API: false, // Disable batch API (for async processing)
-    
+    USE_STREAMING: true,
+    USE_BATCH_API: false,
+
     // Embeddings for semantic search
     EMBEDDING_MODEL: process.env.EMBEDDING_MODEL || "text-embedding-3-large",
-    USE_VECTOR_STORE: process.env.USE_VECTOR_STORE === "true", // Enable vector store deduplication
+    USE_VECTOR_STORE: process.env.USE_VECTOR_STORE === "true",
   },
   PIPELINE: {
     MIN_LIBRARIAN_SCORE: parseFloat(process.env.MIN_LIBRARIAN_SCORE || "6"),
