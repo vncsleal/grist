@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import * as readline from "readline";
 
 /**
  * Beautiful CLI utilities with detailed output
@@ -33,7 +34,9 @@ export function startSpinner(text: string) {
   spinnerInterval = setInterval(() => {
     const frame = spinnerFrames[spinnerFrame % spinnerFrames.length];
     const line = `    ${colors.subsection(frame)} ${text}`;
-    process.stdout.write(`\r${line.padEnd(80)}\r`);
+    readline.cursorTo(process.stdout, 0);
+    process.stdout.write(line.padEnd(80));
+    readline.cursorTo(process.stdout, 0);
     spinnerFrame++;
   }, 80);
 }
@@ -46,7 +49,8 @@ export function stopSpinner() {
     clearInterval(spinnerInterval);
     spinnerInterval = null;
   }
-  process.stdout.write("\r" + " ".repeat(100) + "\r");
+  readline.clearLine(process.stdout, 0);
+  readline.cursorTo(process.stdout, 0);
 }
 
 export function printHeader(title: string, subtitle: string) {
