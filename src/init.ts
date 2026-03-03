@@ -84,10 +84,10 @@ async function generateContextMd(answers: Record<string, string>, writingSamples
     "The file is used to personalize AI agents that filter news, research articles, and draft content.",
     "Output must be plain markdown — no fences, no preamble.",
     "Be extremely specific about voice patterns. Generic descriptions are useless.",
-    "Oversteer on voice: the model will regress toward the mean anyway.",
+    "VOICE ONLY — Oversteer on tone, writing style, signature phrases, and banned constructions: the model regresses to the mean, so push hard here.",
     "Extract exact recurring phrases, sentence length patterns, structural habits, and things the user never does.",
-    "If writing samples are provided, they are the ground truth — prioritize them over self-description.",
-    "CRITICAL: Do NOT infer, extrapolate, or pad with technologies, frameworks, or topics the user did not explicitly mention.",
+    "If writing samples are provided, they are the ground truth for voice — prioritize them over self-description.",
+    "FACTUAL AREAS — Be strictly literal. Do NOT infer, extrapolate, or pad.",
     "Stack I Use Daily must list ONLY tools the user actually stated — no aspirational additions, no adjacent tools.",
     "Content Themes must reflect ONLY what the user said they read or skip — do not supplement with related topics.",
   ].join("\n");
@@ -157,11 +157,11 @@ async function personalizePrompt(name: string, basePrompt: string, context: stri
     "Return plain text only — no markdown fences.",
     "Preserve ALL output contracts, JSON field names, and enum literals exactly as-is.",
     "Keep all technical constraints intact.",
-    "Aggressively incorporate the user's voice patterns, banned words, signature phrases, and content preferences.",
-    "The goal is that output from this prompt sounds like the user wrote it, not like a generic AI.",
-    "When in doubt, oversteer on personalization — the model will moderate itself.",
-    "CRITICAL: Do NOT add technologies, frameworks, or topics that are not in the user context.",
-    "The user's stack and interests are exactly what the context says — do not supplement, infer, or upgrade them.",
+    "Aggressively incorporate the user's voice patterns, banned words, signature phrases, and sentence rhythms.",
+    "VOICE ONLY — Oversteer on tone and writing style: push hard, the model will self-moderate.",
+    "The goal is that output sounds like this specific user wrote it, not a generic senior developer.",
+    "FACTUAL AREAS — Be strictly literal. Do NOT add, infer, or upgrade stack, topics, or interests beyond what the context explicitly states.",
+    "Boost signals only for what the user actually mentioned — never add adjacent technologies or tangential interests.",
   ].join("\n");
 
   const userMessage = [
