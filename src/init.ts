@@ -87,6 +87,9 @@ async function generateContextMd(answers: Record<string, string>, writingSamples
     "Oversteer on voice: the model will regress toward the mean anyway.",
     "Extract exact recurring phrases, sentence length patterns, structural habits, and things the user never does.",
     "If writing samples are provided, they are the ground truth — prioritize them over self-description.",
+    "CRITICAL: Do NOT infer, extrapolate, or pad with technologies, frameworks, or topics the user did not explicitly mention.",
+    "Stack I Use Daily must list ONLY tools the user actually stated — no aspirational additions, no adjacent tools.",
+    "Content Themes must reflect ONLY what the user said they read or skip — do not supplement with related topics.",
   ].join("\n");
 
   const userMessage = [
@@ -157,6 +160,8 @@ async function personalizePrompt(name: string, basePrompt: string, context: stri
     "Aggressively incorporate the user's voice patterns, banned words, signature phrases, and content preferences.",
     "The goal is that output from this prompt sounds like the user wrote it, not like a generic AI.",
     "When in doubt, oversteer on personalization — the model will moderate itself.",
+    "CRITICAL: Do NOT add technologies, frameworks, or topics that are not in the user context.",
+    "The user's stack and interests are exactly what the context says — do not supplement, infer, or upgrade them.",
   ].join("\n");
 
   const userMessage = [
