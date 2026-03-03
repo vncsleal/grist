@@ -73,12 +73,7 @@ function printHelp() {
   console.log("    Generate one draft from a selected card");
   console.log("");
   console.log("  npm run init");
-  console.log("    Create local private config/prompt files");
-  console.log("");
-  console.log("  Optional init flags:");
-  console.log("    --ai                 personalize local prompts with AI");
-  console.log("    --copy               copy defaults only (no AI)");
-  console.log("    --overwrite          replace existing local files");
+  console.log("    Interactive setup: creates context.md, seeds RSS sources, personalizes prompts");
   console.log("");
   console.log("  Optional compose flags:");
   console.log("    --take <index|text>      pick or override take");

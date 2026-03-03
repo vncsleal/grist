@@ -33,11 +33,7 @@ Bootstrap these files with:
 npm run init
 ```
 
-For AI-assisted personalization:
-
-```bash
-npm run init -- --ai --overwrite
-```
+The init command is interactive — it asks a few questions, fetches writing samples from URLs you provide, and personalizes all prompts automatically. Re-running it is safe.
 
 ## Safety rules when editing prompts
 

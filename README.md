@@ -116,13 +116,8 @@ Compose creates:
 - `npm run harvest` — scan and build structure cards
 - `npm run board` — list latest structure cards for quick selection
 - `npm run compose -- --card <id> --platform <platform>` — generate one draft on demand
-- `npm run init` — create local private config and prompt overrides
+- `npm run init` — interactive setup: builds context, seeds RSS sources, personalizes prompts
 - `npm run help` — show commands and examples
-
-Init options:
-- `npm run init -- --copy` — copy defaults only (no AI)
-- `npm run init -- --ai` — personalize local prompts with AI
-- `npm run init -- --overwrite` — replace existing local files
 
 ## Open Source Readiness
 

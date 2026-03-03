@@ -1,6 +1,6 @@
 {
   "name": "grist",
-  "version": "0.1",
+  "version": "0.1.1",
   "description": "GRIST — Guided Research & Insight Synthesis Tool. Reads the internet and writes content in your voice.",
   "license": "MIT",
   "author": "Vinicius Leal",

@@ -229,6 +229,47 @@ export function printSection(title: string) {
   console.log(colors.subsection(`  ◆ ${title}`));
 }
 
+export function printInitCompletion(stats: {
+  agentsPersonalized: number;
+  agentsTotal: number;
+  failed: number;
+  writingSamples: number;
+  rssSeed: boolean;
+  duration: string;
+  cost?: number;
+}) {
+  const boxWidth = getCompletionBoxWidth();
+  const title = "─ INIT COMPLETE ";
+  const topFill = Math.max(0, boxWidth - title.length);
+
+  console.log("");
+  console.log(colors.section(`  ╭${title}${"─".repeat(topFill)}╮`));
+  printBoxEmpty(boxWidth);
+
+  printBoxHeader("Setup", boxWidth);
+  printBoxDivider(boxWidth);
+  printBoxStat("Agents personalized", stats.agentsPersonalized, boxWidth);
+  if (stats.failed > 0) printBoxStat("Agents failed", stats.failed, boxWidth, true);
+  printBoxStat("Writing samples used", stats.writingSamples, boxWidth);
+  printBoxStat("RSS seed generated", stats.rssSeed ? 1 : 0, boxWidth);
+
+  if (stats.cost !== undefined) {
+    printBoxDivider(boxWidth);
+    printBoxHeader("API Usage", boxWidth);
+    printBoxDivider(boxWidth);
+    printBoxStatStr("Estimated cost", `$${stats.cost.toFixed(4)}`, boxWidth);
+  }
+
+  printBoxDivider(boxWidth);
+  printBoxHeader("Duration", boxWidth);
+  printBoxDivider(boxWidth);
+  printBoxValue(stats.duration, boxWidth);
+
+  printBoxEmpty(boxWidth);
+  console.log(colors.section(`  ╰${"─".repeat(boxWidth)}╯`));
+  console.log("");
+}
+
 export function printMessage(text: string, level: "info" | "success" | "muted" = "info") {
   const styled =
     level === "success" ? colors.success(text) : level === "muted" ? colors.muted(text) : text;

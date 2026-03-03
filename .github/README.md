@@ -7,9 +7,6 @@ npm install
 npm run init
 ```
 
-`npm run init` creates your local private files (`config/context.md`, `config/rss_sources.txt`, and `config/prompts/*.local.txt`) without changing tracked defaults.
+`npm run init` walks you through an interactive setup: it builds `config/context.md` from your answers, seeds `config/rss_sources.txt`, and personalizes all agent prompts in `config/prompts/*.local.txt`. Nothing tracked in git is changed.
 
-Optional:
-
-- `npm run init -- --copy` for copy-only setup
-- `npm run init -- --ai --overwrite` to regenerate local prompts with AI personalization
+Re-running `npm run init` is safe — it detects existing files and asks before overwriting.
