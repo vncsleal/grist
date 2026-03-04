@@ -17,6 +17,7 @@ import { getCostStats, logCostsToFile } from "./costs";
 import type { StructureCard } from "./types";
 import * as cli from "./cli";
 import { runInit } from "./init";
+import { reconcileOpenAICostsIfAvailable } from "./reconcile";
 
 type Command = "harvest" | "compose" | "board" | "help" | "init";
 
@@ -177,7 +178,13 @@ async function runHarvest(date: string) {
   saveSeenUrls(seen);
 
   const costStats = getCostStats();
-  logCostsToFile(date);
+  const costLog = logCostsToFile(date);
+
+  // Attempt to reconcile OpenAI costs with actual billing (fails silently if unavailable)
+  await reconcileOpenAICostsIfAvailable(costLog.path);
+
+  // Reload cost stats after potential reconciliation
+  const updatedCostStats = getCostStats();
 
   const stats = getCallStats();
   cli.printCompletion({
@@ -191,7 +198,8 @@ async function runHarvest(date: string) {
     calls: stats.total,
     failed: stats.failed,
     duration: "harvest",
-    cost: costStats.total,
+    cost: updatedCostStats.totalEstimated,
+    billedCost: updatedCostStats.totalBilled,
     outputDir,
   });
 
@@ -251,7 +259,13 @@ async function runCompose(date: string, flags: Record<string, string>) {
   });
 
   const costStats = getCostStats();
-  logCostsToFile(date);
+  const costLog = logCostsToFile(date);
+
+  // Attempt to reconcile OpenAI costs with actual billing (fails silently if unavailable)
+  await reconcileOpenAICostsIfAvailable(costLog.path);
+
+  // Reload cost stats after potential reconciliation
+  const updatedCostStats = getCostStats();
 
   const stats = getCallStats();
   cli.printCompletion({
@@ -264,8 +278,9 @@ async function runCompose(date: string, flags: Record<string, string>) {
     drafts: 1,
     calls: stats.total,
     failed: stats.failed,
+    cost: updatedCostStats.totalEstimated,
+    billedCost: updatedCostStats.totalBilled,
     duration: "compose",
-    cost: costStats.total,
     outputDir,
   });
 }

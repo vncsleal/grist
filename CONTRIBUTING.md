@@ -22,6 +22,7 @@ Thanks for helping improve GRIST.
 - Include a clear problem statement and solution summary.
 - Update docs when behavior changes.
 - Avoid committing secrets, outputs, or cache files.
+- For LLM-related changes, verify cost tracking still works (check `costs/*.json` after test run)
 
 ## Commit style (recommended)
 

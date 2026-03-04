@@ -90,8 +90,8 @@ export async function researcher(items: EnrichedItem[], context: string): Promis
 
       // Cache the article for future runs
       try {
-        const { embedding, cost } = await getEmbeddingWithCost(item.title);
-        recordEmbeddingCost(cost);
+        const { embedding, cost, tokens } = await getEmbeddingWithCost(item.title);
+        recordEmbeddingCost(cost, tokens);
         cacheArticle(item.link, item.title, embedding, research);
       } catch {
         // Silently skip caching on error

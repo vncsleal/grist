@@ -131,6 +131,7 @@ export function printCompletion(stats: {
   failed: number;
   duration: string;
   cost?: number;
+  billedCost?: number;
   outputDir?: string;
 }) {
   const boxWidth = getCompletionBoxWidth();
@@ -160,7 +161,12 @@ export function printCompletion(stats: {
   }
   if (stats.cost !== undefined) {
     const costStr = `$${stats.cost.toFixed(4)}`;
-    printBoxStatStr("Estimated cost", costStr, boxWidth);
+    const label = stats.billedCost !== undefined ? "Estimated cost" : "Estimated cost";
+    printBoxStatStr(label, costStr, boxWidth);
+  }
+  if (stats.billedCost !== undefined) {
+    const billedStr = `$${stats.billedCost.toFixed(4)}`;
+    printBoxStatStr("Actual billed cost", billedStr, boxWidth);
   }
 
   printBoxDivider(boxWidth);
@@ -241,6 +247,7 @@ export function printInitCompletion(stats: {
   rssSeed: boolean;
   duration: string;
   cost?: number;
+  billedCost?: number;
 }) {
   const boxWidth = getCompletionBoxWidth();
   const title = "─ INIT COMPLETE ";
@@ -261,7 +268,13 @@ export function printInitCompletion(stats: {
     printBoxDivider(boxWidth);
     printBoxHeader("API Usage", boxWidth);
     printBoxDivider(boxWidth);
-    printBoxStatStr("Estimated cost", `$${stats.cost.toFixed(4)}`, boxWidth);
+    const costStr = `$${stats.cost.toFixed(4)}`;
+    const label = stats.billedCost !== undefined ? "Estimated cost" : "Estimated cost";
+    printBoxStatStr(label, costStr, boxWidth);
+  }
+  if (stats.billedCost !== undefined) {
+    const billedStr = `$${stats.billedCost.toFixed(4)}`;
+    printBoxStatStr("Actual billed cost", billedStr, boxWidth);
   }
 
   printBoxDivider(boxWidth);

@@ -216,6 +216,32 @@ See [docs/ADVANCED_FEATURES.md](./docs/ADVANCED_FEATURES.md) for:
 
 See [config/prompts/README.md](./config/prompts/README.md) for prompt contracts and safe editing rules.
 
+## Cost Tracking
+
+Every `harvest`, `compose`, and `init` run automatically tracks:
+- ✅ **Token usage** - Prompt, completion, cached, reasoning tokens from every LLM call
+- ✅ **Estimated costs** - Computed from accurate token counts (all providers)
+- ✅ **Actual billed costs** - Returned per-request by OpenRouter
+- ✅ **OpenAI reconciliation** - Optionally fetches actual OpenAI billing data
+- ✅ **Cost logs** - Detailed JSON files in `costs/` with per-request breakdown
+- ✅ **CLI summary** - Shows estimated + actual costs after each run
+
+**Costs displayed in CLI:**
+```
+Estimated cost                                    $0.1234
+Actual billed cost                                $0.1187
+```
+
+Only OpenRouter shows "Actual billed cost" (per-request cost in API response).
+Other providers show estimated costs (highly accurate, using published pricing).
+
+See [docs/COST_TRACKING.md](./docs/COST_TRACKING.md) for:
+- Token breakdown by type (cached, reasoning, audio, etc.)
+- Cost optimization strategies
+- Provider comparison (OpenRouter vs OpenAI vs others)
+- OpenAI reconciliation setup
+- Monthly cost estimates
+
 ## Cost Estimate
 
 - ~100 items processed → ~$0.50 (with gpt-4o-mini)

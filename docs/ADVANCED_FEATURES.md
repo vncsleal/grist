@@ -216,6 +216,138 @@ USE_STREAMING=true                  # Enable streaming
 USE_BATCH_API=false                 # Use async batch API (soon)
 ```
 
+## 💰 Cost Optimization
+
+GRIST automatically tracks costs per request with granular detail. See [COST_TRACKING.md](./COST_TRACKING.md) for comprehensive guides.
+
+### Key Optimization Strategies
+
+#### 1. Model Tier Selection
+Different task complexities require different models:
+
+```bash
+# Fast filtering — use cheapest model
+LLM_MODEL_FAST=gpt-4o-mini      # $0.15/$0.60 per 1M tokens
+
+# General tasks — balanced cost/quality
+LLM_MODEL=gpt-4o                # $2.50/$10 per 1M tokens
+
+# Deep research — best quality
+LLM_MODEL_RESEARCH=gpt-4-turbo  # $10/$30 per 1M tokens
+
+# Complex reasoning — expensive but necessary
+LLM_MODEL_REASONING=o3          # $200/$800 per 1M tokens
+```
+
+**Rule of thumb:** Use strongest models only where needed.
+
+Library tasks (filtering) can use gpt-4o-mini.
+Research tasks require gpt-4-turbo.
+Reasoning tasks need o1/o3.
+
+#### 2. Prompt Caching (OpenAI)
+Automatically caches repeated context at 50% input token cost:
+
+```bash
+USE_PROMPT_CACHE=true
+```
+
+Caches:
+- `config/context.md` - Your identity (reused every request)
+- Common system prompts - Shared across all requests in a batch
+- Article headers - Deduplicated across many items
+
+**Savings:** 30-50% reduction on repeated context tokens.
+
+#### 3. Provider Selection
+Different providers offer different pricing/quality tradeoffs:
+
+| Provider | Speed | Cost | Free Tier| Quality |
+|----------|-------|------|----------|---------|
+| OpenRouter | Fast | $$ | Pay-as-you-go | Excellent |
+| OpenAI | Fast | $$ | No | Excellent |
+| Groq | Very Fast | $ | Yes | Good |
+| Together AI | Fast | $ | Pay-as-you-go | Good |
+| Anthropic | Medium | $$$ | No | Excellent |
+| Gemini | Fast | $ | Yes | Good |
+
+For cost-sensitive runs: Use Groq or Together AI.
+For quality: Use OpenAI or Anthropic.
+
+#### 4. Semantic Deduplication
+Prevents wasted analysis on duplicate content:
+
+```bash
+USE_VECTOR_STORE=true
+EMBEDDING_MODEL=text-embedding-3-small   # Cheaper than large
+```
+
+**Savings:** 20-40% fewer items processed when deduplication active.
+
+#### 5. Content Length Limits
+Reduce input tokens by limiting article length:
+
+```bash
+# In src/config.ts
+ENRICHMENT: {
+  MAX_CONTENT_LENGTH: 2000,     // Reduce from 4000
+  MAX_INSIGHTS: 2,               // Reduce from 3
+  MAX_QUOTES: 3,                 // Reduce from 5
+}
+```
+
+**Trade-off:** Slightly lower quality analysis but 25-35% cheaper.
+
+#### 6. Batch Sizing
+Large batches require more LLM context but process more items:
+
+```bash
+BATCH_SIZE=20    # Larger batches = fewer API calls but higher per-call cost
+BATCH_SIZE=5     # Smaller batches = more calls but lower per-call cost
+```
+
+**Optimal:** 10-15 items per batch (balances efficiency).
+
+#### 7. Parallel Workers
+Higher parallelism speeds up execution but increases concurrency costs:
+
+```bash
+PARALLEL_WORKERS=4       # Standard: balances speed & cost
+PARALLEL_WORKERS=2       # Conservative: slower but cheaper rate-limiting
+PARALLEL_WORKERS=8       # Aggressive: fast but expensive
+```
+
+### Monitoring Costs
+
+Every run generates detailed cost logs in `costs/costs_*.json`:
+
+```bash
+# View costs from last run
+cat costs/costs_*.json | tail -1 | jq '.totalEstimatedCost'
+
+# Find most expensive stage
+cat costs/costs_*.json | jq '.byStage | to_entries | sort_by(.value) | reverse | .[0]'
+
+# Track costs over time
+for f in costs/costs_*.json; do 
+  echo "$(date -r $f +%Y-%m-%d): $(jq '.totalEstimatedCost' < $f)"
+done
+```
+
+### Expected Costs (Per Run)
+
+With optimization:
+- **100-item harvest** - $0.08-0.12
+- **Typed compose** - $0.01-0.02
+- **Monthly (10 runs)** - $0.80-1.50
+
+Without optimization:
+- **100-item harvest** - $0.15-0.25
+- **Typed compose** - $0.02-0.03
+- **Monthly (10 runs)** - $1.70-3.00
+
+**Optimization can save 40-50% of costs.**
+
 ## 🎨 Future Enhancements
 
 - [ ] Native batch API integration (50% cost savings)

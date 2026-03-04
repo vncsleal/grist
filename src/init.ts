@@ -4,7 +4,8 @@ import * as readline from "readline";
 import { CONFIG } from "./config";
 import { callLLM, hasLLMKey, selectModel } from "./llm";
 import { fetchURL, extractTextFromHTML } from "./extractors/content";
-import { getCostStats } from "./costs";
+import { getCostStats, logCostsToFile } from "./costs";
+import { reconcileOpenAICostsIfAvailable } from "./reconcile";
 import * as cli from "./cli";
 
 type PromptEntry = {
@@ -362,6 +363,16 @@ async function personalizeAllPrompts(
 
   const duration = ((Date.now() - start) / 1000).toFixed(1) + "s";
   const costStats = getCostStats();
+  
+  // Log costs and attempt reconciliation (same as harvest/compose)
+  const date = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+  const costLog = logCostsToFile(date);
+  await reconcileOpenAICostsIfAvailable(costLog.path);
+  const updatedCostStats = getCostStats();
 
   cli.printInitCompletion({
     agentsPersonalized: personalized,
@@ -370,7 +381,8 @@ async function personalizeAllPrompts(
     writingSamples: writingSamplesCount,
     rssSeed,
     duration,
-    cost: costStats.total,
+    cost: updatedCostStats.totalEstimated,
+    billedCost: updatedCostStats.totalBilled,
   });
 
   cli.printMessage("Run `npm run harvest` to start.", "success");

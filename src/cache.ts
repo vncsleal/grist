@@ -122,15 +122,19 @@ export function cacheArticle(
   saveCache(cache);
 }
 
-export async function getEmbeddingWithCost(text: string): Promise<{ embedding: number[]; cost: number }> {
+export async function getEmbeddingWithCost(text: string): Promise<{ embedding: number[]; cost: number; tokens?: number }> {
   const response = await createEmbeddingResponse(text);
 
-  // Use API-reported tokens when available; fallback to rough estimate
-  const inputTokens = response.usage?.total_tokens ?? Math.ceil(text.split(/\s+/).length * 1.3);
-  const cost = inputTokens * EMBEDDING_INPUT_COST_PER_TOKEN;
+  // Always use API-reported tokens for accuracy
+  const inputTokens = response.usage?.total_tokens;
+  if (!inputTokens) {
+    console.warn("⚠️  Embedding API response missing usage data");
+  }
+  const cost = (inputTokens || 0) * EMBEDDING_INPUT_COST_PER_TOKEN;
 
   return {
     embedding: response.data[0].embedding,
     cost,
+    tokens: inputTokens,
   };
 }

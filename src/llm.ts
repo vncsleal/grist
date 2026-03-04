@@ -1,11 +1,11 @@
 import OpenAI from "openai";
 import { CONFIG } from "./config";
-import { recordCost } from "./costs";
+import { recordUsage, type TokenUsage } from "./costs";
 import type { Tool, ToolCall } from "./types";
 
 // ─── Provider detection ───────────────────────────────────────────────────────
 
-type Provider = "openai" | "anthropic" | "groq" | "gemini" | "openrouter" | "mistral" | "xai" | "together" | "azure";
+export type Provider = "openai" | "anthropic" | "groq" | "gemini" | "openrouter" | "mistral" | "xai" | "together" | "azure";
 
 interface ProviderConfig {
   name: Provider;
@@ -309,10 +309,27 @@ export async function callLLM(options: LLMCallOptions): Promise<LLMCallResult> {
 
       callStats.total++;
 
-      // Track cost
-      const inputTokens = response.usage?.prompt_tokens || 0;
-      const outputTokens = response.usage?.completion_tokens || 0;
-      recordCost(stage, model, inputTokens, outputTokens);
+      // Extract detailed usage from response
+      const usage = response.usage;
+      if (usage) {
+        const tokens: TokenUsage = {
+          promptTokens: usage.prompt_tokens || 0,
+          completionTokens: usage.completion_tokens || 0,
+          totalTokens: usage.total_tokens || 0,
+          cachedTokens: usage.prompt_tokens_details?.cached_tokens,
+          reasoningTokens: usage.completion_tokens_details?.reasoning_tokens,
+          audioInputTokens: usage.prompt_tokens_details?.audio_tokens,
+          audioOutputTokens: usage.completion_tokens_details?.audio_tokens,
+        };
+
+        // OpenRouter returns actual cost in some cases
+        const billedCost = (usage as any).cost;
+
+        recordUsage(stage, provider, model, tokens, {
+          requestId: response.id,
+          billedCost,
+        });
+      }
 
       const message = response.choices[0].message;
 
