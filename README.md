@@ -1,67 +1,90 @@
-# GRIST v0.2
+# GRIST v0.2.1
 
 Guided Research and Insight Synthesis Tool.
 
-GRIST is MCP-first. It exposes deterministic tools, and your host AI client handles reasoning and final writing.
+GRIST is a pure MCP data layer. It handles file I/O, RSS fetching, and content persistence. Your host AI client (Claude, Cursor, VS Code Copilot) does all reasoning, scoring, and writing — no extra API key required.
 
 ## Quick Start
 
 ```bash
-<install dependencies with your package manager>
-tsc
-./bin/grist-mcp
+npm install
+npm run build
 ```
 
-Then use your MCP host client to call:
+Register with your MCP client using one of the provided config files (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`), then start with the `grist_onboarding` prompt.
 
-- `grist_harvest`
-- `grist_list_cards`
-- `grist_get_card`
-- `grist_compose`
+## Tools
+
+| Tool | Description |
+|---|---|
+| `grist_set_context` | Save the user content creator profile |
+| `grist_get_context` | Load the saved profile |
+| `grist_discover_feeds` | Discover RSS feeds via Google News + Feedly for user topics |
+| `grist_add_feeds` | Add RSS feed URLs (deduplicates automatically) |
+| `grist_list_feeds` | List all configured feeds |
+| `grist_fetch_articles` | Fetch articles from feeds (`slim=true` for headline index) |
+| `grist_read_article` | Fetch full text for a single URL via Readability |
+| `grist_analyze_articles` | Full pipeline via MCP Sampling: fetch → score → enrich → cards |
+| `grist_save_cards` | Persist analyzed structure cards to disk |
+| `grist_list_cards` | List cards (`minScore`, `limit` filters) |
+| `grist_get_card` | Get full card details by ID |
+| `grist_save_draft` | Save a drafted post to disk |
+
+## Resources
+
+| URI | Description |
+|---|---|
+| `grist://context` | User content creator profile (JSON) |
+| `grist://harvest/latest` | Structure cards from latest session (JSON) |
+| `grist://feeds` | Configured RSS feed URLs (plain text) |
+
+## Prompts
+
+- `grist_onboarding` — guided setup to collect user profile
+- `grist_workflow` — full workflow reference with voice rules and platform guides
 
 ## Configuration
 
-- `config/context.md`: identity, voice, and content preferences
-- `config/rss_sources.txt`: RSS feed list
+- `config/context.json` — user profile (created via `grist_set_context`)
+- `config/rss_sources.txt` — feed list (managed via `grist_add_feeds` / `grist_discover_feeds`)
 
-## Runtime Mode
-
-Default mode is keyless and host-model-first:
-
-- GRIST tools run locally over MCP/stdio.
-- Claude/Cursor/VS Code/OpenAI host clients perform reasoning and writing.
-- No GRIST-specific API key is required for standard operation.
-
-## MCP
-
-MCP config files:
+## MCP Config Files
 
 - `.mcp.json`
 - `.cursor/mcp.json`
 - `.vscode/mcp.json`
 
-See `docs/MCP.md` for tool contracts and client configuration examples.
+See [docs/MCP.md](docs/MCP.md) for tool contracts and client configuration details.
 
 ## Project Layout
 
 ```
 src/
-  mcp/server.ts
+  mcp/server.ts        # MCP server — tools, resources, prompts
   agents/
-    harvest.ts
-    compose.ts
+    onboard.ts         # Profile load/save, onboarding prompt
+    discover.ts        # Feed source management
+    harvest.ts         # RSS fetch, pre-scoring
+    seeds.ts           # Google News + Feedly feed discovery
+    compose.ts         # Platform format guides
   extractors/
-    rss.ts
-    content.ts
+    rss.ts             # RSS parsing with type-safe field guards
+    content.ts         # Mozilla Readability article extraction
   output/
-    structures.ts
+    structures.ts      # Card/draft persistence, seen-URL dedup
+config/
+  context.json         # User profile
+  rss_sources.txt      # Feed list
+bin/
+  grist-mcp            # Entry point
 ```
 
 ## Development
 
 ```bash
-tsc --noEmit
-npm run mcp:dev
+npm run build          # tsc compile
+npm run typecheck      # type-check only
+npm run mcp:dev        # build + run server
 ```
 
 ## License
