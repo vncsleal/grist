@@ -39,7 +39,7 @@ import {
 } from "../output/structures.js";
 
 const server = new Server(
-  { name: "quillby-mcp", version: "0.3.2" },
+  { name: "quillby-mcp", version: "0.3.4" },
   { capabilities: { tools: {}, resources: {}, prompts: {}, logging: {} } }
 );
 
@@ -1251,7 +1251,7 @@ if (TRANSPORT_MODE === "http") {
         name: "Quillby",
         description: "Guided Research & Insight Synthesis Tool — RSS content intelligence MCP server. Fetches, scores, and structures articles into content cards for social media posts.",
         url: `${baseUrl}/mcp`,
-        version: "0.4.0",
+        version: "0.3.4",
         capabilities: {
           streaming: true,
           pushNotifications: false,

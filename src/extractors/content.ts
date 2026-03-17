@@ -1,7 +1,7 @@
 import * as https from "https";
 import * as http from "http";
 import { Readability } from "@mozilla/readability";
-import { JSDOM } from "jsdom";
+import { parseHTML } from "linkedom";
 import { CONFIG } from "../config.js";
 
 /**
@@ -60,8 +60,9 @@ export function fetchURL(url: string, redirects = 0): Promise<string> {
  */
 export function extractTextFromHTML(html: string, url: string): string {
   try {
-    const dom = new JSDOM(html, { url });
-    const article = new Readability(dom.window.document).parse();
+    const { document } = parseHTML(html);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const article = new Readability(document as any).parse();
     if (article?.textContent) {
       return article.textContent.replace(/\s+/g, " ").trim().slice(0, CONFIG.ENRICHMENT.MAX_CONTENT_LENGTH);
     }

@@ -4,7 +4,7 @@
  * All tests run in a temporary directory to keep the real project tree clean.
  * beforeEach creates a temp dir and chdir into it; afterEach restores cwd.
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -14,6 +14,7 @@ import {
   latestHarvestExists,
 } from "../../src/output/structures.js";
 import { CardInputSchema, type CardInput } from "../../src/types.js";
+import * as rss from "../../src/extractors/rss.js";
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -127,13 +128,17 @@ describe("saveHarvestOutput", () => {
   });
 
   it("calls saveSeenUrls only when seenUrls is non-empty", () => {
-    // With empty set — .cache/seen_urls.json should NOT be written
-    saveHarvestOutput([makeCard()], new Set());
-    expect(fs.existsSync(".cache/seen_urls.json")).toBe(false);
+    const spy = vi.spyOn(rss, "saveSeenUrls").mockImplementation(() => {});
 
-    // With populated set — file IS written
+    // With empty set — saveSeenUrls should NOT be called
+    saveHarvestOutput([makeCard()], new Set());
+    expect(spy).not.toHaveBeenCalled();
+
+    // With populated set — saveSeenUrls IS called
     saveHarvestOutput([makeCard()], new Set(["https://example.com/1"]));
-    expect(fs.existsSync(".cache/seen_urls.json")).toBe(true);
+    expect(spy).toHaveBeenCalledOnce();
+
+    spy.mockRestore();
   });
 
   it("structures.md includes card titles", () => {
