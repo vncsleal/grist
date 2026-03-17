@@ -61,14 +61,13 @@ jobs:
       - name: Build binary
         run: bun build --compile --target=bun-windows-x64 ./src/mcp/server.ts --outfile quillby-mcp-windows-x64.exe
 
-      - name: Install NSIS
-        run: choco install nsis --no-progress -y
-
-      - name: Copy binary next to installer script
-        run: copy quillby-mcp-windows-x64.exe installer\windows\quillby-mcp-windows-x64.exe
-
-      - name: Build NSIS installer
-        run: makensis installer\windows\installer.nsi
+      - name: Install NSIS and build installer
+        run: |
+          choco install nsis --no-progress -y
+          $env:PATH = "C:\Program Files (x86)\NSIS;" + $env:PATH
+          copy quillby-mcp-windows-x64.exe installer\windows\quillby-mcp-windows-x64.exe
+          makensis installer\windows\installer.nsi
+        shell: pwsh
 
       - uses: softprops/action-gh-release@v2
         with:
