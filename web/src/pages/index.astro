@@ -159,18 +159,7 @@ const claudeConfigPath = {
       }
       .hero-content { flex: 1 1 520px; display: flex; flex-direction: column; gap: 2rem; }
 
-      .hero-badge {
-        display: inline-flex; align-items: center; gap: 0.6rem;
-        padding: 0.35rem 0.9rem 0.35rem 0.5rem;
-        border: 1px solid var(--border); border-radius: 100px;
-        font-size: 0.75rem; font-weight: 600; color: var(--violet-3);
-        background: rgba(167,139,250,0.07); letter-spacing: 0.04em; width: fit-content;
-      }
-      .hero-badge-dot {
-        width: 6px; height: 6px; border-radius: 50%;
-        background: var(--violet); box-shadow: 0 0 6px var(--violet);
-        animation: pulse-dot 2s ease-in-out infinite;
-      }
+      
       @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.8)} }
 
       .hero-headline {
@@ -562,10 +551,7 @@ const claudeConfigPath = {
     <!-- HERO -->
     <section class="hero">
       <div class="hero-content">
-        <div class="hero-badge">
-          <div class="hero-badge-dot"></div>
-          AI Content Agent · Claude Desktop · Open Source
-        </div>
+        
         <h1 class="hero-headline">
           The internet<br />
           already wrote<br />
