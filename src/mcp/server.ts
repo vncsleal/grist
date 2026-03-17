@@ -39,7 +39,7 @@ import {
 } from "../output/structures.js";
 
 const server = new Server(
-  { name: "quillby-mcp", version: "0.3.0" },
+  { name: "quillby-mcp", version: "0.3.2" },
   { capabilities: { tools: {}, resources: {}, prompts: {}, logging: {} } }
 );
 
