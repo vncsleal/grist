@@ -1,6 +1,6 @@
 {
   "name": "@vncsleal/quillby",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Quillby — AI copywriting assistant. Reads the internet and writes content in your voice.",
   "license": "MIT",
   "author": "Vinicius Leal",
@@ -18,7 +18,7 @@
   },
   "main": "dist/mcp/server.js",
   "bin": {
-    "quillby-mcp": "./bin/quillby-mcp"
+    "quillby-mcp": "bin/quillby-mcp"
   },
   "files": [
     "dist",
