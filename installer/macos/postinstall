@@ -11,23 +11,27 @@ CURRENT_USER=$(stat -f "%Su" /dev/console 2>/dev/null || true)
 USER_HOME=$(dscl . -read "/Users/$CURRENT_USER" NFSHomeDirectory 2>/dev/null | awk '{print $2}' || true)
 [[ -z "$USER_HOME" ]] && USER_HOME="/Users/$CURRENT_USER"
 
-CONFIG_FILE="$USER_HOME/Library/Application Support/Claude/claude_desktop_config.json"
+CONFIG_DIR="$USER_HOME/Library/Application Support/Claude"
+CONFIG_FILE="$CONFIG_DIR/claude_desktop_config.json"
 
-sudo -u "$CURRENT_USER" python3 -c "
-import json, os, sys
-config_file, binary_path = sys.argv[1], sys.argv[2]
-config = {}
-if os.path.exists(config_file):
-    try:
-        with open(config_file) as f:
-            config = json.load(f)
-    except Exception:
-        pass
-config.setdefault('mcpServers', {})['quillby'] = {'command': binary_path}
-os.makedirs(os.path.dirname(config_file), exist_ok=True)
-with open(config_file, 'w') as f:
-    json.dump(config, f, indent=2)
-    f.write('\n')
-" "$CONFIG_FILE" "$BINARY_PATH"
+# Ensure directory exists
+mkdir -p "$CONFIG_DIR"
+
+# Create config file if missing
+[ ! -f "$CONFIG_FILE" ] && echo '{}' > "$CONFIG_FILE"
+
+# Ensure the file is valid JSON (reset if corrupted)
+plutil -lint "$CONFIG_FILE" > /dev/null 2>&1 || echo '{}' > "$CONFIG_FILE"
+
+# Ensure mcpServers key exists
+plutil -extract mcpServers raw "$CONFIG_FILE" > /dev/null 2>&1 || \
+    plutil -insert mcpServers -json '{}' "$CONFIG_FILE"
+
+# Insert quillby entry, or replace if it already exists
+plutil -insert "mcpServers.quillby" -json "{\"command\":\"$BINARY_PATH\"}" "$CONFIG_FILE" 2>/dev/null || \
+    plutil -replace "mcpServers.quillby" -json "{\"command\":\"$BINARY_PATH\"}" "$CONFIG_FILE"
+
+# Fix ownership so the user owns their own config
+chown -R "$CURRENT_USER" "$CONFIG_DIR"
 
 exit 0
