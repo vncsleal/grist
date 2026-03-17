@@ -12,6 +12,19 @@ echo -e "${VIOLET}${BOLD}  Quillby Installer${RESET}"
 echo ""
 
 # ── 1. Node.js check ─────────────────────────────────────────────────────────
+# curl|bash runs a non-interactive shell — nvm / Homebrew paths may not be set.
+# Try to load nvm if present, then extend PATH with common install locations.
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh" --no-use 2>/dev/null || true
+[[ -s "$HOME/.nvm/nvm.sh" ]] && source "$HOME/.nvm/nvm.sh" --no-use 2>/dev/null || true
+
+export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+# Pick up the active nvm version if any
+if [[ -d "$NVM_DIR/versions/node" ]]; then
+  LATEST_NVM_NODE=$(ls -t "$NVM_DIR/versions/node" 2>/dev/null | head -1)
+  [[ -n "$LATEST_NVM_NODE" ]] && export PATH="$NVM_DIR/versions/node/$LATEST_NVM_NODE/bin:$PATH"
+fi
+
 if ! command -v node &>/dev/null; then
   echo -e "${RED}✗  Node.js is not installed.${RESET}"
   echo ""
