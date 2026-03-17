@@ -1,6 +1,6 @@
 {
   "name": "grist",
-  "version": "0.2.1",
+  "version": "0.4.0",
   "description": "GRIST — Guided Research & Insight Synthesis Tool. Reads the internet and writes content in your voice.",
   "license": "MIT",
   "author": "Vinicius Leal",
@@ -31,12 +31,14 @@
     "mcp": "node dist/mcp/server.js",
     "mcp:dev": "tsx src/mcp/server.ts",
     "mcp:start": "node dist/mcp/server.js",
+    "mcp:http": "GRIST_TRANSPORT=http node dist/mcp/server.js",
+    "mcp:http:dev": "GRIST_TRANSPORT=http tsx src/mcp/server.ts",
     "dev": "tsx src/mcp/server.ts",
     "clean": "rm -rf .cache dist",
     "clean:all": "rm -rf .cache dist output",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'tests pending'"
+    "test": "npm run build && node --input-type=module < test-mcp.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
