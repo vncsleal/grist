@@ -61,7 +61,7 @@ export function saveHarvestOutput(rawCards: CardInput[], seenUrls: Set<string>):
 
 function buildMarkdown(cards: StructureCard[], dateLabel: string): string {
   return [
-    `# GRIST Harvest — ${dateLabel}`,
+    `# Quillby Harvest — ${dateLabel}`,
     "",
     `> ${cards.length} structure card${cards.length === 1 ? "" : "s"}, sorted by relevance`,
     "",
@@ -104,13 +104,13 @@ function buildMarkdown(cards: StructureCard[], dateLabel: string): string {
 export function loadLatestHarvest(): HarvestBundle {
   if (!fs.existsSync(LATEST_HARVEST_POINTER)) {
     throw new Error(
-      "No harvest found. Run grist_fetch_articles then grist_save_cards first."
+      "No harvest found. Run quillby_fetch_articles then quillby_save_cards first."
     );
   }
 
   const bundlePath = fs.readFileSync(LATEST_HARVEST_POINTER, "utf-8").trim();
   if (!bundlePath || !fs.existsSync(bundlePath)) {
-    throw new Error("Latest harvest pointer is invalid. Re-run grist_fetch_articles.");
+    throw new Error("Latest harvest pointer is invalid. Re-run quillby_fetch_articles.");
   }
 
   const raw = JSON.parse(fs.readFileSync(bundlePath, "utf-8"));

@@ -1,92 +1,89 @@
-# GRIST MCP Server
+# Quillby MCP Setup
 
-GRIST exposes its workflow as an MCP server over stdio so MCP-compatible clients can call it directly.
+How to connect Quillby to your AI client. Quillby runs locally over stdio — no account, no API key, no cloud service required.
 
-Default runtime is host-model-first and keyless: GRIST provides deterministic tools, and your MCP host client does reasoning and writing.
+## Prerequisites
 
-## Industry-Standard Setup Pattern
-
-Across Claude Code, VS Code, Cursor, and OpenAI MCP integrations, the common pattern is:
-
-- use MCP transport (`stdio` for local process, `http` for remote hosted server)
-- configure servers in a client config file/command with explicit `command` + `args` (or `url`)
-- pass secrets via environment variables or env files
-- require user trust/approval for tool calls unless sandboxed/policy-managed
-
-So for GRIST, prefer explicit server commands over project-specific wrappers when possible.
-In this repo, `./bin/grist-mcp` is the canonical MCP entrypoint.
-
-## Run (Local STDIO)
-
-Recommended for production-like local use:
+- [Node.js 20+](https://nodejs.org)
+- A built copy of Quillby:
 
 ```bash
-tsc
-./bin/grist-mcp
+cd /path/to/grist
+npm install
+npm run build
 ```
 
-Development mode:
+`./bin/quillby-mcp` is the canonical entrypoint after building.
 
-```bash
-tsx src/mcp/server.ts
-```
+## Tools
 
-This starts the server on stdio.
+**For Claude Desktop user setup, see [README.md](../README.md).**
 
-## Exposed Tools
+### Onboarding & Profile
 
-### `grist_harvest`
-Fetch RSS feeds and generate deterministic structure cards.
+| Tool | Parameters | Returns |
+|---|---|---|
+| `quillby_onboard` | *(MCP Elicitation — no params)* | Inline questions → profile saved |
+| `quillby_set_context` | `context` object (required) | Confirmation |
+| `quillby_get_context` | — | Profile JSON |
 
-Input (all optional):
-- `context: string` custom context override
-- `sources: string[]` custom RSS source URLs override
+### Feed Management
 
-Returns:
-- run metadata (`generatedAt`, `dateLabel`, `outputDir`)
-- `cardsCount`
-- card summaries (`id`, `title`, `source`, `link`)
+| Tool | Parameters | Returns |
+|---|---|---|
+| `quillby_discover_feeds` | `topics[]` (optional override) | Suggested feed URLs |
+| `quillby_add_feeds` | `urls[]` (required) | Added / skipped counts |
+| `quillby_list_feeds` | — | Feed URL list |
 
-### `grist_list_cards`
-List structure cards from the latest harvest bundle.
+### Fetch & Research
 
-Input (optional):
-- `limit: number` defaults to `25`, max `100`
+| Tool | Parameters | Returns |
+|---|---|---|
+| `quillby_fetch_articles` | `sources[]` (optional), `slim` (bool) | Article array |
+| `quillby_read_article` | `url` (required) | Full article text |
 
-Returns:
-- bundle metadata
-- card list with `id`, `title`, `source`, `link`, `thesis`
+### Analysis *(requires MCP Sampling)*
 
-### `grist_get_card`
-Get one full card by id.
+| Tool | Parameters | Returns |
+|---|---|---|
+| `quillby_daily_brief` | `topN` (number, default 15) | Full brief with scored cards |
+| `quillby_analyze_articles` | `sources[]`, `topN` | Cards from full pipeline |
 
-Input:
-- `cardId: number` required
+### Cards & Drafts
 
-Returns:
-- bundle metadata
-- full `card` object
+| Tool | Parameters | Returns |
+|---|---|---|
+| `quillby_save_cards` | `cards[]` (CardInput array, required) | Save path |
+| `quillby_list_cards` | `limit`, `minScore` | Card summaries |
+| `quillby_get_card` | `cardId` (number, required) | Full card object |
+| `quillby_generate_post` | `cardId`, `platform` | Post text. Requires Sampling. |
+| `quillby_save_draft` | `content`, `platform`, `cardId`, `addToVoiceExamples` | Save path |
 
-### `grist_compose`
-Build a deterministic draft scaffold from a selected card.
+### Voice Memory
 
-Input:
-- `cardId: number` required
-- `platform: string` optional, defaults to `LinkedIn`
-- `take: string` optional override
-- `insight: string` optional override
-- `angle: string` optional override
-- `save: boolean` optional, defaults to `true`
+| Tool | Parameters | Returns |
+|---|---|---|
+| `quillby_remember` | `post` (string, required) | Confirmation |
 
-Returns:
-- `draft`
-- selected `cardId`
-- `platform`
-- save metadata (`saved`, `filePath`)
+## Resources
+
+| URI | MIME | Description |
+|---|---|---|
+| `quillby://context` | `application/json` | User content creator profile |
+| `quillby://memory` | `application/json` | Voice examples |
+| `quillby://harvest/latest` | `application/json` | Cards from the latest session |
+| `quillby://feeds` | `text/plain` | Configured RSS feed URLs |
+
+## Prompts
+
+| Prompt | Description |
+|---|---|
+| `quillby_onboarding` | Guided setup |
+| `quillby_workflow` | Full workflow reference with platform guides |
 
 ## Environment
 
-For standard MVP usage, no GRIST API key is required.
+For standard MVP usage, no Quillby API key is required.
 
 ## Do I Need To Deploy?
 
@@ -105,11 +102,11 @@ You only deploy a remote HTTP MCP server if you need:
 
 ### Claude Code (CLI)
 
-Add GRIST with explicit stdio command:
+Add Quillby with explicit stdio command:
 
 ```bash
 claude mcp add --transport stdio --scope project grist -- \
-  /Users/vncsleal/Downloads/projects/rss-filter/bin/grist-mcp
+  /path/to/quillby/bin/quillby-mcp
 ```
 
 Notes:
@@ -123,9 +120,9 @@ Add to Claude Desktop MCP config:
 ```json
 {
   "mcpServers": {
-    "grist": {
+    "quillby": {
       "type": "stdio",
-      "command": "/Users/vncsleal/Downloads/projects/rss-filter/bin/grist-mcp",
+      "command": "/path/to/quillby/bin/quillby-mcp",
       "args": []
     }
   }
@@ -137,9 +134,9 @@ Add to Claude Desktop MCP config:
 ```json
 {
   "servers": {
-    "grist": {
+    "quillby": {
       "type": "stdio",
-      "command": "${workspaceFolder}/bin/grist-mcp",
+      "command": "${workspaceFolder}/bin/quillby-mcp",
       "args": []
     }
   }
@@ -151,9 +148,9 @@ Add to Claude Desktop MCP config:
 ```json
 {
   "mcpServers": {
-    "grist": {
+    "quillby": {
       "type": "stdio",
-      "command": "${workspaceFolder}/bin/grist-mcp",
+      "command": "${workspaceFolder}/bin/quillby-mcp",
       "args": []
     }
   }
@@ -168,7 +165,7 @@ OpenAI docs emphasize remote MCP for ChatGPT Apps / deep research / API tools:
 - use OAuth/authn for enterprise/shared deployments
 - register tool server in ChatGPT or pass as `tools: [{ type: "mcp", server_url: ... }]` in API flows
 
-GRIST today is local stdio only. If you want OpenAI-native remote deployment, next step is adding HTTP transport wrapper and auth.
+Quillby today is local stdio only. If you want OpenAI-native remote deployment, next step is adding HTTP transport wrapper and auth.
 
 ### Gemini and other clients
 
@@ -179,9 +176,9 @@ Gemini tooling emphasizes function/tool use. For MCP-capable clients, use the sa
 ```json
 {
   "mcpServers": {
-    "grist": {
+    "quillby": {
       "type": "stdio",
-      "command": "/absolute/path/to/rss-filter/bin/grist-mcp",
+      "command": "/absolute/path/to/rss-filter/bin/quillby-mcp",
       "args": []
     }
   }
@@ -190,9 +187,10 @@ Gemini tooling emphasizes function/tool use. For MCP-capable clients, use the sa
 
 ## Notes
 
-- GRIST suppresses normal CLI stdout while tools execute so MCP JSON-RPC output is not corrupted.
-- `grist_harvest` writes the latest bundle to `output/<timestamp>/structures.json` and updates `.cache/latest_harvest_path.txt`.
-- `grist_compose` writes drafts into the latest harvest output directory when `save` is true.
+- Quillby suppresses normal CLI stdout while tools execute so MCP JSON-RPC output is not corrupted.
+- `quillby_daily_brief` and `quillby_analyze_articles` require MCP Sampling support in the host client (Claude Desktop supports this).
+- Saved cards and drafts are written to `output/<timestamp>/` and linked from `output/latest`.
+- Voice examples accumulate in `config/memory.json` via `quillby_remember` or `quillby_save_draft` with `addToVoiceExamples: true`.
 
 ## Practical Recommendation
 
@@ -200,5 +198,5 @@ For acceptance and familiarity:
 
 1. Keep local stdio support (already implemented).
 2. Use config-file-driven setup (`.mcp.json`, `.vscode/mcp.json`, `.cursor/mcp.json`) with explicit `command`/`args`.
-3. Use repo-local executable wrapper `./bin/grist-mcp` for consistent client wiring.
+3. Use repo-local executable wrapper `./bin/quillby-mcp` for consistent client wiring.
 4. Add remote HTTP transport + auth only if you want hosted/team-scale connectors.

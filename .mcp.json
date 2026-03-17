@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "grist": {
+    "quillby": {
       "type": "stdio",
-      "command": "${workspaceFolder}/bin/grist-mcp",
+      "command": "${workspaceFolder}/bin/quillby-mcp",
       "args": []
     }
   }

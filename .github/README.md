@@ -5,7 +5,7 @@ If you just cloned this repository, run:
 ```bash
 <install dependencies with your package manager>
 tsc
-./bin/grist-mcp
+./bin/quillby-mcp
 ```
 
 Create local config files if they do not exist:
@@ -13,12 +13,12 @@ Create local config files if they do not exist:
 - `config/context.md`
 - `config/rss_sources.txt`
 
-Then call GRIST from your MCP host client via `grist_harvest`, `grist_list_cards`, and `grist_compose`.
+Then call Quillby from your MCP host client via `quillby_harvest`, `quillby_list_cards`, and `quillby_compose`.
 
 ### Runtime Model
 
 Default MVP mode is host-model-first and keyless:
 
-- GRIST runs deterministic local MCP tools.
+- Quillby runs deterministic local MCP tools.
 - Your MCP host client model (Claude/Cursor/VS Code/OpenAI) performs reasoning and writing.
-- No GRIST-specific API key is required for normal operation.
+- No Quillby-specific API key is required for normal operation.

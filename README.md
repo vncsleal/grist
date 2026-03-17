@@ -1,91 +1,167 @@
-# GRIST v0.2.1
+# Quillby
 
-Guided Research and Insight Synthesis Tool.
+Quillby gives Claude a daily content briefing. It scans articles across your topics, finds what's relevant to your audience, and helps you write posts that sound like you — not generic AI.
 
-GRIST is a pure MCP data layer. It handles file I/O, RSS fetching, and content persistence. Your host AI client (Claude, Cursor, VS Code Copilot) does all reasoning, scoring, and writing — no extra API key required.
+No extra accounts. No API keys. Everything runs on your computer, inside Claude.
 
-## Quick Start
+---
 
-```bash
+## What you need
+
+- **[Claude Desktop](https://claude.ai/download)** — the free desktop app from Anthropic (free tier works)
+- **[Node.js](https://nodejs.org)** — a free one-time install (click the large **LTS** button on their site)
+
+---
+
+## Installation
+
+This is a one-time setup. It takes about 10 minutes.
+
+### 1. Download Quillby
+
+At the top of this page, click **Code → Download ZIP**. Unzip it. Move the `grist` folder somewhere you'll remember — your **Documents** folder works well.
+
+### 2. Open a terminal
+
+**Mac:** Press `Cmd + Space`, type `Terminal`, press Enter.
+
+**Windows:** Press `Win + R`, type `cmd`, press Enter.
+
+### 3. Go to the quillby folder
+
+Type `cd ` (with a space after it), then drag the `grist` folder from Finder (Mac) or File Explorer (Windows) directly into the terminal window. Press Enter.
+
+### 4. Run the setup commands
+
+Copy and paste each line and press Enter after each one. Wait for the cursor to stop blinking before running the next.
+
+```
 npm install
+```
+
+*Downloads what Quillby needs to run. Takes about a minute.*
+
+```
 npm run build
 ```
 
-Register with your MCP client using one of the provided config files (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`), then start with the `grist_onboarding` prompt.
+*Compiles Quillby. Done in a few seconds.*
 
-## Tools
+### 5. Find your Quillby path
 
-| Tool | Description |
-|---|---|
-| `grist_set_context` | Save the user content creator profile |
-| `grist_get_context` | Load the saved profile |
-| `grist_discover_feeds` | Discover RSS feeds via Google News + Feedly for user topics |
-| `grist_add_feeds` | Add RSS feed URLs (deduplicates automatically) |
-| `grist_list_feeds` | List all configured feeds |
-| `grist_fetch_articles` | Fetch articles from feeds (`slim=true` for headline index) |
-| `grist_read_article` | Fetch full text for a single URL via Readability |
-| `grist_analyze_articles` | Full pipeline via MCP Sampling: fetch → score → enrich → cards |
-| `grist_save_cards` | Persist analyzed structure cards to disk |
-| `grist_list_cards` | List cards (`minScore`, `limit` filters) |
-| `grist_get_card` | Get full card details by ID |
-| `grist_save_draft` | Save a drafted post to disk |
+Still in the terminal, run this:
 
-## Resources
-
-| URI | Description |
-|---|---|
-| `grist://context` | User content creator profile (JSON) |
-| `grist://harvest/latest` | Structure cards from latest session (JSON) |
-| `grist://feeds` | Configured RSS feed URLs (plain text) |
-
-## Prompts
-
-- `grist_onboarding` — guided setup to collect user profile
-- `grist_workflow` — full workflow reference with voice rules and platform guides
-
-## Configuration
-
-- `config/context.json` — user profile (created via `grist_set_context`)
-- `config/rss_sources.txt` — feed list (managed via `grist_add_feeds` / `grist_discover_feeds`)
-
-## MCP Config Files
-
-- `.mcp.json`
-- `.cursor/mcp.json`
-- `.vscode/mcp.json`
-
-See [docs/MCP.md](docs/MCP.md) for tool contracts and client configuration details.
-
-## Project Layout
-
+**Mac:**
 ```
-src/
-  mcp/server.ts        # MCP server — tools, resources, prompts
-  agents/
-    onboard.ts         # Profile load/save, onboarding prompt
-    discover.ts        # Feed source management
-    harvest.ts         # RSS fetch, pre-scoring
-    seeds.ts           # Google News + Feedly feed discovery
-    compose.ts         # Platform format guides
-  extractors/
-    rss.ts             # RSS parsing with type-safe field guards
-    content.ts         # Mozilla Readability article extraction
-  output/
-    structures.ts      # Card/draft persistence, seen-URL dedup
-config/
-  context.json         # User profile
-  rss_sources.txt      # Feed list
-bin/
-  grist-mcp            # Entry point
+echo "$PWD/bin/quillby-mcp"
 ```
 
-## Development
-
-```bash
-npm run build          # tsc compile
-npm run typecheck      # type-check only
-npm run mcp:dev        # build + run server
+**Windows:**
 ```
+echo %CD%\bin\quillby-mcp
+```
+
+It will print a path like `/Users/yourname/Documents/quillby/bin/quillby-mcp`. **Copy the entire line.**
+
+### 6. Connect Quillby to Claude Desktop
+
+Open Claude Desktop. Go to **Settings → Developer → Edit Config**.
+
+This opens a file. Replace everything in it with the text below, swapping in the path you just copied:
+
+```json
+{
+  "mcpServers": {
+    "quillby": {
+      "command": "/Users/yourname/Documents/quillby/bin/quillby-mcp"
+    }
+  }
+}
+```
+
+Save the file. Then **fully quit Claude Desktop** — right-click the icon in the Dock (Mac) or taskbar (Windows) and choose Quit — then reopen it.
+
+> **Already have other tools?** If the config file has content already, don't replace everything. Add the `"quillby": { ... }` block inside the existing `"mcpServers"` section.
+
+### 7. Tell Quillby about yourself
+
+In a new Claude conversation, type exactly:
+
+> Run the quillby_onboarding prompt
+
+Claude will ask a few questions about your work, your audience, and what you publish. Answer naturally — that's how Quillby learns your voice.
+
+---
+
+## Every day
+
+Once set up, just talk to Claude like normal.
+
+**Get today's content ideas:**
+
+> "Give me my Quillby daily brief"
+
+Claude scans today's articles across your topics, picks the most relevant ones for your audience, and gives you a set of ready-to-use ideas — each with a specific angle and hook.
+
+**Write a post from any idea:**
+
+> "Write a LinkedIn post from idea 3"
+
+Claude writes it in your voice, based on your profile.
+
+**Save it:**
+
+> "Save this draft"
+
+Quillby stores it in the `output/` folder inside your grist directory.
+
+---
+
+## Teaching Quillby your voice
+
+The more examples Quillby has, the more accurately it writes like you.
+
+When Claude writes a post you're happy with, say:
+
+> "Add this post to my Quillby voice examples"
+
+Quillby saves it. Every future post draws on those examples.
+
+To check what Quillby knows about your style:
+
+> "Show me my Quillby voice memory"
+
+---
+
+## Tips
+
+**Updating your focus:**
+> "Update my Quillby profile — I'm focusing on [topic] now"
+
+**Adding sources:**
+> "Find good news sources for my Quillby topics and add them"
+
+**Being specific gets better results.** "Write a 150-word conversational LinkedIn post from idea 2" works much better than "write a post."
+
+**Your content stays on your computer.** Your profile, voice examples, drafts, and content ideas are saved locally in your `grist/` folder. Nothing is sent to any external service.
+
+---
+
+## Troubleshooting
+
+**Quillby doesn't appear in Claude** — Make sure you fully quit and reopened Claude Desktop after saving the config. Check the path in the config matches exactly what the terminal printed (no extra spaces or missing characters).
+
+**"No context saved" error** — Run the onboarding first: *"Run the quillby_onboarding prompt"*
+
+**"No feeds configured" error** — Ask Claude to find sources: *"Find RSS feeds for my topics and add them to Quillby"*
+
+---
+
+## For developers
+
+HTTP transport, environment variables, scheduled harvest, the full tool reference, and integration configs for VS Code and Cursor: see [docs/MCP.md](docs/MCP.md).
+
+---
 
 ## License
 

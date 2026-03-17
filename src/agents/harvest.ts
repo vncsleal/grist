@@ -1,11 +1,52 @@
 import { fetchFeeds, getSeenUrls } from "../extractors/rss.js";
+import { fetchReddit } from "../extractors/reddit.js";
 import { enrichArticle } from "../extractors/content.js";
 import { mapWithConcurrency } from "../llm.js";
-import type { EnrichedArticle } from "../types.js";
+import type { RssItem, EnrichedArticle } from "../types.js";
 import { CONFIG } from "../config.js";
 
 /**
- * Fetch RSS feeds and enrich article content.
+ * Route sources to the right extractor based on URL prefix:
+ *   reddit://r/<subreddit>[/<sort>]  (sort defaults to "hot")
+ *   anything else → RSS (covers Google News, Feedly, Medium tags, etc.)
+ */
+async function fetchAllSources(
+  sources: string[],
+  log: (msg: string) => void
+): Promise<RssItem[]> {
+  const rssSources: string[] = [];
+  const redditSources: string[] = [];
+
+  for (const src of sources) {
+    if (src.startsWith("reddit://")) redditSources.push(src);
+    else rssSources.push(src);
+  }
+
+  const results: RssItem[] = [];
+
+  if (rssSources.length > 0) {
+    const rssItems = await fetchFeeds(rssSources, log);
+    results.push(...rssItems);
+  }
+
+  for (const src of redditSources) {
+    // reddit://r/marketing → subreddit = "marketing", sort = "hot"
+    // reddit://r/marketing/top → subreddit = "marketing", sort = "top"
+    const path = src.replace("reddit://r/", "").trim();
+    const [subreddit, sort = "hot"] = path.split("/");
+    if (subreddit) {
+      const items = await fetchReddit(subreddit, sort, log);
+      results.push(...items);
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Fetch articles from all configured sources (RSS, Reddit) and enrich content.
+ * RSS covers: Google News, Feedly, Medium tags, any Atom/RSS feed URL.
+ * Reddit covers: any subreddit community via reddit://r/<name>.
  * Returns raw enriched articles for the host model to analyze.
  * No LLM calls — pure I/O.
  *
@@ -17,8 +58,8 @@ export async function fetchArticles(
   log: (msg: string) => void = () => {},
   slim = false
 ): Promise<{ articles: EnrichedArticle[]; seenUrls: Set<string> }> {
-  log(`Fetching ${sources.length} RSS feeds...`);
-  const items = await fetchFeeds(sources, log);
+  log(`Fetching from ${sources.length} source(s)...`);
+  const items = await fetchAllSources(sources, log);
   const seenUrls = getSeenUrls();
   items.forEach((item) => seenUrls.add(item.link));
 

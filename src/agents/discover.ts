@@ -1,8 +1,7 @@
 import * as fs from "fs";
-import * as path from "path";
 import { CONFIG, readTextFile } from "../config.js";
 
-const SOURCES_FILE = path.join(process.cwd(), CONFIG.FILES.SOURCES);
+const SOURCES_FILE = CONFIG.FILES.SOURCES;
 
 /**
  * Load current RSS sources from file. Returns empty array if file missing.
@@ -28,7 +27,7 @@ export function appendSources(newUrls: string[]): { added: number; skipped: numb
   if (toAdd.length === 0) return { added: 0, skipped: newUrls.length };
 
   const header = !fs.existsSync(SOURCES_FILE)
-    ? "# GRIST RSS Sources\n\n"
+    ? "# Quillby RSS Sources\n\n"
     : "";
 
   fs.appendFileSync(SOURCES_FILE, header + toAdd.join("\n") + "\n");
@@ -41,6 +40,6 @@ export function appendSources(newUrls: string[]): { added: number; skipped: numb
  */
 export function replaceSources(urls: string[]): void {
   const unique = [...new Set(urls.map((u) => u.trim()).filter(Boolean))];
-  fs.writeFileSync(SOURCES_FILE, "# GRIST RSS Sources\n\n" + unique.join("\n") + "\n");
+  fs.writeFileSync(SOURCES_FILE, "# Quillby RSS Sources\n\n" + unique.join("\n") + "\n");
 }
 

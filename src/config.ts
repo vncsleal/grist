@@ -3,10 +3,11 @@ import * as path from "path";
 
 export const CONFIG = {
   FILES: {
-    CONTEXT: "config/context.json",
-    SOURCES: "config/rss_sources.txt",
-    OUTPUT_DIR: "output",
-    CACHE: ".cache/seen_urls.json",
+    CONTEXT: path.join(process.cwd(), "config/context.json"),
+    MEMORY: path.join(process.cwd(), "config/memory.json"),
+    SOURCES: path.join(process.cwd(), "config/rss_sources.txt"),
+    OUTPUT_DIR: path.join(process.cwd(), "output"),
+    CACHE: path.join(process.cwd(), ".cache/seen_urls.json"),
   },
   RSS: {
     ITEMS_PER_FEED: parseInt(process.env.RSS_ITEMS_PER_FEED || "5", 10),
@@ -25,21 +26,23 @@ export function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-export function readTextFile(filename: string): string {
-  const ext = path.extname(filename);
+export function readTextFile(filePath: string): string {
+  const ext = path.extname(filePath);
   const localVariant = ext
-    ? `${filename.slice(0, -ext.length)}.local${ext}`
-    : `${filename}.local`;
+    ? `${filePath.slice(0, -ext.length)}.local${ext}`
+    : `${filePath}.local`;
 
-  for (const candidate of [localVariant, filename]) {
-    const filePath = path.join(process.cwd(), candidate);
-    if (fs.existsSync(filePath)) return fs.readFileSync(filePath, "utf-8");
+  for (const candidate of [localVariant, filePath]) {
+    const resolved = path.isAbsolute(candidate)
+      ? candidate
+      : path.join(process.cwd(), candidate);
+    if (fs.existsSync(resolved)) return fs.readFileSync(resolved, "utf-8");
   }
 
-  throw new Error(`Cannot read config file: ${filename}`);
+  throw new Error(`Cannot read config file: ${filePath}`);
 }
 
 // Initialize required directories on import
-ensureDir(".cache");
+ensureDir(path.dirname(CONFIG.FILES.CACHE));
 ensureDir(CONFIG.FILES.OUTPUT_DIR);
 

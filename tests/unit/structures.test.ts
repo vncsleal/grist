@@ -42,7 +42,7 @@ let originalCwd: string;
 
 beforeEach(() => {
   originalCwd = process.cwd();
-  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "grist-test-"));
+  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "quillby-test-"));
   // Seed the required dirs so config.ts side-effects are satisfied locally
   fs.mkdirSync(path.join(tempDir, ".cache"), { recursive: true });
   fs.mkdirSync(path.join(tempDir, "output"), { recursive: true });

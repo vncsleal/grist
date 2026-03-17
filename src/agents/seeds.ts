@@ -3,7 +3,8 @@
  *
  * Sources:
  *   1. Google News RSS — one query-based feed per topic, zero API keys, multilingual
- *   2. Feedly Search   — discovers curated publication feeds by topic (no key required)
+ *   2. Medium tag feeds — one feed per topic, covers any niche (healthcare, law, fashion, etc.)
+ *   3. Feedly Search   — discovers curated publication feeds by topic (no key required)
  */
 /**
  * Build Google News RSS search URLs for each topic.
@@ -23,6 +24,21 @@ export function getGoogleNewsFeeds(
     (t) =>
       `https://news.google.com/rss/search?q=${encodeURIComponent(t)}&hl=${hl}&gl=${gl}&ceid=${gl}:${lang}`
   );
+}
+
+/**
+ * Build Medium tag RSS feed URLs for each topic.
+ * Medium covers virtually every professional topic: healthcare, law, fashion,
+ * farming, construction, marketing, fitness, finance, etc.
+ * No API key required — these are standard RSS feeds.
+ *
+ * Topics are slugified (lowercase, spaces → dashes) to match Medium tag format.
+ */
+export function getMediumTagFeeds(topics: string[]): string[] {
+  return topics.map((t) => {
+    const slug = t.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    return `https://medium.com/feed/tag/${slug}`;
+  });
 }
 
 /**

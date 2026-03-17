@@ -111,7 +111,7 @@ describe("MCP initialize", () => {
 
     expect(res.error).toBeUndefined();
     expect((res.result as { serverInfo: { name: string; version: string } }).serverInfo.name).toBe(
-      "grist-mcp",
+      "quillby-mcp",
     );
     expect(
       (res.result as { serverInfo: { name: string; version: string } }).serverInfo.version,
@@ -144,22 +144,20 @@ describe("MCP tools/list", () => {
     tools = (res.result as { tools: typeof tools }).tools;
   });
 
-  it("returns exactly 18 tools", () => {
-    expect(tools).toHaveLength(18);
+  it("returns exactly 16 tools", () => {
+    expect(tools).toHaveLength(16);
   });
 
   it.each([
-    "grist_onboard",
-    "grist_set_context",
-    "grist_get_context",
-    "grist_fetch_articles",
-    "grist_save_cards",
-    "grist_daily_brief",
-    "grist_analyze_articles",
-    "grist_generate_post",
-    "grist_rate_card",
-    "grist_rate_post",
-    "grist_feedback_stats",
+    "quillby_onboard",
+    "quillby_set_context",
+    "quillby_get_context",
+    "quillby_fetch_articles",
+    "quillby_save_cards",
+    "quillby_daily_brief",
+    "quillby_analyze_articles",
+    "quillby_generate_post",
+    "quillby_remember",
   ])('tool "%s" is present', (name) => {
     expect(tools.map((t) => t.name)).toContain(name);
   });
@@ -190,13 +188,13 @@ describe("MCP prompts/list", () => {
   });
 });
 
-describe("grist_feedback_stats tool call", () => {
+describe("quillby_remember tool call", () => {
   it("responds without error and returns text content", async () => {
     const res = await client.request({
       jsonrpc: "2.0",
       id: 4,
       method: "tools/call",
-      params: { name: "grist_feedback_stats", arguments: {} },
+      params: { name: "quillby_remember", arguments: { voiceExamples: ["Test voice example."] } },
     });
     expect(res.error).toBeUndefined();
     const content = (res.result as { content: { type: string; text: string }[] }).content;
@@ -205,13 +203,13 @@ describe("grist_feedback_stats tool call", () => {
   });
 });
 
-describe("grist_get_context tool call", () => {
+describe("quillby_get_context tool call", () => {
   it("responds without error and returns text content", async () => {
     const res = await client.request({
       jsonrpc: "2.0",
       id: 5,
       method: "tools/call",
-      params: { name: "grist_get_context", arguments: {} },
+      params: { name: "quillby_get_context", arguments: {} },
     });
     expect(res.error).toBeUndefined();
     const content = (res.result as { content: { type: string; text: string }[] }).content;
