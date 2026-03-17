@@ -8,14 +8,41 @@ Write-Host ""
 
 # ── 1. Node.js check ─────────────────────────────────────────────────────────
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Write-Host "x  Node.js is not installed." -ForegroundColor Red
+    Write-Host "   Node.js not found — installing it now..." -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "   Install it from https://nodejs.org — click the LTS button."
-    Write-Host "   Once done, open a NEW terminal and run this installer again:"
-    Write-Host ""
-    Write-Host "   irm https://raw.githubusercontent.com/vncsleal/quillby/main/install.ps1 | iex"
-    Write-Host ""
-    exit 1
+
+    $installed = $false
+
+    # Try winget first (built into Windows 10 1709+ and Windows 11)
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        Write-Host "   Using winget..."
+        winget install --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements --silent
+        $installed = $true
+    } else {
+        # Fallback: download the official LTS MSI
+        Write-Host "   Downloading Node.js LTS installer..."
+        $arch = if ([System.Environment]::Is64BitOperatingSystem) { "x64" } else { "x86" }
+        $indexJson = Invoke-RestMethod -Uri "https://nodejs.org/dist/index.json"
+        $lts = $indexJson | Where-Object { $_.lts } | Select-Object -First 1
+        $version = $lts.version
+        $msiUrl = "https://nodejs.org/dist/$version/node-$version-$arch.msi"
+        $msiPath = Join-Path $env:TEMP "node-lts.msi"
+        Invoke-WebRequest -Uri $msiUrl -OutFile $msiPath -UseBasicParsing
+        Write-Host "   Running installer..."
+        Start-Process msiexec.exe -ArgumentList "/i `"$msiPath`" /quiet /norestart" -Wait
+        Remove-Item $msiPath -Force -ErrorAction SilentlyContinue
+        $installed = $true
+    }
+
+    # Refresh PATH so node is visible in this session
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Host "x  Node.js installation failed." -ForegroundColor Red
+        Write-Host "   Please install it manually from https://nodejs.org and re-run:"
+        Write-Host "   irm https://raw.githubusercontent.com/vncsleal/quillby/main/install.ps1 | iex"
+        exit 1
+    }
 }
 
 $nodeVersion = node --version
