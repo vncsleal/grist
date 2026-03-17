@@ -1,0 +1,92 @@
+name: Release Binaries
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  # macOS: universal .pkg installer + raw arch binaries (for install.sh fallback)
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+
+      - name: Build arch binaries
+        run: |
+          bun build --compile --target=bun-darwin-arm64 ./src/mcp/server.ts --outfile quillby-mcp-macos-arm64
+          bun build --compile --target=bun-darwin-x64  ./src/mcp/server.ts --outfile quillby-mcp-macos-x64
+
+      - name: Create universal binary via lipo
+        run: lipo -create -output quillby-mcp quillby-mcp-macos-arm64 quillby-mcp-macos-x64
+
+      - name: Build .pkg installer
+        run: |
+          mkdir -p pkg-root/usr/local/bin
+          cp quillby-mcp pkg-root/usr/local/bin/quillby-mcp
+          chmod +x pkg-root/usr/local/bin/quillby-mcp
+
+          mkdir -p pkg-scripts
+          cp installer/macos/postinstall pkg-scripts/postinstall
+          chmod +x pkg-scripts/postinstall
+
+          pkgbuild \
+            --root pkg-root \
+            --install-location / \
+            --scripts pkg-scripts \
+            --identifier com.quillby.mcp \
+            --version "${GITHUB_REF_NAME#v}" \
+            quillby-macos.pkg
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            quillby-macos.pkg
+            quillby-mcp-macos-arm64
+            quillby-mcp-macos-x64
+
+  # Windows: NSIS .exe installer
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+
+      - name: Build binary
+        run: bun build --compile --target=bun-windows-x64 ./src/mcp/server.ts --outfile quillby-mcp-windows-x64.exe
+
+      - name: Install NSIS
+        run: choco install nsis --no-progress -y
+
+      - name: Copy binary next to installer script
+        run: copy quillby-mcp-windows-x64.exe installer\windows\quillby-mcp-windows-x64.exe
+
+      - name: Build NSIS installer
+        run: makensis installer\windows\installer.nsi
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            installer\windows\quillby-windows.exe
+            quillby-mcp-windows-x64.exe
+
+  # Linux: raw binary (install.sh handles config)
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+
+      - name: Build binary
+        run: bun build --compile --target=bun-linux-x64 ./src/mcp/server.ts --outfile quillby-mcp-linux-x64
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: quillby-mcp-linux-x64

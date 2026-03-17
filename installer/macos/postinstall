@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BINARY_PATH="/usr/local/bin/quillby-mcp"
+
+# pkg postinstall runs as root — find the actual logged-in user
+CURRENT_USER=$(stat -f "%Su" /dev/console 2>/dev/null || true)
+[[ -z "$CURRENT_USER" || "$CURRENT_USER" == "root" ]] && CURRENT_USER="${SUDO_USER:-}"
+[[ -z "$CURRENT_USER" || "$CURRENT_USER" == "root" ]] && exit 0
+
+USER_HOME=$(dscl . -read "/Users/$CURRENT_USER" NFSHomeDirectory 2>/dev/null | awk '{print $2}' || true)
+[[ -z "$USER_HOME" ]] && USER_HOME="/Users/$CURRENT_USER"
+
+CONFIG_FILE="$USER_HOME/Library/Application Support/Claude/claude_desktop_config.json"
+
+sudo -u "$CURRENT_USER" python3 -c "
+import json, os, sys
+config_file, binary_path = sys.argv[1], sys.argv[2]
+config = {}
+if os.path.exists(config_file):
+    try:
+        with open(config_file) as f:
+            config = json.load(f)
+    except Exception:
+        pass
+config.setdefault('mcpServers', {})['quillby'] = {'command': binary_path}
+os.makedirs(os.path.dirname(config_file), exist_ok=True)
+with open(config_file, 'w') as f:
+    json.dump(config, f, indent=2)
+    f.write('\n')
+" "$CONFIG_FILE" "$BINARY_PATH"
+
+exit 0

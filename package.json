@@ -1,6 +1,6 @@
 {
   "name": "@vncsleal/quillby",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Quillby — AI copywriting assistant. Reads the internet and writes content in your voice.",
   "license": "MIT",
   "author": "Vinicius Leal",
@@ -38,6 +38,7 @@
     "clean": "rm -rf .cache dist",
     "clean:all": "rm -rf .cache dist output",
     "build": "tsc",
+    "build:binaries": "bun build --compile --target=bun-darwin-arm64 ./src/mcp/server.ts --outfile quillby-mcp-macos-arm64 && bun build --compile --target=bun-darwin-x64 ./src/mcp/server.ts --outfile quillby-mcp-macos-x64 && bun build --compile --target=bun-linux-x64 ./src/mcp/server.ts --outfile quillby-mcp-linux-x64 && bun build --compile --target=bun-windows-x64 ./src/mcp/server.ts --outfile quillby-mcp-windows-x64.exe",
     "typecheck": "tsc --noEmit",
     "test": "vitest run tests/unit",
     "test:unit": "vitest run tests/unit",

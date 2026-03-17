@@ -6,65 +6,41 @@ Write-Host ""
 Write-Host "  Quillby Installer" -ForegroundColor Magenta
 Write-Host ""
 
-# ── 1. Node.js check ─────────────────────────────────────────────────────────
-if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Write-Host "   Node.js not found — installing it now..." -ForegroundColor Yellow
-    Write-Host ""
-
-    $installed = $false
-
-    # Try winget first (built into Windows 10 1709+ and Windows 11)
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Write-Host "   Using winget..."
-        winget install --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements --silent
-        $installed = $true
-    } else {
-        # Fallback: download the official LTS MSI
-        Write-Host "   Downloading Node.js LTS installer..."
-        $arch = if ([System.Environment]::Is64BitOperatingSystem) { "x64" } else { "x86" }
-        $indexJson = Invoke-RestMethod -Uri "https://nodejs.org/dist/index.json"
-        $lts = $indexJson | Where-Object { $_.lts } | Select-Object -First 1
-        $version = $lts.version
-        $msiUrl = "https://nodejs.org/dist/$version/node-$version-$arch.msi"
-        $msiPath = Join-Path $env:TEMP "node-lts.msi"
-        Invoke-WebRequest -Uri $msiUrl -OutFile $msiPath -UseBasicParsing
-        Write-Host "   Running installer..."
-        Start-Process msiexec.exe -ArgumentList "/i `"$msiPath`" /quiet /norestart" -Wait
-        Remove-Item $msiPath -Force -ErrorAction SilentlyContinue
-        $installed = $true
-    }
-
-    # Refresh PATH so node is visible in this session
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-
-    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-        Write-Host "x  Node.js installation failed." -ForegroundColor Red
-        Write-Host "   Please install it manually from https://nodejs.org and re-run:"
-        Write-Host "   irm https://raw.githubusercontent.com/vncsleal/quillby/main/install.ps1 | iex"
-        exit 1
-    }
+# ── 1. Detect platform ────────────────────────────────────────────────────────
+$arch = if ([System.Environment]::Is64BitOperatingSystem) { "x64" } else { "x86" }
+if ($arch -ne "x64") {
+    Write-Host "x  Unsupported architecture: $arch. Only x64 is supported." -ForegroundColor Red
+    exit 1
 }
+$asset = "quillby-mcp-windows-x64.exe"
 
-$nodeVersion = node --version
-Write-Host "v  Node.js $nodeVersion" -ForegroundColor Green
+# ── 2. Determine install location ─────────────────────────────────────────────
+$installDir = Join-Path $env:LOCALAPPDATA "Quillby"
+$binaryPath = Join-Path $installDir "quillby-mcp.exe"
 
-# ── 2. Install quillby globally ───────────────────────────────────────────────
-Write-Host "->  Installing Quillby (npm install -g @vncsleal/quillby)..."
-npm install -g @vncsleal/quillby --silent
-Write-Host "v  Quillby installed" -ForegroundColor Green
+# ── 3. Fetch latest release ───────────────────────────────────────────────────
+Write-Host "->  Checking latest release..."
+$release = Invoke-RestMethod -Uri "https://api.github.com/repos/vncsleal/quillby/releases/latest" -UseBasicParsing
+$tag = $release.tag_name
 
-# ── 3. Resolve absolute paths ─────────────────────────────────────────────────
-$nodeBin = (Get-Command node).Source
-$npmGlobalRoot = (npm root -g).Trim()
-$serverJs = Join-Path $npmGlobalRoot "@vncsleal\quillby\dist\mcp\server.js"
-
-if (-not (Test-Path $serverJs)) {
-    Write-Host "x  Could not find $serverJs" -ForegroundColor Red
-    Write-Host "   Try running: npm install -g @vncsleal/quillby"
+if (-not $tag) {
+    Write-Host "x  Could not determine latest release." -ForegroundColor Red
     exit 1
 }
 
-# ── 4. Find Claude Desktop config ────────────────────────────────────────────
+Write-Host "->  Downloading Quillby $tag..."
+
+# ── 4. Download binary ────────────────────────────────────────────────────────
+if (-not (Test-Path $installDir)) {
+    New-Item -ItemType Directory -Path $installDir | Out-Null
+}
+
+$downloadUrl = "https://github.com/vncsleal/quillby/releases/download/$tag/$asset"
+Invoke-WebRequest -Uri $downloadUrl -OutFile $binaryPath -UseBasicParsing
+
+Write-Host "v  Quillby downloaded" -ForegroundColor Green
+
+# ── 5. Find Claude Desktop config ─────────────────────────────────────────────
 $configDir = Join-Path $env:APPDATA "Claude"
 $configFile = Join-Path $configDir "claude_desktop_config.json"
 
@@ -72,25 +48,28 @@ if (-not (Test-Path $configDir)) {
     New-Item -ItemType Directory -Path $configDir | Out-Null
 }
 
-# ── 5. Merge config via Node.js (already guaranteed available) ────────────────
-$configScript = @"
-const fs = require('fs');
-const [,, configPath, nodeBin, serverJs] = process.argv;
-let config = {};
-if (fs.existsSync(configPath)) {
-  try { config = JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch {}
+# ── 6. Write Claude Desktop config ────────────────────────────────────────────
+$config = @{}
+if (Test-Path $configFile) {
+    try {
+        $config = Get-Content $configFile -Raw | ConvertFrom-Json -AsHashtable
+    } catch {
+        $config = @{}
+    }
 }
-config.mcpServers = config.mcpServers || {};
-config.mcpServers.quillby = { command: nodeBin, args: [serverJs] };
-fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
-"@
 
-node -e $configScript -- $configFile $nodeBin $serverJs
+if (-not $config.ContainsKey("mcpServers")) {
+    $config["mcpServers"] = @{}
+}
+
+$config["mcpServers"]["quillby"] = @{ command = $binaryPath }
+
+$config | ConvertTo-Json -Depth 10 | Set-Content -Path $configFile -Encoding UTF8
 
 Write-Host "v  Claude Desktop config updated" -ForegroundColor Green
 Write-Host "   $configFile"
 
-# ── 6. Done ───────────────────────────────────────────────────────────────────
+# ── 7. Done ───────────────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "Done!" -ForegroundColor White
 Write-Host ""
