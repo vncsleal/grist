@@ -24,6 +24,28 @@ export const UserMemorySchema = z.object({
 
 export type UserMemory = z.infer<typeof UserMemorySchema>;
 
+export const TypedMemorySchema = z.object({
+  voiceExamples: z.array(z.string()).default([]),
+  styleRules: z.array(z.string()).default([]),
+  audienceInsights: z.array(z.string()).default([]),
+  doNotSay: z.array(z.string()).default([]),
+  successfulPosts: z.array(z.string()).default([]),
+  campaignContext: z.array(z.string()).default([]),
+  sourcePreferences: z.array(z.string()).default([]),
+});
+
+export type TypedMemory = z.infer<typeof TypedMemorySchema>;
+
+export const WorkspaceMetadataSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().default(""),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type WorkspaceMetadata = z.infer<typeof WorkspaceMetadataSchema>;
+
 // ─── RSS feed item ────────────────────────────────────────────────────────────
 
 export const RssItemSchema = z.object({

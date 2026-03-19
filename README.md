@@ -2,6 +2,8 @@
 
 Quillby gives Claude a daily content briefing. It scans articles across your topics, finds what's relevant to your audience, and helps you write posts that sound like you — not generic AI.
 
+Quillby is now workspace-based: use one workspace per Claude Project, client, brand, or campaign.
+
 No extra accounts. No API keys. Everything runs on your computer, inside Claude.
 
 ---
@@ -69,6 +71,12 @@ Claude will ask a few questions about your work, your audience, and what you pub
 
 Once set up, just talk to Claude like normal.
 
+If you work across multiple contexts, start by creating or selecting a workspace:
+
+> "Create a Quillby workspace for my B2B SaaS brand"
+
+> "Switch Quillby to my newsletter workspace"
+
 **Get today's content ideas:**
 
 > "Give me my Quillby daily brief"
@@ -85,7 +93,7 @@ Claude writes it in your voice, based on your profile.
 
 > "Save this draft"
 
-Quillby stores it in the `output/` folder inside your Quillby directory.
+Quillby stores it inside your Quillby data directory, typically `~/.quillby/workspaces/<workspace-id>/output/`.
 
 ---
 
@@ -97,11 +105,17 @@ When Claude writes a post you're happy with, say:
 
 > "Add this post to my Quillby voice examples"
 
-Quillby saves it. Every future post draws on those examples.
+Quillby saves it inside the current workspace. Every future post in that workspace draws on those examples.
 
 To check what Quillby knows about your style:
 
 > "Show me my Quillby voice memory"
+
+You can also save typed editorial memory:
+
+> "Remember this as a Quillby style rule: short paragraphs, no consultant tone"
+
+> "Remember this as a Quillby do-not-say rule: never say 'unlock growth'"
 
 ---
 
@@ -115,7 +129,9 @@ To check what Quillby knows about your style:
 
 **Being specific gets better results.** "Write a 150-word conversational LinkedIn post from idea 2" works much better than "write a post."
 
-**Your content stays on your computer.** Your profile, voice examples, drafts, and content ideas are saved locally in the `output/` folder. Nothing is sent to any external service.
+**Use Claude Projects with Quillby.** Keep structured state in Quillby, and keep long reference material in Claude Project knowledge.
+
+**Your content stays on your computer.** Your profile, memory, drafts, and content ideas are saved locally under `~/.quillby/workspaces/`. Nothing is sent to any external service beyond the AI client you choose to use.
 
 ---
 
@@ -123,7 +139,7 @@ To check what Quillby knows about your style:
 
 **Quillby doesn't appear in Claude** — Make sure you fully quit and reopened Claude Desktop after saving the config. Check the path in the config matches exactly what the terminal printed (no extra spaces or missing characters).
 
-**"No context saved" error** — Run the onboarding first: *"Run the quillby_onboarding prompt"*
+**"No context saved" error** — Run onboarding for the current workspace: *"Set me up with Quillby"* or *"Run the quillby_onboarding prompt"*
 
 **"No feeds configured" error** — Ask Claude to find sources: *"Find RSS feeds for my topics and add them to Quillby"*
 
@@ -131,7 +147,7 @@ To check what Quillby knows about your style:
 
 ## For developers
 
-HTTP transport, environment variables, scheduled harvest, the full tool reference, and integration configs for VS Code and Cursor: see [docs/MCP.md](docs/MCP.md).
+HTTP transport, environment variables, scheduled harvest, the full tool reference, and integration configs for VS Code and Cursor: see [docs/MCP.md](docs/MCP.md). The implementation roadmap is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 

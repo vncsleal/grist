@@ -15,6 +15,7 @@ import {
 } from "../../src/output/structures.js";
 import { CardInputSchema, type CardInput } from "../../src/types.js";
 import * as rss from "../../src/extractors/rss.js";
+import { getWorkspacePaths } from "../../src/workspaces.js";
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -44,13 +45,12 @@ let originalCwd: string;
 beforeEach(() => {
   originalCwd = process.cwd();
   tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "quillby-test-"));
-  // Seed the required dirs so config.ts side-effects are satisfied locally
-  fs.mkdirSync(path.join(tempDir, ".cache"), { recursive: true });
-  fs.mkdirSync(path.join(tempDir, "output"), { recursive: true });
+  process.env.QUILLBY_HOME = tempDir;
   process.chdir(tempDir);
 });
 
 afterEach(() => {
+  delete process.env.QUILLBY_HOME;
   process.chdir(originalCwd);
   fs.rmSync(tempDir, { recursive: true, force: true });
 });
@@ -113,7 +113,7 @@ describe("saveHarvestOutput", () => {
 
   it("writes the latest harvest pointer file", () => {
     saveHarvestOutput([makeCard()], new Set());
-    const pointer = path.join(".cache", "latest_harvest_path.txt");
+    const pointer = getWorkspacePaths("default").latestHarvestPointer;
     expect(fs.existsSync(pointer)).toBe(true);
     const pointerValue = fs.readFileSync(pointer, "utf-8").trim();
     expect(pointerValue).toMatch(/structures\.json$/);
@@ -187,7 +187,7 @@ describe("loadLatestHarvest", () => {
   it("throws with clear message when pointer points to missing file", () => {
     saveHarvestOutput([makeCard()], new Set());
     // Corrupt the pointer
-    fs.writeFileSync(".cache/latest_harvest_path.txt", "/nonexistent/path.json");
+    fs.writeFileSync(getWorkspacePaths("default").latestHarvestPointer, "/nonexistent/path.json");
     expect(() => loadLatestHarvest()).toThrow(/invalid|Re-run/i);
   });
 });

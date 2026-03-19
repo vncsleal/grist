@@ -24,6 +24,7 @@ import {
   ONBOARDING_PROMPT,
   loadMemory,
   appendVoiceExample,
+  loadTypedWorkspaceMemory,
 } from "../agents/onboard.js";
 import { loadSources, appendSources } from "../agents/discover.js";
 import { fetchArticles, preScoreArticles } from "../agents/harvest.js";
@@ -37,9 +38,30 @@ import {
   saveHarvestOutput,
   saveDraft,
 } from "../output/structures.js";
+import {
+  appendTypedMemory,
+  createWorkspace,
+  getCurrentWorkspace,
+  getCurrentWorkspaceId,
+  listWorkspaces,
+  loadWorkspace,
+  setCurrentWorkspace,
+} from "../workspaces.js";
+
+const MEMORY_TYPES = {
+  voice_examples: "voiceExamples",
+  style_rules: "styleRules",
+  audience_insights: "audienceInsights",
+  do_not_say: "doNotSay",
+  successful_posts: "successfulPosts",
+  campaign_context: "campaignContext",
+  source_preferences: "sourcePreferences",
+} as const;
+
+type MemoryTypeInput = keyof typeof MEMORY_TYPES;
 
 const server = new Server(
-  { name: "quillby-mcp", version: "0.3.4" },
+  { name: "quillby-mcp", version: "0.4.0" },
   { capabilities: { tools: {}, resources: {}, prompts: {}, logging: {} } }
 );
 
@@ -78,6 +100,54 @@ const TOOLS: Tool[] = [
   },
 
   // ── Profile ───────────────────────────────────────────────────────────────
+  {
+    name: "quillby_list_workspaces",
+    description: "List Quillby workspaces. Use one workspace per Claude Project, client, publication, or campaign.",
+    annotations: { readOnlyHint: true, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "quillby_create_workspace",
+    description: "Create a workspace with isolated context, memories, feeds, and outputs.",
+    annotations: { destructiveHint: false },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        workspaceId: { type: "string" },
+        description: { type: "string" },
+        makeCurrent: { type: "boolean" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "quillby_select_workspace",
+    description: "Switch the active Quillby workspace.",
+    annotations: { destructiveHint: false, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceId: { type: "string" },
+      },
+      required: ["workspaceId"],
+    },
+  },
+  {
+    name: "quillby_get_workspace",
+    description: "Inspect the active workspace or a specific workspace.",
+    annotations: { readOnlyHint: true, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceId: { type: "string" },
+      },
+    },
+  },
   {
     name: "quillby_set_context",
     description: "Save the user content creator profile after onboarding.",
@@ -332,24 +402,50 @@ const TOOLS: Tool[] = [
   {
     name: "quillby_remember",
     description:
-      "Add one or more approved posts to your voice memory. These accumulate in memory.json and are used to guide voice in every post Quillby generates. Up to 10 most recent examples are kept.",
+      "Add structured memory to the current workspace. Supports voice examples plus typed editorial memory buckets.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
     inputSchema: {
       type: "object",
       properties: {
-        voiceExamples: {
+        entries: {
           type: "array",
           items: { type: "string" },
-          description: "Post text(s) to add as voice examples.",
+          description: "Memory entries to add.",
+        },
+        memoryType: {
+          type: "string",
+          enum: Object.keys(MEMORY_TYPES),
+          description: "voice_examples, style_rules, audience_insights, do_not_say, successful_posts, campaign_context, source_preferences",
         },
       },
-      required: ["voiceExamples"],
+      required: ["entries"],
+    },
+  },
+  {
+    name: "quillby_get_memory",
+    description: "Read typed memory from the current workspace.",
+    annotations: { readOnlyHint: true, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        memoryType: {
+          type: "string",
+          enum: Object.keys(MEMORY_TYPES),
+        },
+      },
     },
   },
 ];
 
 const RESOURCES: Resource[] = [
+  {
+    uri: "quillby://workspace/current",
+    name: "Active Workspace",
+    description: "Current Quillby workspace metadata.",
+    mimeType: "application/json",
+  },
   {
     uri: "quillby://context",
     name: "User Content Profile",
@@ -359,7 +455,7 @@ const RESOURCES: Resource[] = [
   {
     uri: "quillby://memory",
     name: "User Memory",
-    description: "Accumulated voice examples and other memory that grows over sessions.",
+    description: "Typed memory for the active workspace.",
     mimeType: "application/json",
   },
   {
@@ -385,6 +481,10 @@ const PROMPTS: Prompt[] = [
     name: "quillby_workflow",
     description: "Full Quillby workflow: onboard, discover feeds, fetch, analyze, generate posts.",
   },
+  {
+    name: "quillby_projects_playbook",
+    description: "How to align Quillby workspaces with Claude Projects.",
+  },
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
@@ -394,6 +494,74 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 
   try {
     switch (name) {
+      case "quillby_list_workspaces": {
+        const currentWorkspaceId = getCurrentWorkspaceId();
+        const workspaces = listWorkspaces().map((workspace) => ({
+          ...workspace,
+          current: workspace.id === currentWorkspaceId,
+        }));
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ currentWorkspaceId, workspaces }, null, 2) }],
+          structuredContent: { currentWorkspaceId, workspaces },
+        };
+      }
+
+      case "quillby_create_workspace": {
+        const { name: workspaceName, workspaceId, description, makeCurrent } = args as {
+          name: string;
+          workspaceId?: string;
+          description?: string;
+          makeCurrent?: boolean;
+        };
+        const workspace = createWorkspace({
+          id: workspaceId,
+          name: workspaceName,
+          description,
+          makeCurrent: makeCurrent ?? true,
+        });
+        return {
+          content: [{ type: "text" as const, text: `Workspace "${workspace.name}" created with id "${workspace.id}".` }],
+          structuredContent: workspace,
+        };
+      }
+
+      case "quillby_select_workspace": {
+        const { workspaceId } = args as { workspaceId: string };
+        const workspace = setCurrentWorkspace(workspaceId);
+        return {
+          content: [{ type: "text" as const, text: `Current workspace set to "${workspace.name}" (${workspace.id}).` }],
+          structuredContent: workspace,
+        };
+      }
+
+      case "quillby_get_workspace": {
+        const workspaceId = (args as { workspaceId?: string }).workspaceId ?? getCurrentWorkspaceId();
+        const workspace = loadWorkspace(workspaceId);
+        if (!workspace) {
+          return { content: [{ type: "text" as const, text: `Workspace "${workspaceId}" not found.` }], structuredContent: { error: "not_found", workspaceId } };
+        }
+        const isCurrent = workspace.id === getCurrentWorkspaceId();
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              workspace,
+              current: isCurrent,
+              context: isCurrent ? loadContext() : null,
+              memory: isCurrent ? loadTypedWorkspaceMemory() : null,
+              feedCount: isCurrent ? loadSources().length : null,
+            }, null, 2),
+          }],
+          structuredContent: {
+            workspace,
+            current: isCurrent,
+            context: isCurrent ? loadContext() : null,
+            memory: isCurrent ? loadTypedWorkspaceMemory() : null,
+            feedCount: isCurrent ? loadSources().length : null,
+          },
+        };
+      }
+
       case "quillby_onboard": {
         const caps = server.getClientCapabilities();
         if (!caps?.elicitation?.form) {
@@ -487,7 +655,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         });
         saveContext(onboardCtx);
 
-        const summary = `Profile saved!\n\nRole: ${onboardCtx.role} in ${onboardCtx.industry}\nTopics: ${onboardCtx.topics.join(", ")}\nPlatforms: ${onboardCtx.platforms.join(", ")}\nVoice: ${onboardCtx.voice}\n\nNext: call quillby_discover_feeds to set up your RSS sources.`;
+        const summary = `Workspace: ${getCurrentWorkspace().name}\n\nRole: ${onboardCtx.role} in ${onboardCtx.industry}\nTopics: ${onboardCtx.topics.join(", ")}\nPlatforms: ${onboardCtx.platforms.join(", ")}\nVoice: ${onboardCtx.voice}\n\nNext: call quillby_discover_feeds to set up your RSS sources.`;
         return {
           content: [{ type: "text" as const, text: summary }],
           structuredContent: { saved: true, profile: onboardCtx as unknown as Record<string, unknown> },
@@ -498,8 +666,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         const context = UserContextSchema.parse((args as { context: unknown }).context);
         saveContext(context);
         return {
-          content: [{ type: "text" as const, text: `Context saved. Role: ${context.role}. Topics: ${context.topics.join(", ")}. Platforms: ${context.platforms.join(", ")}.` }],
-          structuredContent: { saved: true, role: context.role, topics: context.topics, platforms: context.platforms },
+          content: [{ type: "text" as const, text: `Context saved for workspace "${getCurrentWorkspace().name}". Role: ${context.role}. Topics: ${context.topics.join(", ")}. Platforms: ${context.platforms.join(", ")}.` }],
+          structuredContent: { saved: true, workspaceId: getCurrentWorkspaceId(), role: context.role, topics: context.topics, platforms: context.platforms },
         };
       }
 
@@ -508,7 +676,10 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           return { content: [{ type: "text" as const, text: "No context saved. Run quillby_onboarding first." }], structuredContent: { error: "no_context" } };
         }
         const ctxData = loadContext()!;
-        return { content: [{ type: "text" as const, text: JSON.stringify(ctxData, null, 2) }], structuredContent: ctxData as unknown as Record<string, unknown> };
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ workspace: getCurrentWorkspace(), context: ctxData }, null, 2) }],
+          structuredContent: { workspace: getCurrentWorkspace(), context: ctxData },
+        };
       }
 
       case "quillby_add_feeds": {
@@ -719,15 +890,15 @@ Return ONLY a JSON array of integers — the indices of the top ${topN} most rel
         const articleBlobs = enriched.map((a, i) =>
           `## Article ${i + 1}: ${a.title}\nURL: ${a.url}\n\n${a.content ?? a.snippet}`
         ).join("\n\n---\n\n");
-        const voiceBlock = loadMemory().voiceExamples.length
-          ? `\n\nUser voice examples (study and match this style — do NOT smooth it out):\n${loadMemory().voiceExamples.map((e, i) => `[${i + 1}]\n${e}`).join("\n\n")}`
+        const memory = loadMemory();
+        const typedMemory = loadTypedWorkspaceMemory();
+        const voiceBlock = memory.voiceExamples.length
+          ? `\n\nUser voice examples (study and match this style — do NOT smooth it out):\n${memory.voiceExamples.map((e, i) => `[${i + 1}]\n${e}`).join("\n\n")}`
           : `\n\nUser voice: ${ctx.voice ?? "direct and authentic"}`;
 
         const analysisPrompt = `You are an expert content strategist. Analyze these articles for a ${ctx.role} in ${ctx.industry ?? "their industry"}.
 
-User topics: ${ctx.topics.join(", ")}
-User audience: ${ctx.audienceDescription ?? "general"}
-User platforms: ${ctx.platforms.join(", ")}${voiceBlock}
+${contextToPromptText(ctx, memory, typedMemory)}${voiceBlock}
 
 ${articleBlobs}
 
@@ -848,8 +1019,10 @@ Return ONLY a JSON array of integers — the indices of the top ${topN} most rel
 
         // Pass 3: Sampling generates full cards in one call
         log("Generating content cards via Sampling...");
-        const voiceBlock3 = loadMemory().voiceExamples.length
-          ? `\n\nVoice examples — match this style, amplify the strongest quirks:\n${loadMemory().voiceExamples.map((e, i) => `[${i + 1}]\n${e}`).join("\n\n")}`
+        const memory3 = loadMemory();
+        const typedMemory3 = loadTypedWorkspaceMemory();
+        const voiceBlock3 = memory3.voiceExamples.length
+          ? `\n\nVoice examples — match this style, amplify the strongest quirks:\n${memory3.voiceExamples.map((e, i) => `[${i + 1}]\n${e}`).join("\n\n")}`
           : `\n\nVoice: ${ctx.voice ?? "direct and authentic"}`;
         const articleBlobs = enriched
           .map((a, i) => `## Article ${i + 1}: ${a.title}\nURL: ${a.link}\n\n${a.content ?? a.snippet}`)
@@ -858,8 +1031,7 @@ Return ONLY a JSON array of integers — the indices of the top ${topN} most rel
           ctx.industry ?? "their industry"
         }.
 
-User topics: ${ctx.topics.join(", ")}
-User platforms: ${ctx.platforms.join(", ")}${voiceBlock3}
+${contextToPromptText(ctx, memory3, typedMemory3)}${voiceBlock3}
 
 ${articleBlobs}
 
@@ -959,13 +1131,15 @@ Return ONLY a valid JSON array of these objects, no prose.`;
           return { content: [{ type: "text" as const, text: `Card #${genCardId} not found. Available: ${genBundle.cards.map((c) => c.id).join(", ")}.` }], structuredContent: { error: "not_found", cardId: genCardId } };
         }
         const genCtx = loadContext()!;
+        const currentMemory = loadMemory();
+        const typedMemory = loadTypedWorkspaceMemory();
         const guide = PLATFORM_GUIDES[genPlatform];
         if (!guide) {
           return { content: [{ type: "text" as const, text: `Unknown platform: "${genPlatform}". Available: ${Object.keys(PLATFORM_GUIDES).join(", ")}.` }], structuredContent: { error: "unknown_platform", platform: genPlatform } };
         }
         const chosenAngle = angle ?? genCard.angleOptions?.[0] ?? genCard.thesis;
-        const genVoiceBlock = loadMemory().voiceExamples.length
-          ? `Voice examples — read these carefully. Match the register, rhythm, and vocabulary exactly. Oversteer on the strongest quirks:\n${loadMemory().voiceExamples.map((e, i) => `[${i + 1}]\n${e}`).join("\n\n")}`
+        const genVoiceBlock = currentMemory.voiceExamples.length
+          ? `Voice examples — read these carefully. Match the register, rhythm, and vocabulary exactly. Oversteer on the strongest quirks:\n${currentMemory.voiceExamples.map((e, i) => `[${i + 1}]\n${e}`).join("\n\n")}`
           : `Voice description: ${genCtx.voice ?? "direct and authentic"}`;
         const genAnglesHint = "";
         const generatePrompt = `You are writing a ${genPlatform} post for ${
@@ -973,9 +1147,10 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         } — a ${genCtx.role} in ${genCtx.industry ?? "their industry"}.
 
 ## User profile
-- Audience: ${genCtx.audienceDescription ?? "general"}
-- Goals: ${genCtx.contentGoals.join(", ")}
-- Platforms: ${genCtx.platforms.join(", ")}
+${contextToPromptText(genCtx, currentMemory, typedMemory)
+  .split("\n")
+  .map((line) => `- ${line}`)
+  .join("\n")}
 
 ## ${genVoiceBlock}
 
@@ -1013,11 +1188,36 @@ ${guide}${genAnglesHint}
       }
 
       case "quillby_remember": {
-        const { voiceExamples: newExamples } = args as { voiceExamples: string[] };
-        for (const ex of newExamples) appendVoiceExample(ex);
+        const { entries, memoryType = "voice_examples" } = args as {
+          entries: string[];
+          memoryType?: MemoryTypeInput;
+        };
+        const resolvedType = MEMORY_TYPES[memoryType];
+        appendTypedMemory(
+          getCurrentWorkspaceId(),
+          resolvedType,
+          entries,
+          resolvedType === "voiceExamples" ? 10 : undefined
+        );
         return {
-          content: [{ type: "text" as const, text: `Added ${newExamples.length} voice example(s) to memory.` }],
-          structuredContent: { added: newExamples.length },
+          content: [{ type: "text" as const, text: `Added ${entries.length} item(s) to ${memoryType} in workspace "${getCurrentWorkspace().name}".` }],
+          structuredContent: { added: entries.length, memoryType, workspaceId: getCurrentWorkspaceId() },
+        };
+      }
+
+      case "quillby_get_memory": {
+        const { memoryType } = args as { memoryType?: MemoryTypeInput };
+        const typedMemory = loadTypedWorkspaceMemory();
+        if (!memoryType) {
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify({ workspace: getCurrentWorkspace(), memory: typedMemory }, null, 2) }],
+            structuredContent: { workspace: getCurrentWorkspace(), memory: typedMemory },
+          };
+        }
+        const resolvedType = MEMORY_TYPES[memoryType];
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ workspace: getCurrentWorkspace(), memoryType, entries: typedMemory[resolvedType] }, null, 2) }],
+          structuredContent: { workspace: getCurrentWorkspace(), memoryType, entries: typedMemory[resolvedType] },
         };
       }
 
@@ -1035,6 +1235,10 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => ({ resources: R
 server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
   const { uri } = req.params;
   switch (uri) {
+    case "quillby://workspace/current": {
+      const text = JSON.stringify(getCurrentWorkspace(), null, 2);
+      return { contents: [{ uri, mimeType: "application/json", text }] };
+    }
     case "quillby://context": {
       const text = contextExists()
         ? JSON.stringify(loadContext(), null, 2)
@@ -1042,7 +1246,7 @@ server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
       return { contents: [{ uri, mimeType: "application/json", text }] };
     }
     case "quillby://memory": {
-      const text = JSON.stringify(loadMemory(), null, 2);
+      const text = JSON.stringify(loadTypedWorkspaceMemory(), null, 2);
       return { contents: [{ uri, mimeType: "application/json", text }] };
     }
     case "quillby://harvest/latest": {
@@ -1068,6 +1272,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (req) => {
     case "quillby_onboarding": {
       const exists = contextExists();
       const existing = exists ? loadContext() : null;
+      const typedMemory = loadTypedWorkspaceMemory();
       return {
         description: "Quillby onboarding",
         messages: [
@@ -1076,7 +1281,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (req) => {
             content: {
               type: "text" as const,
               text: exists
-                ? `I have a saved profile:\n\n${contextToPromptText(existing!, loadMemory())}\n\nUpdate it?`
+                ? `I have a saved profile in workspace "${getCurrentWorkspace().name}":\n\n${contextToPromptText(existing!, loadMemory(), typedMemory)}\n\nUpdate it?`
                 : "Set up Quillby for my content workflow.",
             },
           },
@@ -1100,6 +1305,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (req) => {
 
       const ctx = contextExists() ? loadContext() : null;
       const mem = loadMemory();
+      const typed = loadTypedWorkspaceMemory();
       const voiceSection = mem.voiceExamples.length
         ? `### Voice reference (read before writing any draft)
 
@@ -1112,11 +1318,14 @@ ${mem.voiceExamples.map((e, i) => `**Example ${i + 1}:**\n\`\`\`\n${e}\n\`\`\``)
 
       const workflowText = `## Quillby Workflow
 
+Workspace: ${getCurrentWorkspace().name} (${getCurrentWorkspaceId()})
+
 Quillby handles file I/O and data plumbing. All editorial judgment lives in the model.
 
 ### Setup (once)
-1. Run quillby_onboarding prompt, collect answers, call quillby_set_context.
-2. Call quillby_discover_feeds — it matches your topics against a curated seed list and optionally expands it via Sampling. No manual feed hunting needed.
+1. If you are working across clients, brands, or campaigns, call quillby_create_workspace first.
+2. Run quillby_onboarding prompt, collect answers, call quillby_set_context.
+3. Call quillby_discover_feeds — it matches your topics against a curated seed list and optionally expands it via Sampling. No manual feed hunting needed.
 
 ### Daily workflow — Automated (when Sampling is available)
 1. Call quillby_analyze_articles (limit: 8–12). Quillby fetches articles, pre-scores by topic overlap, enriches the top N, sends them to you via Sampling, and saves the resulting cards automatically.
@@ -1136,11 +1345,17 @@ Quillby handles file I/O and data plumbing. All editorial judgment lives in the 
 8. Call quillby_save_draft to persist it.
 
 ### Voice rules (apply before writing any draft)
-- Read the user's voice examples from quillby://memory. Identify the 2-3 strongest stylistic quirks. Amplify them — oversteer, not understeer.
+- Read the active workspace memory from quillby://memory. Focus first on voice_examples, then apply style_rules, do_not_say, audience_insights, and campaign_context. Identify the 2-3 strongest stylistic quirks and amplify them — oversteer, not understeer.
+- Use typed memory buckets: style_rules, do_not_say, audience_insights, campaign_context.
 - BANNED: “It’s not X, it’s Y” contrasts. Em-dash clusters. Bullet lists as prose. “Game-changer”, “transformative”, “powerful”, “unlock”, “leverage”, “dive into”. Filler openers (“In today’s world”, “Here’s the thing”). Emoji stacking. Numbered listicles. Motivational closings.
 - Write like the user, not like an assistant helping the user.
 
 ${voiceSection}
+
+### Typed memory snapshot
+\`\`\`json
+${JSON.stringify(typed, null, 2)}
+\`\`\`
 
 ### Platform guides
 
@@ -1151,6 +1366,28 @@ ${platformGuideText}`;
         messages: [
           { role: "user" as const, content: { type: "text" as const, text: "How do I use Quillby?" } },
           { role: "assistant" as const, content: { type: "text" as const, text: workflowText } },
+        ],
+      };
+    }
+
+    case "quillby_projects_playbook": {
+      const playbook = `## Quillby + Claude Projects
+
+1. Create one Quillby workspace per Claude Project, client, brand, or campaign.
+2. Keep structured profile, feeds, typed memory, harvests, and drafts in Quillby.
+3. Keep long background documents inside Claude Project knowledge.
+4. Use memory buckets deliberately:
+   - voice_examples for approved writing samples
+   - style_rules for positive editorial constraints
+   - do_not_say for banned phrasing
+   - audience_insights for what readers care about
+   - campaign_context for temporary initiative-specific context
+   - source_preferences for preferred publications or communities`;
+      return {
+        description: "Quillby Projects playbook",
+        messages: [
+          { role: "user" as const, content: { type: "text" as const, text: "How should I use Quillby with Claude Projects?" } },
+          { role: "assistant" as const, content: { type: "text" as const, text: playbook } },
         ],
       };
     }
@@ -1251,7 +1488,7 @@ if (TRANSPORT_MODE === "http") {
         name: "Quillby",
         description: "Guided Research & Insight Synthesis Tool — RSS content intelligence MCP server. Fetches, scores, and structures articles into content cards for social media posts.",
         url: `${baseUrl}/mcp`,
-        version: "0.3.4",
+        version: "0.4.0",
         capabilities: {
           streaming: true,
           pushNotifications: false,
