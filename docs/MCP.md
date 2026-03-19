@@ -8,7 +8,7 @@ How to connect Quillby to your AI client. Quillby runs locally over stdio — no
 - A built copy of Quillby:
 
 ```bash
-cd /path/to/grist
+cd /path/to/quillby
 npm install
 npm run build
 ```
@@ -24,6 +24,10 @@ npm run build
 | Tool | Parameters | Returns |
 |---|---|---|
 | `quillby_onboard` | *(MCP Elicitation — no params)* | Inline questions → profile saved |
+| `quillby_list_workspaces` | — | Workspace list |
+| `quillby_create_workspace` | `name`, `workspaceId?`, `description?`, `makeCurrent?` | Created workspace |
+| `quillby_select_workspace` | `workspaceId` | Active workspace |
+| `quillby_get_workspace` | `workspaceId?` | Workspace metadata + active state |
 | `quillby_set_context` | `context` object (required) | Confirmation |
 | `quillby_get_context` | — | Profile JSON |
 
@@ -63,14 +67,16 @@ npm run build
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_remember` | `post` (string, required) | Confirmation |
+| `quillby_remember` | `entries[]`, `memoryType?` | Confirmation |
+| `quillby_get_memory` | `memoryType?` | Typed memory |
 
 ## Resources
 
 | URI | MIME | Description |
 |---|---|---|
+| `quillby://workspace/current` | `application/json` | Active workspace metadata |
 | `quillby://context` | `application/json` | User content creator profile |
-| `quillby://memory` | `application/json` | Voice examples |
+| `quillby://memory` | `application/json` | Typed memory for the active workspace |
 | `quillby://harvest/latest` | `application/json` | Cards from the latest session |
 | `quillby://feeds` | `text/plain` | Configured RSS feed URLs |
 
@@ -80,6 +86,7 @@ npm run build
 |---|---|
 | `quillby_onboarding` | Guided setup |
 | `quillby_workflow` | Full workflow reference with platform guides |
+| `quillby_projects_playbook` | Claude Projects playbook |
 
 ## Environment
 
@@ -178,7 +185,7 @@ Gemini tooling emphasizes function/tool use. For MCP-capable clients, use the sa
   "mcpServers": {
     "quillby": {
       "type": "stdio",
-      "command": "/absolute/path/to/rss-filter/bin/quillby-mcp",
+      "command": "/absolute/path/to/quillby/bin/quillby-mcp",
       "args": []
     }
   }
@@ -189,8 +196,8 @@ Gemini tooling emphasizes function/tool use. For MCP-capable clients, use the sa
 
 - Quillby suppresses normal CLI stdout while tools execute so MCP JSON-RPC output is not corrupted.
 - `quillby_daily_brief` and `quillby_analyze_articles` require MCP Sampling support in the host client (Claude Desktop supports this).
-- Saved cards and drafts are written to `output/<timestamp>/` and linked from `output/latest`.
-- Voice examples accumulate in `config/memory.json` via `quillby_remember` or `quillby_save_draft` with `addToVoiceExamples: true`.
+- Saved cards and drafts are written under `~/.quillby/workspaces/<workspace-id>/output/<timestamp>/`.
+- Typed memory is written under `~/.quillby/workspaces/<workspace-id>/memory/typed-memory.json`.
 
 ## Practical Recommendation
 

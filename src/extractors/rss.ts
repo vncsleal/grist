@@ -2,19 +2,20 @@ import * as fs from "fs";
 import Parser from "rss-parser";
 import { CONFIG } from "../config.js";
 import type { RssItem } from "../types.js";
+import { getCurrentWorkspaceId, getWorkspacePaths } from "../workspaces.js";
 
 const parser = new Parser({
   timeout: CONFIG.RSS.TIMEOUT,
-  requestOptions: { rejectUnauthorized: false },
   headers: {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
   },
 });
 
 export function getSeenUrls(): Set<string> {
+  const cacheFile = getWorkspacePaths(getCurrentWorkspaceId()).cache;
   try {
-    if (fs.existsSync(CONFIG.FILES.CACHE)) {
-      return new Set(JSON.parse(fs.readFileSync(CONFIG.FILES.CACHE, "utf-8")) as string[]);
+    if (fs.existsSync(cacheFile)) {
+      return new Set(JSON.parse(fs.readFileSync(cacheFile, "utf-8")) as string[]);
     }
   } catch {
     // Ignore malformed cache.
@@ -23,7 +24,9 @@ export function getSeenUrls(): Set<string> {
 }
 
 export function saveSeenUrls(urls: Set<string>) {
-  fs.writeFileSync(CONFIG.FILES.CACHE, JSON.stringify([...urls], null, 2));
+  const cacheFile = getWorkspacePaths(getCurrentWorkspaceId()).cache;
+  fs.mkdirSync(getWorkspacePaths(getCurrentWorkspaceId()).cacheDir, { recursive: true });
+  fs.writeFileSync(cacheFile, JSON.stringify([...urls], null, 2));
 }
 
 export async function fetchFeeds(

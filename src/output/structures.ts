@@ -1,18 +1,17 @@
 import * as fs from "fs";
 import * as path from "path";
-import { CONFIG, ensureDir } from "../config.js";
+import { ensureDir } from "../config.js";
 import { HarvestBundleSchema, CardInputSchema, type HarvestBundle, type StructureCard, type CardInput } from "../types.js";
 import { saveSeenUrls } from "../extractors/rss.js";
-
-const CACHE_DIR = ".cache";
-const LATEST_HARVEST_POINTER = path.join(CACHE_DIR, "latest_harvest_path.txt");
+import { getCurrentWorkspaceId, getWorkspacePaths } from "../workspaces.js";
 
 function createTimestampedOutputDir(): string {
+  const paths = getWorkspacePaths(getCurrentWorkspaceId());
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
-  const outputDir = path.join(CONFIG.FILES.OUTPUT_DIR, timestamp);
+  const outputDir = path.join(paths.outputDir, timestamp);
   ensureDir(outputDir);
 
-  const latestLink = path.join(CONFIG.FILES.OUTPUT_DIR, "latest");
+  const latestLink = path.join(paths.outputDir, "latest");
   try {
     if (fs.existsSync(latestLink)) fs.unlinkSync(latestLink);
     fs.symlinkSync(timestamp, latestLink);
@@ -24,6 +23,7 @@ function createTimestampedOutputDir(): string {
 }
 
 export function saveHarvestOutput(rawCards: CardInput[], seenUrls: Set<string>): string {
+  const paths = getWorkspacePaths(getCurrentWorkspaceId());
   // Only persist if the caller actually passed URLs — calling with new Set()
   // would silently wipe the cache. Seen URLs should be saved by the fetch step.
   if (seenUrls.size > 0) saveSeenUrls(seenUrls);
@@ -53,8 +53,8 @@ export function saveHarvestOutput(rawCards: CardInput[], seenUrls: Set<string>):
   const markdown = buildMarkdown(cards, dateLabel);
   fs.writeFileSync(path.join(outputDir, "structures.md"), markdown + "\n");
 
-  ensureDir(CACHE_DIR);
-  fs.writeFileSync(LATEST_HARVEST_POINTER, path.join(outputDir, "structures.json"));
+  ensureDir(paths.cacheDir);
+  fs.writeFileSync(paths.latestHarvestPointer, path.join(outputDir, "structures.json"));
 
   return outputDir;
 }
@@ -102,13 +102,14 @@ function buildMarkdown(cards: StructureCard[], dateLabel: string): string {
 }
 
 export function loadLatestHarvest(): HarvestBundle {
-  if (!fs.existsSync(LATEST_HARVEST_POINTER)) {
+  const paths = getWorkspacePaths(getCurrentWorkspaceId());
+  if (!fs.existsSync(paths.latestHarvestPointer)) {
     throw new Error(
       "No harvest found. Run quillby_fetch_articles then quillby_save_cards first."
     );
   }
 
-  const bundlePath = fs.readFileSync(LATEST_HARVEST_POINTER, "utf-8").trim();
+  const bundlePath = fs.readFileSync(paths.latestHarvestPointer, "utf-8").trim();
   if (!bundlePath || !fs.existsSync(bundlePath)) {
     throw new Error("Latest harvest pointer is invalid. Re-run quillby_fetch_articles.");
   }
@@ -118,8 +119,9 @@ export function loadLatestHarvest(): HarvestBundle {
 }
 
 export function latestHarvestExists(): boolean {
-  if (!fs.existsSync(LATEST_HARVEST_POINTER)) return false;
-  const bundlePath = fs.readFileSync(LATEST_HARVEST_POINTER, "utf-8").trim();
+  const paths = getWorkspacePaths(getCurrentWorkspaceId());
+  if (!fs.existsSync(paths.latestHarvestPointer)) return false;
+  const bundlePath = fs.readFileSync(paths.latestHarvestPointer, "utf-8").trim();
   return Boolean(bundlePath) && fs.existsSync(bundlePath);
 }
 
@@ -128,11 +130,12 @@ export function saveDraft(
   platform: string,
   cardId?: number
 ): string {
-  const bundlePath = fs.existsSync(LATEST_HARVEST_POINTER)
-    ? fs.readFileSync(LATEST_HARVEST_POINTER, "utf-8").trim()
+  const paths = getWorkspacePaths(getCurrentWorkspaceId());
+  const bundlePath = fs.existsSync(paths.latestHarvestPointer)
+    ? fs.readFileSync(paths.latestHarvestPointer, "utf-8").trim()
     : null;
 
-  const outputDir = bundlePath ? path.dirname(bundlePath) : CONFIG.FILES.OUTPUT_DIR;
+  const outputDir = bundlePath ? path.dirname(bundlePath) : paths.outputDir;
   ensureDir(outputDir);
   const suffix = cardId != null ? `_card${cardId}` : "";
   const filePath = path.join(outputDir, `${platform.toLowerCase()}${suffix}.md`);

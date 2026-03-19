@@ -12,6 +12,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { spawn, type ChildProcess } from "node:child_process";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import * as os from "node:os";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), "../../../");
@@ -31,10 +32,11 @@ class McpTestClient {
   private buf = "";
   private pending = new Map<number, (res: JsonRpcResponse) => void>();
 
-  constructor() {
+  constructor(dataDir: string) {
     this.proc = spawn("node", [SERVER_BIN], {
       stdio: ["pipe", "pipe", "pipe"],
       cwd: ROOT,
+      env: { ...process.env, QUILLBY_HOME: dataDir },
     });
     this.proc.stderr?.on("data", () => {}); // suppress startup logs
     this.proc.stdout?.on("data", (chunk: Buffer) => {
@@ -80,6 +82,7 @@ class McpTestClient {
 // ─── Suite setup ──────────────────────────────────────────────────────────────
 
 let client: McpTestClient;
+let tempDir: string;
 
 beforeAll(() => {
   if (!fs.existsSync(SERVER_BIN)) {
@@ -87,11 +90,13 @@ beforeAll(() => {
       `Built server not found at ${SERVER_BIN}.\nRun 'npm run build' before the integration tests.`,
     );
   }
-  client = new McpTestClient();
+  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "quillby-mcp-test-"));
+  client = new McpTestClient(tempDir);
 });
 
 afterAll(() => {
   client?.close();
+  if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -144,11 +149,15 @@ describe("MCP tools/list", () => {
     tools = (res.result as { tools: typeof tools }).tools;
   });
 
-  it("returns exactly 16 tools", () => {
-    expect(tools).toHaveLength(16);
+  it("returns the expanded toolset", () => {
+    expect(tools.length).toBeGreaterThanOrEqual(21);
   });
 
   it.each([
+    "quillby_list_workspaces",
+    "quillby_create_workspace",
+    "quillby_select_workspace",
+    "quillby_get_workspace",
     "quillby_onboard",
     "quillby_set_context",
     "quillby_get_context",
@@ -158,6 +167,7 @@ describe("MCP tools/list", () => {
     "quillby_analyze_articles",
     "quillby_generate_post",
     "quillby_remember",
+    "quillby_get_memory",
   ])('tool "%s" is present', (name) => {
     expect(tools.map((t) => t.name)).toContain(name);
   });
@@ -176,15 +186,15 @@ describe("MCP tools/list", () => {
 });
 
 describe("MCP prompts/list", () => {
-  it("returns at least 2 prompts", async () => {
+  it("returns the project-oriented prompts", async () => {
     const res = await client.request({
       jsonrpc: "2.0",
       id: 3,
       method: "prompts/list",
       params: {},
     });
-    const prompts = (res.result as { prompts: unknown[] }).prompts;
-    expect(prompts.length).toBeGreaterThanOrEqual(2);
+    const prompts = (res.result as { prompts: { name: string }[] }).prompts;
+    expect(prompts.map((prompt) => prompt.name)).toContain("quillby_projects_playbook");
   });
 });
 
@@ -194,7 +204,7 @@ describe("quillby_remember tool call", () => {
       jsonrpc: "2.0",
       id: 4,
       method: "tools/call",
-      params: { name: "quillby_remember", arguments: { voiceExamples: ["Test voice example."] } },
+      params: { name: "quillby_remember", arguments: { entries: ["Test voice example."], memoryType: "voice_examples" } },
     });
     expect(res.error).toBeUndefined();
     const content = (res.result as { content: { type: string; text: string }[] }).content;

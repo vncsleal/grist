@@ -1,61 +1,64 @@
 import * as fs from "fs";
-import * as path from "path";
-import { CONFIG, ensureDir } from "../config.js";
-import { UserContextSchema, type UserContext, UserMemorySchema, type UserMemory } from "../types.js";
-
-const CONTEXT_FILE = CONFIG.FILES.CONTEXT;
-const MEMORY_FILE = CONFIG.FILES.MEMORY;
+import {
+  appendTypedMemory,
+  getCurrentWorkspaceId,
+  getCurrentWorkspace,
+  getWorkspacePaths,
+  loadTypedMemory,
+  loadWorkspaceContext,
+  saveTypedMemory,
+  saveWorkspaceContext,
+} from "../workspaces.js";
+import {
+  UserContextSchema,
+  type UserContext,
+  UserMemorySchema,
+  type UserMemory,
+  type TypedMemory,
+} from "../types.js";
 
 export function contextExists(): boolean {
-  return fs.existsSync(CONTEXT_FILE);
+  return fs.existsSync(getWorkspacePaths(getCurrentWorkspaceId()).context);
 }
 
 export function loadContext(): UserContext | null {
-  if (!fs.existsSync(CONTEXT_FILE)) return null;
-  try {
-    const raw = JSON.parse(fs.readFileSync(CONTEXT_FILE, "utf-8"));
-    return UserContextSchema.parse(raw);
-  } catch {
-    return null;
-  }
+  return loadWorkspaceContext(getCurrentWorkspaceId());
 }
 
 export function saveContext(ctx: UserContext): void {
-  ensureDir(path.dirname(CONTEXT_FILE));
-  const validated = UserContextSchema.parse(ctx);
-  fs.writeFileSync(CONTEXT_FILE, JSON.stringify(validated, null, 2));
+  saveWorkspaceContext(getCurrentWorkspaceId(), UserContextSchema.parse(ctx));
 }
 
 export function memoryExists(): boolean {
-  return fs.existsSync(MEMORY_FILE);
+  return fs.existsSync(getWorkspacePaths(getCurrentWorkspaceId()).typedMemory);
 }
 
 export function loadMemory(): UserMemory {
-  if (!fs.existsSync(MEMORY_FILE)) return UserMemorySchema.parse({});
-  try {
-    const raw = JSON.parse(fs.readFileSync(MEMORY_FILE, "utf-8"));
-    return UserMemorySchema.parse(raw);
-  } catch {
-    return UserMemorySchema.parse({});
-  }
+  const typed = loadTypedMemory(getCurrentWorkspaceId());
+  return UserMemorySchema.parse({ voiceExamples: typed.voiceExamples });
 }
 
 export function saveMemory(mem: UserMemory): void {
-  ensureDir(path.dirname(MEMORY_FILE));
-  fs.writeFileSync(MEMORY_FILE, JSON.stringify(UserMemorySchema.parse(mem), null, 2));
+  const validated = UserMemorySchema.parse(mem);
+  saveTypedMemory(getCurrentWorkspaceId(), {
+    voiceExamples: validated.voiceExamples.slice(0, 10),
+  });
 }
 
 export function appendVoiceExample(text: string): void {
-  const mem = loadMemory();
-  const examples = [text, ...mem.voiceExamples].slice(0, 10);
-  saveMemory({ ...mem, voiceExamples: examples });
+  appendTypedMemory(getCurrentWorkspaceId(), "voiceExamples", [text], 10);
+}
+
+export function loadTypedWorkspaceMemory(): TypedMemory {
+  return loadTypedMemory(getCurrentWorkspaceId());
 }
 
 /**
  * Render the user context as a concise text block for LLM system prompts.
  */
-export function contextToPromptText(ctx: UserContext, memory?: UserMemory): string {
+export function contextToPromptText(ctx: UserContext, memory?: UserMemory, typedMemory?: TypedMemory): string {
   const lines = [
+    `Workspace: ${getCurrentWorkspace().name}`,
     ctx.name ? `Name: ${ctx.name}` : null,
     `Role: ${ctx.role}`,
     `Industry: ${ctx.industry}`,
@@ -74,7 +77,17 @@ export function contextToPromptText(ctx: UserContext, memory?: UserMemory): stri
       ? `\n\nVoice examples:\n${memory.voiceExamples.map((e, i) => `[${i + 1}] ${e}`).join("\n\n")}`
       : "";
 
-  return lines + examples;
+  const typedBlocks = typedMemory
+    ? [
+        typedMemory.styleRules.length ? `\n\nStyle rules:\n${typedMemory.styleRules.map((e, i) => `[${i + 1}] ${e}`).join("\n")}` : "",
+        typedMemory.audienceInsights.length ? `\n\nAudience insights:\n${typedMemory.audienceInsights.map((e, i) => `[${i + 1}] ${e}`).join("\n")}` : "",
+        typedMemory.doNotSay.length ? `\n\nDo not say:\n${typedMemory.doNotSay.map((e, i) => `[${i + 1}] ${e}`).join("\n")}` : "",
+        typedMemory.campaignContext.length ? `\n\nCampaign context:\n${typedMemory.campaignContext.map((e, i) => `[${i + 1}] ${e}`).join("\n")}` : "",
+        typedMemory.sourcePreferences.length ? `\n\nSource preferences:\n${typedMemory.sourcePreferences.map((e, i) => `[${i + 1}] ${e}`).join("\n")}` : "",
+      ].join("")
+    : "";
+
+  return lines + examples + typedBlocks;
 }
 
 /** The onboarding prompt text — used as an MCP prompt. */
