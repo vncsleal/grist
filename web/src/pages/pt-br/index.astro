@@ -1,5 +1,5 @@
 ---
-import '../styles/global.css';
+import '../../styles/global.css';
 import Analytics from '@vercel/analytics/astro';
 
 const curlCommand = `curl -fsSL https://raw.githubusercontent.com/vncsleal/quillby/main/install.sh | bash`;
@@ -18,7 +18,7 @@ const claudeConfigPath = {
 };
 ---
 
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="/quillby.png" type="image/png" />
@@ -29,31 +29,32 @@ const claudeConfigPath = {
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,800;1,9..144,300;1,9..144,600&family=Nunito:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
     <!-- Primary SEO -->
-    <title>Quillby — Your AI Content Agent</title>
-    <meta name="description" content="Quillby reads your feeds, filters what matters, and delivers fresh drafts in your voice — with one workspace per project, client, or brand." />
-    <link rel="canonical" href="https://quillby.vercel.app/" />
+    <title>Quillby — Seu agente de conteudo com IA</title>
+    <meta name="description" content="O Quillby le suas fontes, filtra o que importa e entrega rascunhos novos com a sua voz, com um workspace por projeto, cliente ou marca." />
+    <link rel="canonical" href="https://quillby.vercel.app/pt-br/" />
     <link rel="alternate" hreflang="en" href="https://quillby.vercel.app/" />
     <link rel="alternate" hreflang="pt-BR" href="https://quillby.vercel.app/pt-br/" />
     <link rel="alternate" hreflang="x-default" href="https://quillby.vercel.app/" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://quillby.vercel.app/" />
-    <meta property="og:title" content="Quillby — Your AI Content Agent" />
-    <meta property="og:description" content="Reads the internet. Filters for you. Writes in your voice, with one workspace per project." />
+    <meta property="og:url" content="https://quillby.vercel.app/pt-br/" />
+    <meta property="og:title" content="Quillby — Seu agente de conteudo com IA" />
+    <meta property="og:description" content="Le a internet, filtra por voce e escreve na sua voz, com um workspace por projeto." />
     <meta property="og:image" content="https://quillby.vercel.app/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Quillby — Your AI Content Agent" />
+    <meta property="og:image:alt" content="Quillby — Seu agente de conteudo com IA" />
     <meta property="og:site_name" content="Quillby" />
-    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:locale:alternate" content="en_US" />
 
     <!-- Twitter / X Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Quillby — Your AI Content Agent" />
-    <meta name="twitter:description" content="Reads the internet. Filters for you. Writes in your voice, with one workspace per project." />
+    <meta name="twitter:title" content="Quillby — Seu agente de conteudo com IA" />
+    <meta name="twitter:description" content="Le a internet, filtra por voce e escreve na sua voz, com um workspace por projeto." />
     <meta name="twitter:image" content="https://quillby.vercel.app/og.png" />
-    <meta name="twitter:image:alt" content="Quillby — Your AI Content Agent" />
+    <meta name="twitter:image:alt" content="Quillby — Seu agente de conteudo com IA" />
 
     <!-- Indexing -->
     <meta name="robots" content="index, follow" />
@@ -567,16 +568,16 @@ const claudeConfigPath = {
 
     <!-- NAV -->
     <nav>
-      <a href="/" class="nav-logo">
+      <a href="/pt-br/" class="nav-logo">
         <img src="/quillby.png" alt="Quillby" />
         <span class="nav-logo-name">Quillby</span>
       </a>
       <ul class="nav-links">
-        <li><a href="#how-it-works">How it works</a></li>
-        <li><a href="#install">Install</a></li>
+        <li><a href="#how-it-works">Como funciona</a></li>
+        <li><a href="#install">Instalar</a></li>
         <li><a href="https://github.com/vncsleal/quillby" target="_blank" rel="noopener">GitHub</a></li>
-        <li><a href="/pt-br/" hreflang="pt-BR" lang="pt-BR" class="lang-link">PT-BR</a></li>
-        <li><a href="#install" class="nav-pill">Install free</a></li>
+        <li><a href="/" hreflang="en" lang="en" class="lang-link">EN</a></li>
+        <li><a href="#install" class="nav-pill">Instalar gratis</a></li>
       </ul>
     </nav>
 
@@ -585,18 +586,18 @@ const claudeConfigPath = {
       <div class="hero-content">
         
         <h1 class="hero-headline">
-          The internet<br />
-          already wrote<br />
-          <em>your next post.</em>
+          A internet<br />
+          ja escreveu<br />
+          <em>seu proximo post.</em>
         </h1>
         <p class="hero-sub">
-          Ask Claude <strong>"what should I post today?"</strong> and get a ranked brief and a ready-to-publish draft — sourced from your feeds, filtered for your audience, written in your voice. Use one workspace per client, brand, newsletter, or Claude Project.
+          Pergunte ao Claude <strong>"o que eu deveria postar hoje?"</strong> e receba um briefing ranqueado e um rascunho pronto para publicar, com base nas suas fontes, filtrado para sua audiencia e escrito na sua voz. Use um workspace por cliente, marca, newsletter ou projeto no Claude.
         </p>
         <div class="hero-actions">
-          <a href="#install" class="btn-primary">Install free →</a>
-          <a href="https://github.com/vncsleal/quillby" target="_blank" rel="noopener" class="btn-secondary">View on GitHub ↗</a>
+          <a href="#install" class="btn-primary">Instalar gratis →</a>
+          <a href="https://github.com/vncsleal/quillby" target="_blank" rel="noopener" class="btn-secondary">Ver no GitHub ↗</a>
         </div>
-        <p class="hero-proof">Free forever · Local-first · Multiple workspaces · No new apps</p>
+        <p class="hero-proof">Gratis para sempre · Local-first · Multiplos workspaces · Sem apps novos</p>
       </div>
 
       <div class="hero-visual">
@@ -611,7 +612,7 @@ const claudeConfigPath = {
           <svg class="sparkle-svg sp4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L13.5 9.5L21 11L13.5 12.5L12 20L10.5 12.5L3 11L10.5 9.5L12 2Z" fill="#a78bfa" opacity="0.6"/></svg>
           <svg class="sparkle-svg sp5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L13.5 9.5L21 11L13.5 12.5L12 20L10.5 12.5L3 11L10.5 9.5L12 2Z" fill="#c4b5fd" opacity="0.65"/></svg>
           <svg class="sparkle-svg sp6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L13.5 9.5L21 11L13.5 12.5L12 20L10.5 12.5L3 11L10.5 9.5L12 2Z" fill="#a78bfa" opacity="0.5"/></svg>
-          <img src="/quillby.png" alt="Quillby mascot" class="mascot-img" />
+          <img src="/quillby.png" alt="Mascote do Quillby" class="mascot-img" />
         </div>
       </div>
     </section>
@@ -619,27 +620,27 @@ const claudeConfigPath = {
     <!-- PROBLEM / SOLUTION -->
     <section class="problem-sec">
       <div class="container">
-        <div class="eyebrow">The problem</div>
-        <h2 class="sec-title">Staying relevant is a<br /><em>full-time job.</em></h2>
-        <p class="sec-body">You have genuine expertise. The internet produces infinite noise. Between them stands the daily grind of reading, filtering, and turning it into something worth saying.</p>
+        <div class="eyebrow">O problema</div>
+        <h2 class="sec-title">Continuar relevante e um<br /><em>trabalho em tempo integral.</em></h2>
+        <p class="sec-body">Voce tem conhecimento real. A internet produz ruido infinito. No meio disso esta o trabalho diario de ler, filtrar e transformar tudo em algo que valha a pena dizer.</p>
 
         <div class="ps-grid">
           <div data-reveal class="ps-col before">
-            <span class="ps-tag before">Before Quillby</span>
+            <span class="ps-tag before">Antes do Quillby</span>
             <ul class="ps-list">
-              <li><span class="ps-icon">—</span><div><strong>45 minutes</strong> scanning feeds, newsletters, and Twitter to find one thing worth writing about.</div></li>
-              <li><span class="ps-icon">—</span><div><strong>Blank page paralysis.</strong> You know your subject. You don't know where to start.</div></li>
-              <li><span class="ps-icon">—</span><div><strong>Generic AI output.</strong> You try ChatGPT and it sounds like a LinkedIn HR bot.</div></li>
-              <li><span class="ps-icon">—</span><div><strong>Posting irregularly</strong> because "finding something to say" isn't part of your actual job.</div></li>
+              <li><span class="ps-icon">—</span><div><strong>45 minutos</strong> varrendo feeds, newsletters e Twitter para achar um assunto que valha um post.</div></li>
+              <li><span class="ps-icon">—</span><div><strong>Paralisia da pagina em branco.</strong> Voce domina o assunto. So nao sabe por onde comecar.</div></li>
+              <li><span class="ps-icon">—</span><div><strong>Texto generico de IA.</strong> Voce tenta ChatGPT e parece um robo de RH no LinkedIn.</div></li>
+              <li><span class="ps-icon">—</span><div><strong>Postagens irregulares</strong> porque "achar algo para dizer" nao faz parte do seu trabalho de verdade.</div></li>
             </ul>
           </div>
           <div data-reveal class="ps-col after">
-            <span class="ps-tag after">With Quillby</span>
+            <span class="ps-tag after">Com Quillby</span>
             <ul class="ps-list">
-              <li><span class="ps-icon">↗</span><div>Ask Claude <strong>"what should I post today?"</strong> and get a ranked brief of what's actually relevant.</div></li>
-              <li><span class="ps-icon">↗</span><div><strong>One-shot drafts</strong> sourced from real articles, structured as your kind of post.</div></li>
-              <li><span class="ps-icon">↗</span><div><strong>Sounds like you</strong> — not a template. Quillby learns your voice from examples you approve.</div></li>
-              <li><span class="ps-icon">↗</span><div><strong>Publish consistently</strong> without adding a single new tool, tab, or workflow to your day.</div></li>
+              <li><span class="ps-icon">↗</span><div>Pergunte ao Claude <strong>"o que eu deveria postar hoje?"</strong> e receba um briefing ranqueado do que e realmente relevante.</div></li>
+              <li><span class="ps-icon">↗</span><div><strong>Rascunhos de primeira</strong> baseados em artigos reais e estruturados no seu estilo de post.</div></li>
+              <li><span class="ps-icon">↗</span><div><strong>Soa como voce</strong>, nao como template. O Quillby aprende sua voz com exemplos que voce aprova.</div></li>
+              <li><span class="ps-icon">↗</span><div><strong>Publique com consistencia</strong> sem adicionar nenhuma ferramenta, aba ou fluxo novo ao seu dia.</div></li>
             </ul>
           </div>
         </div>
@@ -649,14 +650,14 @@ const claudeConfigPath = {
     <!-- HOW IT WORKS -->
     <section class="how-sec" id="how-it-works">
       <div class="container">
-        <div class="eyebrow">How it works</div>
-        <h2 class="sec-title">Four steps.<br /><em>Zero new apps.</em></h2>
+        <div class="eyebrow">Como funciona</div>
+        <h2 class="sec-title">Quatro passos.<br /><em>Zero apps novos.</em></h2>
         <div class="steps-row">
           {[
-            { n:'01', g:'⬇', title:'Install', desc:'Download the installer for your platform. Quillby wires itself into Claude Desktop automatically — no Terminal required.' },
-            { n:'02', g:'◎', title:'Set up a workspace', desc:'Create one workspace per client, brand, newsletter, or Claude Project. Each one gets its own profile, memory, feeds, and drafts.' },
-            { n:'03', g:'⌗', title:'Quillby reads the internet', desc:'RSS, Reddit, and Medium feeds are fetched, ranked by relevance to that workspace, and surfaced as a content brief.' },
-            { n:'04', g:'↑', title:'Publish in your voice', desc:'Request a draft. Claude writes it from the workspace profile, memory, and sourced article. Edit, approve, post.' },
+            { n:'01', g:'⬇', title:'Instale', desc:'Baixe o instalador da sua plataforma. O Quillby se conecta ao Claude Desktop automaticamente, sem precisar de Terminal.' },
+            { n:'02', g:'◎', title:'Crie um workspace', desc:'Crie um workspace por cliente, marca, newsletter ou projeto no Claude. Cada um tem perfil, memoria, fontes e rascunhos proprios.' },
+            { n:'03', g:'⌗', title:'O Quillby le a internet', desc:'Feeds de RSS, Reddit e Medium sao buscados, ranqueados por relevancia para aquele workspace e entregues em um briefing.' },
+            { n:'04', g:'↑', title:'Publique na sua voz', desc:'Peca um rascunho. O Claude escreve com base no perfil, na memoria e no artigo-fonte do workspace. Edite, aprove e publique.' },
           ].map(s => (
             <div data-reveal class="step-card">
               <div class="step-num">{s.n}</div>
@@ -672,50 +673,50 @@ const claudeConfigPath = {
     <!-- FEATURES -->
     <section class="feat-sec">
       <div class="container">
-        <div class="eyebrow">What it does</div>
-        <h2 class="sec-title">Content intelligence,<br /><em>built into your workflow.</em></h2>
+        <div class="eyebrow">O que ele faz</div>
+        <h2 class="sec-title">Inteligencia de conteudo,<br /><em>embutida no seu fluxo.</em></h2>
         <div class="feat-grid">
           <div data-reveal class="feat-card">
             <div class="feat-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="2"/></svg>
             </div>
-            <h3 class="feat-title">Reads the internet</h3>
-            <p class="feat-desc">RSS feeds, Reddit communities, Medium articles — Quillby monitors sources that matter to your industry, in real time.</p>
+            <h3 class="feat-title">Le a internet</h3>
+            <p class="feat-desc">Feeds RSS, comunidades no Reddit e artigos do Medium: o Quillby monitora em tempo real as fontes que importam para o seu mercado.</p>
           </div>
           <div data-reveal class="feat-card">
             <div class="feat-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </div>
-            <h3 class="feat-title">Stays on-topic</h3>
-            <p class="feat-desc">Define your industry, audience, and excluded topics once. Quillby uses that profile to rank every article by relevance.</p>
+            <h3 class="feat-title">Mantem o foco</h3>
+            <p class="feat-desc">Defina seu setor, audiencia e temas excluidos uma vez. O Quillby usa esse perfil para ranquear cada artigo por relevancia.</p>
           </div>
           <div data-reveal class="feat-card">
             <div class="feat-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             </div>
-            <h3 class="feat-title">Writes in your voice</h3>
-            <p class="feat-desc">No generic AI slop. Quillby sources the material and Claude writes the post — sounding like you, not a content farm.</p>
+            <h3 class="feat-title">Escreve na sua voz</h3>
+            <p class="feat-desc">Nada de texto generico de IA. O Quillby traz a base e o Claude escreve o post soando como voce, nao como fazenda de conteudo.</p>
           </div>
           <div data-reveal class="feat-card">
             <div class="feat-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
             </div>
-            <h3 class="feat-title">Learns over time</h3>
-            <p class="feat-desc">Every draft you approve teaches Quillby your style. The more you use it, the less you edit.</p>
+            <h3 class="feat-title">Aprende com o tempo</h3>
+            <p class="feat-desc">Cada rascunho aprovado ensina seu estilo ao Quillby. Quanto mais voce usa, menos precisa editar.</p>
           </div>
           <div data-reveal class="feat-card">
             <div class="feat-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
             </div>
-            <h3 class="feat-title">One workspace per context</h3>
-            <p class="feat-desc">Keep client work, personal brand, newsletters, and campaigns separated. Each workspace has its own profile, memory, feeds, and outputs.</p>
+            <h3 class="feat-title">Um workspace por contexto</h3>
+            <p class="feat-desc">Separe clientes, marca pessoal, newsletters e campanhas. Cada workspace tem perfil, memoria, fontes e entregas proprias.</p>
           </div>
           <div data-reveal class="feat-card">
             <div class="feat-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </div>
-            <h3 class="feat-title">Any industry, any language</h3>
-            <p class="feat-desc">Healthcare, law, dev, finance, fashion — Quillby works for any niche, in any language Google News supports.</p>
+            <h3 class="feat-title">Qualquer setor, qualquer idioma</h3>
+            <p class="feat-desc">Saude, direito, dev, financas, moda: o Quillby funciona em qualquer nicho, em qualquer idioma suportado pelo Google News.</p>
           </div>
         </div>
       </div>
@@ -724,8 +725,8 @@ const claudeConfigPath = {
     <!-- INSTALL -->
     <section class="install-sec" id="install">
       <div class="container">
-        <div class="eyebrow">Install</div>
-        <h2 class="sec-title">Up and running<br /><em>in three minutes.</em></h2>
+        <div class="eyebrow">Instalar</div>
+        <h2 class="sec-title">No ar<br /><em>em tres minutos.</em></h2>
 
         <div class="install-wrap">
           <div>
@@ -739,49 +740,49 @@ const claudeConfigPath = {
             <div id="os-mac">
               <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg" class="dl-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Get Quillby for Mac
+                Baixar Quillby para Mac
               </a>
-              <p class="install-note">Works on Apple Silicon &amp; Intel. One double-click, no setup.<br />If macOS asks: right-click → <strong style="color:var(--text)">Open</strong>.</p>
+              <p class="install-note">Funciona em Apple Silicon e Intel. Dois cliques e pronto.<br />Se o macOS alertar: clique com o botao direito → <strong style="color:var(--text)">Open</strong>.</p>
             </div>
 
             <div id="os-win" class="hidden">
               <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-windows.exe" class="dl-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Get Quillby for Windows
+                Baixar Quillby para Windows
               </a>
-              <p class="install-note">One double-click installer. No Terminal, no setup steps.</p>
+              <p class="install-note">Instalador com dois cliques. Sem Terminal, sem passos extras.</p>
             </div>
 
             <div id="os-linux" class="hidden">
               <div class="code-block">
-                <div class="code-top"><span class="code-lang">bash</span><button class="copy-btn" data-copy={curlCommand}>copy</button></div>
+                <div class="code-top"><span class="code-lang">bash</span><button class="copy-btn" data-copy={curlCommand}>copiar</button></div>
                 <div class="code-body">{curlCommand}</div>
               </div>
             </div>
 
             <div id="os-npm" class="hidden">
               <div class="code-block">
-                <div class="code-top"><span class="code-lang">shell</span><button class="copy-btn" data-copy="npm install -g @vncsleal/quillby">copy</button></div>
+                <div class="code-top"><span class="code-lang">shell</span><button class="copy-btn" data-copy="npm install -g @vncsleal/quillby">copiar</button></div>
                 <div class="code-body">npm install -g @vncsleal/quillby</div>
               </div>
               <div class="code-block">
-                <div class="code-top"><span class="code-lang">json · claude_desktop_config.json</span><button class="copy-btn" data-copy={claudeConfig}>copy</button></div>
+                <div class="code-top"><span class="code-lang">json · claude_desktop_config.json</span><button class="copy-btn" data-copy={claudeConfig}>copiar</button></div>
                 <div class="code-body" style="font-size:0.73rem;">{claudeConfig}</div>
               </div>
             </div>
 
             <div class="prompt-callout">
-              <div class="prompt-callout-label">Then open Claude and say</div>
-              <div class="prompt-callout-text">"Set me up with Quillby"</div>
+              <div class="prompt-callout-label">Depois abra o Claude e diga</div>
+              <div class="prompt-callout-text">"Configure o Quillby para mim"</div>
             </div>
           </div>
 
           <div class="install-steps">
             {[
-              { n:'1', t:'Install & restart Claude Desktop', b:'Run the installer, then fully quit and reopen Claude Desktop. Quillby loads automatically on startup.' },
-              { n:'2', t:'Create your first workspace', b:'Say "Set me up with Quillby" in Claude. For new users, Quillby creates a default workspace and saves your profile there.' },
-              { n:'3', t:'Discover your sources', b:'Quillby finds and subscribes to relevant RSS feeds, Reddit communities, and Medium articles for that workspace automatically.' },
-              { n:'4', t:'Ask what to post', b:'Every morning: "what should I post today?" — Quillby reads that workspace\'s feeds, ranks what\'s relevant, and writes a draft ready to publish.' },
+              { n:'1', t:'Instale e reinicie o Claude Desktop', b:'Execute o instalador, depois feche o Claude Desktop por completo e abra de novo. O Quillby carrega automaticamente na inicializacao.' },
+              { n:'2', t:'Crie seu primeiro workspace', b:'Diga "Configure o Quillby para mim" no Claude. Para novos usuarios, o Quillby cria um workspace padrao e salva seu perfil nele.' },
+              { n:'3', t:'Descubra suas fontes', b:'O Quillby encontra e assina automaticamente feeds RSS, comunidades do Reddit e artigos do Medium relevantes para aquele workspace.' },
+              { n:'4', t:'Pergunte o que postar', b:'Toda manha: "o que eu deveria postar hoje?" O Quillby le as fontes daquele workspace, ranqueia o que importa e escreve um rascunho pronto para publicar.' },
             ].map(s => (
               <div data-reveal class="install-step">
                 <div class="install-step-num">{s.n}</div>
@@ -796,68 +797,68 @@ const claudeConfigPath = {
     <!-- INDUSTRIES -->
     <section class="ind-sec">
       <div class="container">
-        <div class="eyebrow">Built for every industry</div>
-        <h2 class="sec-title">If you have expertise,<br /><em>Quillby has your back.</em></h2>
+        <div class="eyebrow">Feito para qualquer setor</div>
+        <h2 class="sec-title">Se voce tem repertorio,<br /><em>o Quillby cobre o resto.</em></h2>
         <div class="ind-grid">
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-            <div class="ind-t">Developers</div>
-            <div class="ind-d">Track releases, framework shifts, and OSS trends without living on HN.</div>
+            <div class="ind-t">Desenvolvedores</div>
+            <div class="ind-d">Acompanhe releases, mudancas de framework e tendencias open source sem viver no HN.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <div class="ind-t">Law &amp; legal</div>
-            <div class="ind-d">Surface case law, regulatory changes, and commentary from your practice.</div>
+            <div class="ind-t">Direito</div>
+            <div class="ind-d">Acompanhe jurisprudencia, mudancas regulatorias e analises relevantes para sua area.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <div class="ind-t">Finance</div>
-            <div class="ind-d">Follow market moves, earnings, and macro analysis filtered for your thesis.</div>
+            <div class="ind-t">Financas</div>
+            <div class="ind-d">Siga movimentos de mercado, resultados e analises macro filtradas pela sua tese.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/></svg>
-            <div class="ind-t">Design &amp; creative</div>
-            <div class="ind-d">Track tool launches and creative conversations worth your opinion.</div>
+            <div class="ind-t">Design &amp; criacao</div>
+            <div class="ind-d">Acompanhe lancamentos de ferramentas e conversas criativas que merecem sua opiniao.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            <div class="ind-t">Healthcare</div>
-            <div class="ind-d">Stay current on research, policy shifts, and clinical developments.</div>
+            <div class="ind-t">Saude</div>
+            <div class="ind-d">Mantenha-se atualizado sobre pesquisas, mudancas de politica e avancos clinicos.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
             <div class="ind-t">Marketing</div>
-            <div class="ind-d">Monitor campaigns, platform changes, and measurement trends first.</div>
+            <div class="ind-d">Monitore campanhas, mudancas de plataforma e tendencias de mensuracao antes dos outros.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <div class="ind-t">Real estate</div>
-            <div class="ind-d">Track market data, rates, and regional trends for your geography.</div>
+            <div class="ind-t">Mercado imobiliario</div>
+            <div class="ind-d">Acompanhe dados de mercado, juros e tendencias regionais da sua area.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <div class="ind-t">Education</div>
-            <div class="ind-d">Follow curriculum debates, edtech launches, and policy shifts.</div>
+            <div class="ind-t">Educacao</div>
+            <div class="ind-d">Siga debates curriculares, lancamentos de edtechs e mudancas de politica publica.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12m0 0C12 7 8 4 3 4c0 5 3 8 9 8zm0 0c0-5 4-8 9-8 0 5-3 8-9 8"/></svg>
-            <div class="ind-t">Agriculture</div>
-            <div class="ind-d">Seasonal trends, crop research, and market pricing for your region.</div>
+            <div class="ind-t">Agronegocio</div>
+            <div class="ind-d">Tendencias sazonais, pesquisa de safras e precificacao de mercado para sua regiao.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
-            <div class="ind-t">Construction</div>
-            <div class="ind-d">Monitor material prices, code updates, and project management tools.</div>
+            <div class="ind-t">Construcao</div>
+            <div class="ind-d">Monitore preco de materiais, atualizacoes de normas e ferramentas de gestao de obras.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            <div class="ind-t">Fashion &amp; retail</div>
-            <div class="ind-d">Trend spotting, supply chain news, and brand campaigns.</div>
+            <div class="ind-t">Moda &amp; varejo</div>
+            <div class="ind-d">Identifique tendencias, noticias de supply chain e movimentos de marca.</div>
           </div>
           <div data-reveal class="ind-card">
             <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            <div class="ind-t">Any niche</div>
-            <div class="ind-d">Define your topics in plain language. Quillby discovers the sources.</div>
+            <div class="ind-t">Qualquer nicho</div>
+            <div class="ind-d">Defina seus temas em linguagem natural. O Quillby descobre as fontes.</div>
           </div>
         </div>
       </div>
@@ -866,11 +867,11 @@ const claudeConfigPath = {
     <!-- STATEMENT -->
     <section class="statement-sec">
       <blockquote class="statement-q">
-        "You already know what to say.<br />
-        <em>You just needed someone<br />to read the internet for you.</em>"
+        "Voce ja sabe o que dizer.<br />
+        <em>So precisava de alguem<br />para ler a internet por voce.</em>"
       </blockquote>
       <a href="#install" class="btn-primary" style="font-size:1rem; padding:1rem 2.5rem;">
-        Start posting in your voice →
+        Comece a postar na sua voz →
       </a>
     </section>
 
@@ -878,12 +879,12 @@ const claudeConfigPath = {
     <footer>
       <div class="footer-brand">
         <img src="/quillby.png" alt="Quillby" />
-        <span>Quillby · MIT License</span>
+        <span>Quillby · Licenca MIT</span>
       </div>
       <div class="footer-links">
         <a href="https://github.com/vncsleal/quillby" target="_blank" rel="noopener">GitHub</a>
         <a href="https://www.npmjs.com/package/@vncsleal/quillby" target="_blank" rel="noopener">npm</a>
-        <a href="https://github.com/vncsleal/quillby/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+        <a href="https://github.com/vncsleal/quillby/blob/main/LICENSE" target="_blank" rel="noopener">Licenca</a>
       </div>
     </footer>
 
@@ -902,8 +903,8 @@ const claudeConfigPath = {
       document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           navigator.clipboard.writeText((btn as HTMLElement).dataset.copy ?? '').catch(()=>{});
-          btn.textContent = 'copied!';
-          setTimeout(() => { btn.textContent = 'copy'; }, 1500);
+          btn.textContent = 'copiado!';
+          setTimeout(() => { btn.textContent = 'copiar'; }, 1500);
         });
       });
 
