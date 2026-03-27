@@ -557,7 +557,7 @@ const claudeConfigPath = {
         .steps-row { grid-template-columns:1fr; }
         .feat-grid { grid-template-columns:1fr; }
         .ind-grid { grid-template-columns:1fr; }
-        .nav-links li:not(:last-child) { display:none; }
+        .nav-links li:nth-child(-n+3) { display:none; }
         .hero-actions { flex-direction:column; align-items:flex-start; }
       }
     </style>
@@ -901,9 +901,15 @@ const claudeConfigPath = {
       });
 
       document.querySelectorAll('.copy-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          navigator.clipboard.writeText((btn as HTMLElement).dataset.copy ?? '').catch(()=>{});
-          btn.textContent = 'copiado!';
+        btn.addEventListener('click', async () => {
+          const textToCopy = (btn as HTMLElement).dataset.copy ?? '';
+          try {
+            await navigator.clipboard.writeText(textToCopy);
+            btn.textContent = 'copiado!';
+          } catch (err) {
+            console.error('Falha ao copiar para a área de transferência:', err);
+            btn.textContent = 'falha ao copiar';
+          }
           setTimeout(() => { btn.textContent = 'copiar'; }, 1500);
         });
       });
