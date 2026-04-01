@@ -55,37 +55,15 @@ import {
 import { eq, and } from "drizzle-orm";
 import { ensureHostedTables } from "./db/migrate-hosted.js";
 import { randomUUID } from "node:crypto";
-import { getDeploymentMode } from "./config.js";
+import {
+  getPlanLimits,
+  isPlanEnforcementEnabled,
+  type HostedPlan,
+  type PlanLimits,
+} from "./billing.js";
 
 const DEFAULT_QUILLBY_HOME = `${process.env.HOME ?? ""}/.quillby`;
 const DEFAULT_WORKSPACE_ID = "default";
-
-type HostedPlan = "free" | "pro";
-type PlanLimits = {
-  maxOwnedWorkspaces: number | null;
-  maxDraftsPerWorkspace: number | null;
-  harvestCooldownMs: number | null;
-};
-
-const PLAN_LIMITS: Record<HostedPlan, PlanLimits> = {
-  free: {
-    maxOwnedWorkspaces: 3,
-    maxDraftsPerWorkspace: 20,
-    harvestCooldownMs: 30 * 60 * 1000,
-  },
-  pro: {
-    maxOwnedWorkspaces: null,
-    maxDraftsPerWorkspace: null,
-    harvestCooldownMs: null,
-  },
-};
-
-function isPlanEnforcementEnabled(): boolean {
-  if (getDeploymentMode() !== "cloud") return false;
-  const raw = (process.env.QUILLBY_ENFORCE_PLAN_LIMITS ?? "").trim().toLowerCase();
-  if (!raw) return true;
-  return raw === "1" || raw === "true" || raw === "yes";
-}
 
 function sanitizeUserId(userId: string): string {
   return userId
@@ -317,9 +295,9 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
   private get _effectiveUserId(): string { return this._ownerUserId ?? this.userId; }
 
   private async _limitsForCurrentUser(): Promise<PlanLimits> {
-    if (!isPlanEnforcementEnabled()) return PLAN_LIMITS.pro;
+    if (!isPlanEnforcementEnabled()) return getPlanLimits("pro");
     const plan = await this.getPlan();
-    return PLAN_LIMITS[plan];
+    return getPlanLimits(plan);
   }
 
   private async _enforceOwnedWorkspaceLimit(): Promise<void> {

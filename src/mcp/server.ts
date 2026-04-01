@@ -21,6 +21,16 @@ import { getGoogleNewsFeeds, getMediumTagFeeds, getFeedlyFeeds } from "../agents
 import { PLATFORM_GUIDES } from "../agents/compose.js";
 import { enrichArticle } from "../extractors/content.js";
 import { getHostedUserStorage, storage, type WorkspaceStorage } from "../storage.js";
+import { db } from "../db.js";
+import {
+  applyStripeWebhookEvent,
+  getBillingPortalUrl,
+  getPlanLimits,
+  isCloudMode,
+  isPlanEnforcementEnabled,
+  verifyStripeWebhookSignature,
+} from "../billing.js";
+import { getDeploymentMode } from "../config.js";
 
 const MEMORY_TYPES = {
   voice_examples: "voiceExamples",
@@ -679,9 +689,27 @@ async function handleToolCall(
 
       case "quillby_get_plan": {
         const plan = await storage.getPlan();
+        const mode = getDeploymentMode();
+        const limits = getPlanLimits(plan);
+        const portalUrl = getBillingPortalUrl();
         return {
-          content: [{ type: "text" as const, text: JSON.stringify({ plan }, null, 2) }],
-          structuredContent: { plan },
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              plan,
+              mode,
+              planEnforcementEnabled: isPlanEnforcementEnabled(),
+              limits,
+              billingPortalUrl: portalUrl,
+            }, null, 2),
+          }],
+          structuredContent: {
+            plan,
+            mode,
+            planEnforcementEnabled: isPlanEnforcementEnabled(),
+            limits,
+            billingPortalUrl: portalUrl,
+          },
         };
       }
 
@@ -1917,6 +1945,55 @@ if (TRANSPORT_MODE === "http") {
       if (url.pathname.startsWith("/api/auth")) {
         await toNodeHandler(auth)(req, res);
         finish(res.statusCode ?? 200);
+        return;
+      }
+
+      // ------------------------------------------------------------------
+      // Stripe webhook (cloud only) — syncs subscription status to plan.
+      // ------------------------------------------------------------------
+      if (url.pathname === "/api/billing/stripe/webhook" && req.method === "POST") {
+        if (!isCloudMode()) {
+          res.writeHead(404).end("Not found");
+          finish(404);
+          return;
+        }
+        const signature = req.headers["stripe-signature"];
+        if (typeof signature !== "string") {
+          res.writeHead(400).end("Missing stripe-signature header");
+          finish(400);
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        let totalBytes = 0;
+        for await (const chunk of req) {
+          totalBytes += (chunk as Buffer).length;
+          if (totalBytes > HTTP_BODY_LIMIT) {
+            res.writeHead(413).end("Payload too large");
+            finish(413);
+            return;
+          }
+          chunks.push(chunk as Buffer);
+        }
+        const rawBody = Buffer.concat(chunks).toString("utf-8");
+        if (!verifyStripeWebhookSignature(rawBody, signature)) {
+          res.writeHead(400).end("Invalid webhook signature");
+          finish(400);
+          return;
+        }
+
+        let event: unknown;
+        try {
+          event = JSON.parse(rawBody);
+        } catch {
+          res.writeHead(400).end("Invalid JSON");
+          finish(400);
+          return;
+        }
+
+        const result = await applyStripeWebhookEvent(db, event as Record<string, unknown>);
+        res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ received: true, ...result }));
+        finish(200);
         return;
       }
 

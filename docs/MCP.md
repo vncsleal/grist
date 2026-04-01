@@ -136,6 +136,9 @@ Set `QUILLBY_DEPLOYMENT_MODE` explicitly when running HTTP:
 | `LIBSQL_AUTH_TOKEN` | *(unset)* | Auth token for remote Turso connections only. |
 | `QUILLBY_RATE_LIMIT` | `60` | Default max requests per minute per API key. |
 | `QUILLBY_ENFORCE_PLAN_LIMITS` | `true` in `cloud`, `false` otherwise | Plan limits are cloud-only by default |
+| `QUILLBY_STRIPE_WEBHOOK_SECRET` | *(unset)* | Cloud only. Secret used to verify Stripe webhook signatures. |
+| `QUILLBY_STRIPE_PRO_PRICE_ID` | *(unset)* | Cloud only. Stripe price ID mapped to `pro`. |
+| `QUILLBY_CLOUD_BILLING_PORTAL_URL` | *(unset)* | Cloud only. Returned by `quillby_get_plan` as billing portal link. |
 
 HTTP mode endpoints:
 
@@ -145,6 +148,7 @@ HTTP mode endpoints:
 | `GET /.well-known/agent.json` | none | A2A agent discovery card |
 | `POST /api/auth/sign-up/email` | none | Register a new user |
 | `POST /api/auth/sign-in/email` | none | Sign in, get session |
+| `POST /api/billing/stripe/webhook` | Stripe signature | Cloud only. Sync subscription events to `hosted_user_state.plan`. |
 | `POST /mcp` | Bearer API key | MCP Streamable HTTP transport |
 | `GET /mcp` | Bearer API key | SSE stream for an existing session |
 | `DELETE /mcp` | Bearer API key | Close an existing session |
