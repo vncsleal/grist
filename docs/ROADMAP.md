@@ -230,7 +230,7 @@ Goal: give managed hosted users a native GUI alongside Claude.
 - draft history browser ✓
 - connects to the same HTTP API as the MCP server ✓
 - CORS headers added to HTTP server for browser clients ✓
-- lives at `/app` on the marketing site (Astro + React, static export) ✓
+- ships as a standalone GUI deployable that can be linked from the marketing site ✓
 
 Mode: **Cloud** (self-hosted users can run it against their own endpoint)
 
