@@ -221,14 +221,16 @@ Goal: make self-hosting genuinely easy.
 
 Mode: **Self-Hosted** only (local mode unaffected)
 
-### v1.5: MCP App
+### v1.5: MCP App ✓
 
 Goal: give managed hosted users a native GUI alongside Claude.
 
-- card review, curation filters, and approval flows
-- workspace switcher
-- draft history browser
-- connects to the same HTTP API as the MCP server
+- card review, curation filters, and approval flows ✓
+- workspace switcher ✓
+- draft history browser ✓
+- connects to the same HTTP API as the MCP server ✓
+- CORS headers added to HTTP server for browser clients ✓
+- lives at `/app` on the marketing site (Astro + React, static export) ✓
 
 Mode: **Cloud** (self-hosted users can run it against their own endpoint)
 

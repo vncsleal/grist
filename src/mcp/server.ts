@@ -46,7 +46,7 @@ const MEMORY_TYPES = {
 
 type MemoryTypeInput = keyof typeof MEMORY_TYPES;
 
-const SERVER_INFO = { name: "quillby-mcp", version: "1.4.0" } as const;
+const SERVER_INFO = { name: "quillby-mcp", version: "1.5.0" } as const;
 
 function createMcpServer(): McpServer {
   return new McpServer(
@@ -1977,6 +1977,20 @@ if (TRANSPORT_MODE === "http") {
 
     const finish = (status: number) =>
       slog("info", "request", { method: req.method, path: url.pathname, status, ms: Date.now() - start });
+
+    // ------------------------------------------------------------------
+    // CORS — allow browser-based MCP App to connect from any origin
+    // ------------------------------------------------------------------
+    const allowedOrigin = process.env.QUILLBY_CORS_ORIGIN ?? "*";
+    res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id, Last-Event-ID");
+    res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
+
+    if (req.method === "OPTIONS") {
+      res.writeHead(204).end();
+      return;
+    }
 
     try {
       // ------------------------------------------------------------------

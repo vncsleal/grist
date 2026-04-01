@@ -152,6 +152,7 @@ Set `QUILLBY_DEPLOYMENT_MODE` explicitly when running HTTP:
 | `QUILLBY_STRIPE_CHECKOUT_URL_PRO` | *(unset)* | Cloud only. URL for pro upgrade checkout flow. |
 | `QUILLBY_STRIPE_CHECKOUT_URL_FREE` | *(unset)* | Cloud only. Optional URL for downgrade/free checkout flow. |
 | `QUILLBY_CLOUD_BILLING_PORTAL_URL` | *(unset)* | Cloud only. Returned by `quillby_get_plan` as billing portal link. |
+| `QUILLBY_CORS_ORIGIN` | `*` | `Access-Control-Allow-Origin` header sent on all HTTP responses. Lock down to your app domain in production (e.g. `https://app.quillby.com`). |
 
 HTTP mode endpoints:
 
