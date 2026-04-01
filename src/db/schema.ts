@@ -94,6 +94,8 @@ export const apikey = sqliteTable("apikey", {
 export const hostedUserState = sqliteTable("hosted_user_state", {
   userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
   currentWorkspaceId: text("current_workspace_id").notNull(),
+  /** Subscription plan: free | pro. Defaults to free. */
+  plan: text("plan").notNull().default("free"),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().default(now),
 });
 
@@ -151,3 +153,20 @@ export const hostedWorkspaceDraft = sqliteTable("hosted_workspace_draft", {
   content: text("content").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
 }, (t) => [index("hosted_draft_user_workspace_idx").on(t.userId, t.workspaceId)]);
+
+// ── Workspace sharing / team access (v1.2) ───────────────────────────────
+// Tracks which users have been granted access to another user's workspace.
+// ownerUserId + workspaceId identify the workspace; granteeUserId is the user
+// being given access; role is "viewer" (read-only) or "editor" (read-write).
+
+export const hostedWorkspaceAccess = sqliteTable("hosted_workspace_access", {
+  ownerUserId: text("owner_user_id").notNull(),
+  workspaceId: text("workspace_id").notNull(),
+  granteeUserId: text("grantee_user_id").notNull(),
+  role: text("role").notNull().default("viewer"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
+}, (t) => [
+  primaryKey({ columns: [t.ownerUserId, t.workspaceId, t.granteeUserId] }),
+  index("hosted_access_grantee_idx").on(t.granteeUserId),
+  index("hosted_access_owner_ws_idx").on(t.ownerUserId, t.workspaceId),
+]);

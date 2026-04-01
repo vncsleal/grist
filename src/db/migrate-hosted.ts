@@ -64,9 +64,29 @@ export async function ensureHostedTables(dbInstance: QuillbyDb): Promise<void> {
       content TEXT NOT NULL,
       created_at INTEGER NOT NULL DEFAULT (cast(unixepoch('subsecond') * 1000 as integer))
     )`),
+    // v1.2: plan column on hosted_user_state (idempotent ALTER)
+    sql.raw(`ALTER TABLE hosted_user_state ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'`),
+    // v1.2: workspace sharing / team access
+    sql.raw(`CREATE TABLE IF NOT EXISTS hosted_workspace_access (
+      owner_user_id TEXT NOT NULL,
+      workspace_id TEXT NOT NULL,
+      grantee_user_id TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'viewer',
+      created_at INTEGER NOT NULL DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)),
+      PRIMARY KEY (owner_user_id, workspace_id, grantee_user_id)
+    )`),
   ];
 
   for (const stmt of ddl) {
-    await dbInstance.run(stmt);
+    await dbInstance.run(stmt).catch((err: unknown) => {
+      // Ignore duplicate-column errors from ALTER TABLE — nested in some libsql wrappers.
+      const msg = err instanceof Error ? err.message : String(err);
+      const causeMsg =
+        typeof err === "object" && err !== null && "cause" in err
+          ? String((err as { cause?: unknown }).cause)
+          : "";
+      const full = `${msg} ${causeMsg}`.toLowerCase();
+      if (!full.includes("duplicate column")) throw err;
+    });
   }
 }

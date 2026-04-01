@@ -34,7 +34,7 @@ const MEMORY_TYPES = {
 
 type MemoryTypeInput = keyof typeof MEMORY_TYPES;
 
-const SERVER_INFO = { name: "quillby-mcp", version: "1.1.0" } as const;
+const SERVER_INFO = { name: "quillby-mcp", version: "1.2.0" } as const;
 
 function createMcpServer(): McpServer {
   return new McpServer(
@@ -123,6 +123,55 @@ const TOOLS: Tool[] = [
     },
   },
   {
+    name: "quillby_get_plan",
+    description: "Get the current hosted plan for this account.",
+    annotations: { readOnlyHint: true, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "quillby_share_workspace",
+    description: "Grant another hosted user access to one of your workspaces.",
+    annotations: { destructiveHint: false },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceId: { type: "string" },
+        granteeUserId: { type: "string" },
+        role: { type: "string", enum: ["viewer", "editor"] },
+      },
+      required: ["workspaceId", "granteeUserId", "role"],
+    },
+  },
+  {
+    name: "quillby_revoke_access",
+    description: "Revoke another hosted user's access to one of your workspaces.",
+    annotations: { destructiveHint: false, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceId: { type: "string" },
+        granteeUserId: { type: "string" },
+      },
+      required: ["workspaceId", "granteeUserId"],
+    },
+  },
+  {
+    name: "quillby_list_workspace_access",
+    description: "List users who have access to one of your hosted workspaces.",
+    annotations: { readOnlyHint: true, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceId: { type: "string" },
+      },
+      required: ["workspaceId"],
+    },
+  },
+  {
     name: "quillby_set_context",
     description: "Save the user content creator profile after onboarding.",
     annotations: { destructiveHint: false, idempotentHint: true },
@@ -130,6 +179,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
         context: {
           type: "object",
           properties: {
@@ -154,7 +204,12 @@ const TOOLS: Tool[] = [
     description: "Load the saved user profile.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
+      },
+    },
   },
 
   // ── Feeds ─────────────────────────────────────────────────────────────────
@@ -201,7 +256,12 @@ const TOOLS: Tool[] = [
     description: "List all configured RSS feed URLs.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
+      },
+    },
   },
 
   // ── Fetch & Research ──────────────────────────────────────────────────────
@@ -282,7 +342,12 @@ const TOOLS: Tool[] = [
       "Open the most recent Quillby Briefing instantly from saved workspace state — no network calls, no Sampling. Always call this first when the user opens Quillby or asks to see their brief. Falls back with a clear message if no Briefing has been generated yet.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
+      },
+    },
   },
 
   // ── Cards ─────────────────────────────────────────────────────────────────
@@ -294,6 +359,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
         cards: {
           type: "array",
           items: {
@@ -329,6 +395,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
         limit: { type: "number", description: "Max cards to return." },
         minScore: { type: "number", description: "Filter cards at or above this relevance score (0–10)." },
       },
@@ -341,7 +408,10 @@ const TOOLS: Tool[] = [
     outputSchema: { type: "object" as const },
     inputSchema: {
       type: "object",
-      properties: { cardId: { type: "number" } },
+      properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
+        cardId: { type: "number" },
+      },
       required: ["cardId"],
     },
   },
@@ -355,6 +425,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
         content: { type: "string" },
         platform: { type: "string", description: "linkedin, x, instagram, threads, blog, newsletter, medium" },
         cardId: { type: "number" },
@@ -368,7 +439,12 @@ const TOOLS: Tool[] = [
     description: "List saved draft posts for the current workspace, most recent first.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
+      },
+    },
   },
 
   // ── Card curation ─────────────────────────────────────────────────────────
@@ -381,6 +457,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
         cardId: { type: "number", description: "Structure card ID to curate." },
         action: {
           type: "string",
@@ -420,6 +497,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
         entries: {
           type: "array",
           items: { type: "string" },
@@ -442,6 +520,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
         memoryType: {
           type: "string",
           enum: Object.keys(MEMORY_TYPES),
@@ -522,6 +601,12 @@ async function handleToolCall(
   };
 
   try {
+    const resolveStorage = async (): Promise<WorkspaceStorage> => {
+      const workspaceId = typeof args.workspaceId === "string" ? args.workspaceId : undefined;
+      if (!workspaceId) return storage;
+      return storage.withWorkspace(workspaceId);
+    };
+
     switch (name) {
       case "quillby_list_workspaces": {
         const currentWorkspaceId = await storage.getCurrentWorkspaceId();
@@ -564,34 +649,66 @@ async function handleToolCall(
       }
 
       case "quillby_get_workspace": {
-        const currentId = await storage.getCurrentWorkspaceId();
-        const workspaceId = (args as { workspaceId?: string }).workspaceId ?? currentId;
-        const workspace = await storage.loadWorkspace(workspaceId);
-        if (!workspace) {
-          return { content: [{ type: "text" as const, text: `Workspace "${workspaceId}" not found.` }], structuredContent: { error: "not_found", workspaceId } };
-        }
-        const isCurrent = workspace.id === currentId;
-        const ctx = isCurrent ? await storage.loadContext() : null;
-        const mem = isCurrent ? await storage.loadTypedMemory() : null;
-        const feedCount = isCurrent ? (await storage.loadSources()).length : null;
+        const activeStorage = await resolveStorage();
+        const workspace = await activeStorage.getCurrentWorkspace();
+        const [ctx, mem, sources] = await Promise.all([
+          activeStorage.loadContext(),
+          activeStorage.loadTypedMemory(),
+          activeStorage.loadSources(),
+        ]);
         return {
           content: [{
             type: "text" as const,
             text: JSON.stringify({
               workspace,
-              current: isCurrent,
+              current: true,
               context: ctx,
               memory: mem,
-              feedCount,
+              feedCount: sources.length,
             }, null, 2),
           }],
           structuredContent: {
             workspace,
-            current: isCurrent,
+            current: true,
             context: ctx,
             memory: mem,
-            feedCount,
+            feedCount: sources.length,
           },
+        };
+      }
+
+      case "quillby_get_plan": {
+        const plan = await storage.getPlan();
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ plan }, null, 2) }],
+          structuredContent: { plan },
+        };
+      }
+
+      case "quillby_share_workspace": {
+        const { workspaceId, granteeUserId, role } = args as { workspaceId: string; granteeUserId: string; role: "viewer" | "editor" };
+        await storage.shareWorkspace(workspaceId, granteeUserId, role);
+        return {
+          content: [{ type: "text" as const, text: `Granted ${role} access to ${granteeUserId} on workspace "${workspaceId}".` }],
+          structuredContent: { workspaceId, granteeUserId, role, shared: true },
+        };
+      }
+
+      case "quillby_revoke_access": {
+        const { workspaceId, granteeUserId } = args as { workspaceId: string; granteeUserId: string };
+        await storage.revokeAccess(workspaceId, granteeUserId);
+        return {
+          content: [{ type: "text" as const, text: `Revoked access for ${granteeUserId} on workspace "${workspaceId}".` }],
+          structuredContent: { workspaceId, granteeUserId, revoked: true },
+        };
+      }
+
+      case "quillby_list_workspace_access": {
+        const { workspaceId } = args as { workspaceId: string };
+        const access = await storage.listWorkspaceAccess(workspaceId);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ workspaceId, count: access.length, access }, null, 2) }],
+          structuredContent: { workspaceId, count: access.length, access },
         };
       }
 
@@ -697,9 +814,10 @@ async function handleToolCall(
       }
 
       case "quillby_set_context": {
+        const activeStorage = await resolveStorage();
         const context = UserContextSchema.parse((args as { context: unknown }).context);
-        await storage.saveContext(context);
-        const setCtxWs = await storage.getCurrentWorkspace();
+        await activeStorage.saveContext(context);
+        const setCtxWs = await activeStorage.getCurrentWorkspace();
         return {
           content: [{ type: "text" as const, text: `Context saved for workspace "${setCtxWs.name}". Role: ${context.role}. Topics: ${context.topics.join(", ")}. Platforms: ${context.platforms.join(", ")}.` }],
           structuredContent: { saved: true, workspaceId: setCtxWs.id, role: context.role, topics: context.topics, platforms: context.platforms },
@@ -707,11 +825,12 @@ async function handleToolCall(
       }
 
       case "quillby_get_context": {
-        if (!await storage.contextExists()) {
+        const activeStorage = await resolveStorage();
+        if (!await activeStorage.contextExists()) {
           return { content: [{ type: "text" as const, text: "No context saved for this workspace yet. Start by setting up Quillby for it." }], structuredContent: { error: "no_context" } };
         }
-        const ctxData = (await storage.loadContext())!;
-        const getCtxWs = await storage.getCurrentWorkspace();
+        const ctxData = (await activeStorage.loadContext())!;
+        const getCtxWs = await activeStorage.getCurrentWorkspace();
         return {
           content: [{ type: "text" as const, text: JSON.stringify({ workspace: getCtxWs, context: ctxData }, null, 2) }],
           structuredContent: { workspace: getCtxWs, context: ctxData },
@@ -787,7 +906,8 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
       }
 
       case "quillby_list_feeds": {
-        const sources = await storage.loadSources();
+        const activeStorage = await resolveStorage();
+        const sources = await activeStorage.loadSources();
         const listFeedsResult = { count: sources.length, feeds: sources };
         return {
           content: [{ type: "text" as const, text: sources.length ? JSON.stringify(listFeedsResult, null, 2) : "No feeds configured. Use quillby_add_feeds." }],
@@ -827,9 +947,10 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
       }
 
       case "quillby_open_briefing": {
+        const activeStorage = await resolveStorage();
         const [workspace, hasBriefing] = await Promise.all([
-          storage.getCurrentWorkspace(),
-          storage.latestHarvestExists(),
+          activeStorage.getCurrentWorkspace(),
+          activeStorage.latestHarvestExists(),
         ]);
         if (!hasBriefing) {
           return {
@@ -838,8 +959,8 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
           };
         }
         const [bundle, ctx] = await Promise.all([
-          storage.loadLatestHarvest(),
-          storage.loadContext(),
+          activeStorage.loadLatestHarvest(),
+          activeStorage.loadContext(),
         ]);
         const curation = bundle.curationState ?? {};
         const sorted = [...bundle.cards].sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
@@ -885,21 +1006,23 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
       }
 
       case "quillby_save_cards": {
+        const activeStorage = await resolveStorage();
         const { cards: rawCards } = args as { cards: unknown[] };
         const cards = rawCards.map((c) => CardInputSchema.parse(c));
         if (cards.length === 0) {
           return { content: [{ type: "text" as const, text: "No cards provided." }], structuredContent: { saved: 0 } };
         }
-        const outputDir = await storage.saveHarvestOutput(cards, new Set());
+        const outputDir = await activeStorage.saveHarvestOutput(cards, new Set());
         return { content: [{ type: "text" as const, text: `Saved ${cards.length} card(s) to ${outputDir}.` }], structuredContent: { saved: cards.length, outputDir } };
       }
 
       case "quillby_list_cards": {
-        if (!await storage.latestHarvestExists()) {
+        const activeStorage = await resolveStorage();
+        if (!await activeStorage.latestHarvestExists()) {
           return { content: [{ type: "text" as const, text: "No harvest found. Fetch articles and save cards first." }], structuredContent: { error: "no_harvest" } };
         }
         const { limit, minScore } = args as { limit?: number; minScore?: number };
-        const bundle = await storage.loadLatestHarvest();
+        const bundle = await activeStorage.loadLatestHarvest();
         let cards = bundle.cards;
         if (minScore != null) {
           cards = cards.filter((c) => (c.relevanceScore ?? 0) >= minScore);
@@ -1171,11 +1294,12 @@ Return ONLY a valid JSON array of these objects, no prose.`;
       }
 
       case "quillby_get_card": {
-        if (!await storage.latestHarvestExists()) {
+        const activeStorage = await resolveStorage();
+        if (!await activeStorage.latestHarvestExists()) {
           return { content: [{ type: "text" as const, text: "No harvest found." }], structuredContent: { error: "no_harvest" } };
         }
         const { cardId } = args as { cardId: number };
-        const bundle = await storage.loadLatestHarvest();
+        const bundle = await activeStorage.loadLatestHarvest();
         const card = bundle.cards.find((c) => c.id === cardId);
         if (!card) {
           return { content: [{ type: "text" as const, text: `Card #${cardId} not found. Available: ${bundle.cards.map((c) => c.id).join(", ")}.` }], structuredContent: { error: "not_found", cardId } };
@@ -1184,9 +1308,10 @@ Return ONLY a valid JSON array of these objects, no prose.`;
       }
 
       case "quillby_save_draft": {
+        const activeStorage = await resolveStorage();
         const { content, platform, cardId, addToVoiceExamples } = args as { content: string; platform: string; cardId?: number; addToVoiceExamples?: boolean };
-        const filePath = await storage.saveDraft(content, platform, cardId);
-        if (addToVoiceExamples) await storage.appendTypedMemory("voiceExamples", [content], 10);
+        const filePath = await activeStorage.saveDraft(content, platform, cardId);
+        if (addToVoiceExamples) await activeStorage.appendTypedMemory("voiceExamples", [content], 10);
         const savedMsg = addToVoiceExamples
           ? `Draft saved to ${filePath}. Added to voice memory.`
           : `Draft saved to ${filePath}.`;
@@ -1194,7 +1319,8 @@ Return ONLY a valid JSON array of these objects, no prose.`;
       }
 
       case "quillby_list_drafts": {
-        const drafts = await storage.listDrafts();
+        const activeStorage = await resolveStorage();
+        const drafts = await activeStorage.listDrafts();
         const listDraftsResult = { count: drafts.length, drafts };
         return {
           content: [{ type: "text" as const, text: drafts.length ? JSON.stringify(listDraftsResult, null, 2) : "No saved drafts for this workspace yet." }],
@@ -1203,11 +1329,12 @@ Return ONLY a valid JSON array of these objects, no prose.`;
       }
 
       case "quillby_curate_card": {
+        const activeStorage = await resolveStorage();
         const { cardId: curateId, action } = args as { cardId: number; action: "shortlist" | "approve" | "skip" | "clear" };
-        if (!await storage.latestHarvestExists()) {
+        if (!await activeStorage.latestHarvestExists()) {
           return { content: [{ type: "text" as const, text: "No harvest found. Save cards first." }], structuredContent: { error: "no_harvest" } };
         }
-        const curateBundle = await storage.loadLatestHarvest();
+        const curateBundle = await activeStorage.loadLatestHarvest();
         const curateCard = curateBundle.cards.find((c) => c.id === curateId);
         if (!curateCard) {
           return { content: [{ type: "text" as const, text: `Card #${curateId} not found. Available: ${curateBundle.cards.map((c) => c.id).join(", ")}.` }], structuredContent: { error: "not_found", cardId: curateId } };
@@ -1221,9 +1348,9 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         if (action === "clear") {
           const cleared = { ...(curateBundle.curationState ?? {}) };
           delete cleared[key];
-          await storage.saveCurationState(cleared as Record<string, "shortlisted" | "approved" | "skipped">);
+          await activeStorage.saveCurationState(cleared as Record<string, "shortlisted" | "approved" | "skipped">);
         } else {
-          await storage.saveCurationState({ [key]: statusMap[action] });
+          await activeStorage.saveCurationState({ [key]: statusMap[action] });
         }
         const newStatus = action === "clear" ? "cleared" : statusMap[action];
         return {
@@ -1305,17 +1432,18 @@ ${guide}
       }
 
       case "quillby_remember": {
+        const activeStorage = await resolveStorage();
         const { entries, memoryType = "voice_examples" } = args as {
           entries: string[];
           memoryType?: MemoryTypeInput;
         };
         const resolvedType = MEMORY_TYPES[memoryType];
-        await storage.appendTypedMemory(
+        await activeStorage.appendTypedMemory(
           resolvedType,
           entries,
           resolvedType === "voiceExamples" ? 10 : undefined
         );
-        const remWs = await storage.getCurrentWorkspace();
+        const remWs = await activeStorage.getCurrentWorkspace();
         return {
           content: [{ type: "text" as const, text: `Added ${entries.length} item(s) to ${memoryType} in workspace "${remWs.name}".` }],
           structuredContent: { added: entries.length, memoryType, workspaceId: remWs.id },
@@ -1323,8 +1451,9 @@ ${guide}
       }
 
       case "quillby_get_memory": {
+        const activeStorage = await resolveStorage();
         const { memoryType } = args as { memoryType?: MemoryTypeInput };
-        const [typedMemoryGet, getMemWs] = await Promise.all([storage.loadTypedMemory(), storage.getCurrentWorkspace()]);
+        const [typedMemoryGet, getMemWs] = await Promise.all([activeStorage.loadTypedMemory(), activeStorage.getCurrentWorkspace()]);
         if (!memoryType) {
           return {
             content: [{ type: "text" as const, text: JSON.stringify({ workspace: getMemWs, memory: typedMemoryGet }, null, 2) }],

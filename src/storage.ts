@@ -50,6 +50,7 @@ import {
   hostedWorkspaceSeenUrls,
   hostedWorkspaceHarvest,
   hostedWorkspaceDraft,
+  hostedWorkspaceAccess,
 } from "./db/schema.js";
 import { eq, and } from "drizzle-orm";
 import { ensureHostedTables } from "./db/migrate-hosted.js";
@@ -121,6 +122,16 @@ export interface WorkspaceStorage {
   saveDraft(content: string, platform: string, cardId?: number): Promise<string>;
   saveCurationState(state: Record<string, CurationStatus>): Promise<void>;
   listDrafts(): Promise<DraftSummary[]>;
+  /** Return a storage view scoped to a specific workspace without changing the global selection. */
+  withWorkspace(workspaceId: string): Promise<WorkspaceStorage>;
+  /** Subscription plan. Always "free" in local mode. */
+  getPlan(): Promise<"free" | "pro">;
+  /** Grant another user access to a workspace. Hosted only. */
+  shareWorkspace(workspaceId: string, granteeUserId: string, role: "viewer" | "editor"): Promise<void>;
+  /** Revoke another user's access to a workspace. Hosted only. */
+  revokeAccess(workspaceId: string, granteeUserId: string): Promise<void>;
+  /** List users who have been granted access to a workspace. Hosted only. */
+  listWorkspaceAccess(workspaceId: string): Promise<Array<{ userId: string; role: string }>>;
 }
 
 export type { DraftSummary };
@@ -153,9 +164,59 @@ export class LocalWorkspaceStorage implements WorkspaceStorage {
   async saveDraft(content: string, platform: string, cardId?: number) { return structsSaveDraft(content, platform, cardId); }
   async saveCurationState(state: Record<string, CurationStatus>) { structsSaveCurationState(state); }
   async listDrafts() { return structsListLocalDrafts(); }
+
+  async withWorkspace(id: string): Promise<WorkspaceStorage> {
+    if (!await this.workspaceExists(id)) throw new Error(`Workspace "${id}" not found.`);
+    return new LocalPinnedStorage(id);
+  }
+  async getPlan(): Promise<"free" | "pro"> { return "free"; }
+  async shareWorkspace(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
+  async revokeAccess(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
+  async listWorkspaceAccess(): Promise<Array<{ userId: string; role: string }>> { return []; }
 }
 
 export const storage = new LocalWorkspaceStorage();
+
+// ── Pinned local storage (per-tool workspace override for local mode) ─────────
+
+class LocalPinnedStorage implements WorkspaceStorage {
+  constructor(private readonly pinnedId: string) {}
+
+  async listWorkspaces() { return wsListWorkspaces(); }
+  async workspaceExists(id: string) { return wsWorkspaceExists(id); }
+  async loadWorkspace(id: string) { return wsLoadWorkspace(id); }
+  async createWorkspace(input: CreateWorkspaceInput) { return wsCreateWorkspace(input); }
+  async getCurrentWorkspaceId() { return this.pinnedId; }
+  async getCurrentWorkspace() { return wsLoadWorkspace(this.pinnedId) ?? wsGetCurrentWorkspace(); }
+  async setCurrentWorkspace(): Promise<WorkspaceMetadata> { throw new Error("Cannot switch workspace on a pinned storage view."); }
+  async touchWorkspace(id: string) { wsTouchWorkspace(id); }
+  async contextExists() { return workspaceContextExists(this.pinnedId); }
+  async loadContext() { return loadWorkspaceContext(this.pinnedId); }
+  async saveContext(ctx: UserContext) { saveWorkspaceContext(this.pinnedId, ctx); }
+  async loadTypedMemory() { return wsLoadTypedMemory(this.pinnedId); }
+  async appendTypedMemory(type: keyof TypedMemory, entries: string[], limit?: number) {
+    wsAppendTypedMemory(this.pinnedId, type, entries, limit);
+  }
+  async loadSources() { return wsLoadSources(this.pinnedId); }
+  async appendSources(urls: string[]) { return wsAppendSources(this.pinnedId, urls); }
+  async getSeenUrls() { return wsGetSeenUrls(this.pinnedId); }
+  async saveSeenUrls(urls: Set<string>) { wsSaveSeenUrls(this.pinnedId, urls); }
+  async loadLatestHarvest() { return structsLoadLatest(this.pinnedId); }
+  async latestHarvestExists() { return structsLatestExists(this.pinnedId); }
+  async saveHarvestOutput(cards: CardInput[], seenUrls: Set<string>) { return structsSaveHarvest(cards, seenUrls, this.pinnedId); }
+  async saveDraft(content: string, platform: string, cardId?: number) { return structsSaveDraft(content, platform, cardId, this.pinnedId); }
+  async saveCurationState(state: Record<string, CurationStatus>) { structsSaveCurationState(state, this.pinnedId); }
+  async listDrafts() { return structsListLocalDrafts(this.pinnedId); }
+
+  async withWorkspace(id: string): Promise<WorkspaceStorage> {
+    if (!await this.workspaceExists(id)) throw new Error(`Workspace "${id}" not found.`);
+    return new LocalPinnedStorage(id);
+  }
+  async getPlan(): Promise<"free" | "pro"> { return "free"; }
+  async shareWorkspace(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
+  async revokeAccess(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
+  async listWorkspaceAccess(): Promise<Array<{ userId: string; role: string }>> { return []; }
+}
 
 // ── Scoped filesystem storage (wraps each call in a QUILLBY_HOME swap) ───────
 // Kept for reference but not used in hosted mode after v0.8.
@@ -196,6 +257,16 @@ class ScopedWorkspaceStorage implements WorkspaceStorage {
   async listDrafts() {
     return withScopedHome(this.homeDir, () => structsListLocalDrafts());
   }
+
+  async withWorkspace(id: string): Promise<WorkspaceStorage> {
+    const exists = await withScopedHome(this.homeDir, () => wsWorkspaceExists(id));
+    if (!exists) throw new Error(`Workspace "${id}" not found.`);
+    return new ScopedWorkspaceStorage(this.homeDir); // scoped home already pins the env; caller switches via setCurrentWorkspace
+  }
+  async getPlan(): Promise<"free" | "pro"> { return "free"; }
+  async shareWorkspace(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
+  async revokeAccess(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
+  async listWorkspaceAccess(): Promise<Array<{ userId: string; role: string }>> { return []; }
 }
 
 // ── Database-backed hosted storage (HTTP mode, v0.8+) ────────────────────────
@@ -204,11 +275,18 @@ class ScopedWorkspaceStorage implements WorkspaceStorage {
 
 export class HostedDbWorkspaceStorage implements WorkspaceStorage {
   private initPromise: Promise<void> | null = null;
+  /** Set by withWorkspace() to override the active workspace without mutating DB state. */
+  _workspaceIdOverride?: string;
+  /** Set by withWorkspace() when the pinned workspace belongs to another user (shared access). */
+  _ownerUserId?: string;
 
   constructor(
     private readonly userId: string,
     private readonly db: QuillbyDb = defaultDb
   ) {}
+
+  /** The user whose data rows are read/written for content operations. */
+  private get _effectiveUserId(): string { return this._ownerUserId ?? this.userId; }
 
   private async ensureInit(): Promise<void> {
     if (!this.initPromise) {
@@ -278,12 +356,30 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
 
   async listWorkspaces(): Promise<WorkspaceMetadata[]> {
     await this.ensureInit();
-    const rows = await this.db
+    const owned = await this.db
       .select()
       .from(hostedWorkspaceTable)
       .where(eq(hostedWorkspaceTable.userId, this.userId))
       .orderBy(hostedWorkspaceTable.name);
-    return rows.map((r) => this.rowToMetadata(r));
+    // Include workspaces shared with this user by other owners.
+    const shared = await this.db
+      .select({
+        workspaceId: hostedWorkspaceTable.workspaceId,
+        name: hostedWorkspaceTable.name,
+        description: hostedWorkspaceTable.description,
+        createdAt: hostedWorkspaceTable.createdAt,
+        updatedAt: hostedWorkspaceTable.updatedAt,
+      })
+      .from(hostedWorkspaceAccess)
+      .innerJoin(
+        hostedWorkspaceTable,
+        and(
+          eq(hostedWorkspaceTable.userId, hostedWorkspaceAccess.ownerUserId),
+          eq(hostedWorkspaceTable.workspaceId, hostedWorkspaceAccess.workspaceId)
+        )
+      )
+      .where(eq(hostedWorkspaceAccess.granteeUserId, this.userId));
+    return [...owned, ...shared].map((r) => this.rowToMetadata(r));
   }
 
   async workspaceExists(id: string): Promise<boolean> {
@@ -322,6 +418,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
   }
 
   async getCurrentWorkspaceId(): Promise<string> {
+    if (this._workspaceIdOverride) return this._workspaceIdOverride;
     await this.ensureInit();
     const rows = await this.db
       .select({ id: hostedUserState.currentWorkspaceId })
@@ -366,7 +463,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const rows = await this.db
       .select({ data: hostedWorkspaceContext.data })
       .from(hostedWorkspaceContext)
-      .where(and(eq(hostedWorkspaceContext.userId, this.userId), eq(hostedWorkspaceContext.workspaceId, currentId)))
+      .where(and(eq(hostedWorkspaceContext.userId, this._effectiveUserId), eq(hostedWorkspaceContext.workspaceId, currentId)))
       .limit(1);
     return rows.length > 0;
   }
@@ -377,7 +474,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const rows = await this.db
       .select({ data: hostedWorkspaceContext.data })
       .from(hostedWorkspaceContext)
-      .where(and(eq(hostedWorkspaceContext.userId, this.userId), eq(hostedWorkspaceContext.workspaceId, currentId)))
+      .where(and(eq(hostedWorkspaceContext.userId, this._effectiveUserId), eq(hostedWorkspaceContext.workspaceId, currentId)))
       .limit(1);
     if (rows.length === 0) return null;
     try { return UserContextSchema.parse(JSON.parse(rows[0].data)); } catch { return null; }
@@ -389,7 +486,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const data = JSON.stringify(UserContextSchema.parse(ctx));
     await this.db
       .insert(hostedWorkspaceContext)
-      .values({ userId: this.userId, workspaceId: currentId, data, updatedAt: new Date() })
+      .values({ userId: this._effectiveUserId, workspaceId: currentId, data, updatedAt: new Date() })
       .onConflictDoUpdate({
         target: [hostedWorkspaceContext.userId, hostedWorkspaceContext.workspaceId],
         set: { data, updatedAt: new Date() },
@@ -403,7 +500,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const rows = await this.db
       .select({ data: hostedWorkspaceMemory.data })
       .from(hostedWorkspaceMemory)
-      .where(and(eq(hostedWorkspaceMemory.userId, this.userId), eq(hostedWorkspaceMemory.workspaceId, currentId)))
+      .where(and(eq(hostedWorkspaceMemory.userId, this._effectiveUserId), eq(hostedWorkspaceMemory.workspaceId, currentId)))
       .limit(1);
     if (rows.length === 0) return TypedMemorySchema.parse({});
     try { return TypedMemorySchema.parse(JSON.parse(rows[0].data)); } catch { return TypedMemorySchema.parse({}); }
@@ -419,7 +516,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const data = JSON.stringify(TypedMemorySchema.parse({ ...current, [type]: next }));
     await this.db
       .insert(hostedWorkspaceMemory)
-      .values({ userId: this.userId, workspaceId: currentId, data, updatedAt: new Date() })
+      .values({ userId: this._effectiveUserId, workspaceId: currentId, data, updatedAt: new Date() })
       .onConflictDoUpdate({
         target: [hostedWorkspaceMemory.userId, hostedWorkspaceMemory.workspaceId],
         set: { data, updatedAt: new Date() },
@@ -433,7 +530,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const rows = await this.db
       .select({ urls: hostedWorkspaceSources.urls })
       .from(hostedWorkspaceSources)
-      .where(and(eq(hostedWorkspaceSources.userId, this.userId), eq(hostedWorkspaceSources.workspaceId, currentId)))
+      .where(and(eq(hostedWorkspaceSources.userId, this._effectiveUserId), eq(hostedWorkspaceSources.workspaceId, currentId)))
       .limit(1);
     if (rows.length === 0) return [];
     try { return JSON.parse(rows[0].urls) as string[]; } catch { return []; }
@@ -449,7 +546,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const urls = JSON.stringify([...existing, ...toAdd]);
     await this.db
       .insert(hostedWorkspaceSources)
-      .values({ userId: this.userId, workspaceId: currentId, urls })
+      .values({ userId: this._effectiveUserId, workspaceId: currentId, urls })
       .onConflictDoUpdate({
         target: [hostedWorkspaceSources.userId, hostedWorkspaceSources.workspaceId],
         set: { urls },
@@ -464,7 +561,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const rows = await this.db
       .select({ urls: hostedWorkspaceSeenUrls.urls })
       .from(hostedWorkspaceSeenUrls)
-      .where(and(eq(hostedWorkspaceSeenUrls.userId, this.userId), eq(hostedWorkspaceSeenUrls.workspaceId, currentId)))
+      .where(and(eq(hostedWorkspaceSeenUrls.userId, this._effectiveUserId), eq(hostedWorkspaceSeenUrls.workspaceId, currentId)))
       .limit(1);
     if (rows.length === 0) return new Set();
     try { return new Set(JSON.parse(rows[0].urls) as string[]); } catch { return new Set(); }
@@ -476,7 +573,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const data = JSON.stringify([...urls]);
     await this.db
       .insert(hostedWorkspaceSeenUrls)
-      .values({ userId: this.userId, workspaceId: currentId, urls: data })
+      .values({ userId: this._effectiveUserId, workspaceId: currentId, urls: data })
       .onConflictDoUpdate({
         target: [hostedWorkspaceSeenUrls.userId, hostedWorkspaceSeenUrls.workspaceId],
         set: { urls: data },
@@ -489,7 +586,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const rows = await this.db
       .select({ id: hostedWorkspaceHarvest.workspaceId })
       .from(hostedWorkspaceHarvest)
-      .where(and(eq(hostedWorkspaceHarvest.userId, this.userId), eq(hostedWorkspaceHarvest.workspaceId, currentId)))
+      .where(and(eq(hostedWorkspaceHarvest.userId, this._effectiveUserId), eq(hostedWorkspaceHarvest.workspaceId, currentId)))
       .limit(1);
     return rows.length > 0;
   }
@@ -500,7 +597,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const rows = await this.db
       .select({ data: hostedWorkspaceHarvest.data })
       .from(hostedWorkspaceHarvest)
-      .where(and(eq(hostedWorkspaceHarvest.userId, this.userId), eq(hostedWorkspaceHarvest.workspaceId, currentId)))
+      .where(and(eq(hostedWorkspaceHarvest.userId, this._effectiveUserId), eq(hostedWorkspaceHarvest.workspaceId, currentId)))
       .limit(1);
     if (rows.length === 0) {
       throw new Error("No harvest found. Run quillby_fetch_articles then quillby_save_cards first.");
@@ -527,7 +624,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const now = new Date();
     await this.db
       .insert(hostedWorkspaceHarvest)
-      .values({ userId: this.userId, workspaceId: currentId, data, generatedAt: now })
+      .values({ userId: this._effectiveUserId, workspaceId: currentId, data, generatedAt: now })
       .onConflictDoUpdate({
         target: [hostedWorkspaceHarvest.userId, hostedWorkspaceHarvest.workspaceId],
         set: { data, generatedAt: now },
@@ -542,7 +639,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const id = randomUUID();
     await this.db.insert(hostedWorkspaceDraft).values({
       id,
-      userId: this.userId,
+      userId: this._effectiveUserId,
       workspaceId: currentId,
       platform: platform.toLowerCase(),
       cardId: cardId ?? null,
@@ -558,7 +655,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const rows = await this.db
       .select({ data: hostedWorkspaceHarvest.data })
       .from(hostedWorkspaceHarvest)
-      .where(and(eq(hostedWorkspaceHarvest.userId, this.userId), eq(hostedWorkspaceHarvest.workspaceId, currentId)))
+      .where(and(eq(hostedWorkspaceHarvest.userId, this._effectiveUserId), eq(hostedWorkspaceHarvest.workspaceId, currentId)))
       .limit(1);
     if (rows.length === 0) throw new Error("No harvest found. Save cards first before curating.");
     const bundle = HarvestBundleSchema.parse(JSON.parse(rows[0].data));
@@ -568,7 +665,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     await this.db
       .update(hostedWorkspaceHarvest)
       .set({ data: updated, generatedAt: now })
-      .where(and(eq(hostedWorkspaceHarvest.userId, this.userId), eq(hostedWorkspaceHarvest.workspaceId, currentId)));
+      .where(and(eq(hostedWorkspaceHarvest.userId, this._effectiveUserId), eq(hostedWorkspaceHarvest.workspaceId, currentId)));
   }
 
   async listDrafts(): Promise<DraftSummary[]> {
@@ -577,7 +674,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
     const rows = await this.db
       .select()
       .from(hostedWorkspaceDraft)
-      .where(and(eq(hostedWorkspaceDraft.userId, this.userId), eq(hostedWorkspaceDraft.workspaceId, currentId)))
+      .where(and(eq(hostedWorkspaceDraft.userId, this._effectiveUserId), eq(hostedWorkspaceDraft.workspaceId, currentId)))
       .orderBy(hostedWorkspaceDraft.createdAt);
     return rows.map((r) => ({
       id: r.id,
@@ -586,6 +683,82 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
       createdAt: (r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt)).toISOString(),
       preview: r.content.slice(0, 200).replace(/\n+/g, " ").trim(),
     })).reverse();
+  }
+
+  async withWorkspace(id: string): Promise<WorkspaceStorage> {
+    await this.ensureInit();
+    // Check if this user owns the workspace.
+    const owned = await this.workspaceExists(id);
+    if (owned) {
+      const scoped = new HostedDbWorkspaceStorage(this.userId, this.db);
+      scoped._workspaceIdOverride = id;
+      scoped.initPromise = this.initPromise;
+      return scoped;
+    }
+    // Check if the workspace has been shared with this user.
+    const access = await this.db
+      .select()
+      .from(hostedWorkspaceAccess)
+      .where(and(eq(hostedWorkspaceAccess.workspaceId, id), eq(hostedWorkspaceAccess.granteeUserId, this.userId)))
+      .limit(1);
+    if (access.length === 0) throw new Error(`Workspace "${id}" not found or not accessible.`);
+    const scoped = new HostedDbWorkspaceStorage(this.userId, this.db);
+    scoped._workspaceIdOverride = id;
+    scoped._ownerUserId = access[0].ownerUserId;
+    scoped.initPromise = this.initPromise;
+    return scoped;
+  }
+
+  async getPlan(): Promise<"free" | "pro"> {
+    await this.ensureInit();
+    const rows = await this.db
+      .select({ plan: hostedUserState.plan })
+      .from(hostedUserState)
+      .where(eq(hostedUserState.userId, this.userId))
+      .limit(1);
+    return ((rows[0]?.plan ?? "free") as "free" | "pro");
+  }
+
+  async shareWorkspace(workspaceId: string, granteeUserId: string, role: "viewer" | "editor"): Promise<void> {
+    await this.ensureInit();
+    if (!await this.workspaceExists(workspaceId)) {
+      throw new Error(`Workspace "${workspaceId}" not found or you do not own it.`);
+    }
+    await this.db
+      .insert(hostedWorkspaceAccess)
+      .values({ ownerUserId: this.userId, workspaceId, granteeUserId, role, createdAt: new Date() })
+      .onConflictDoUpdate({
+        target: [hostedWorkspaceAccess.ownerUserId, hostedWorkspaceAccess.workspaceId, hostedWorkspaceAccess.granteeUserId],
+        set: { role },
+      });
+  }
+
+  async revokeAccess(workspaceId: string, granteeUserId: string): Promise<void> {
+    await this.ensureInit();
+    if (!await this.workspaceExists(workspaceId)) {
+      throw new Error(`Workspace "${workspaceId}" not found or you do not own it.`);
+    }
+    await this.db
+      .delete(hostedWorkspaceAccess)
+      .where(
+        and(
+          eq(hostedWorkspaceAccess.ownerUserId, this.userId),
+          eq(hostedWorkspaceAccess.workspaceId, workspaceId),
+          eq(hostedWorkspaceAccess.granteeUserId, granteeUserId)
+        )
+      );
+  }
+
+  async listWorkspaceAccess(workspaceId: string): Promise<Array<{ userId: string; role: string }>> {
+    await this.ensureInit();
+    if (!await this.workspaceExists(workspaceId)) {
+      throw new Error(`Workspace "${workspaceId}" not found or you do not own it.`);
+    }
+    const rows = await this.db
+      .select({ userId: hostedWorkspaceAccess.granteeUserId, role: hostedWorkspaceAccess.role })
+      .from(hostedWorkspaceAccess)
+      .where(and(eq(hostedWorkspaceAccess.ownerUserId, this.userId), eq(hostedWorkspaceAccess.workspaceId, workspaceId)));
+    return rows;
   }
 }
 

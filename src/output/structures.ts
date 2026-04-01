@@ -4,8 +4,8 @@ import { ensureDir } from "../config.js";
 import { HarvestBundleSchema, CardInputSchema, type HarvestBundle, type StructureCard, type CardInput, type CurationStatus } from "../types.js";
 import { getCurrentWorkspaceId, getWorkspacePaths } from "../workspaces.js";
 
-function createTimestampedOutputDir(): string {
-  const paths = getWorkspacePaths(getCurrentWorkspaceId());
+function createTimestampedOutputDir(workspaceId: string): string {
+  const paths = getWorkspacePaths(workspaceId);
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
   const outputDir = path.join(paths.outputDir, timestamp);
   ensureDir(outputDir);
@@ -21,9 +21,10 @@ function createTimestampedOutputDir(): string {
   return outputDir;
 }
 
-export function saveHarvestOutput(rawCards: CardInput[], _seenUrls?: Set<string>): string {
-  const paths = getWorkspacePaths(getCurrentWorkspaceId());
-  const outputDir = createTimestampedOutputDir();
+export function saveHarvestOutput(rawCards: CardInput[], _seenUrls?: Set<string>, workspaceId?: string): string {
+  const wsId = workspaceId ?? getCurrentWorkspaceId();
+  const paths = getWorkspacePaths(wsId);
+  const outputDir = createTimestampedOutputDir(wsId);
   const dateLabel = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -97,8 +98,8 @@ function buildMarkdown(cards: StructureCard[], dateLabel: string): string {
   ].join("\n");
 }
 
-export function loadLatestHarvest(): HarvestBundle {
-  const paths = getWorkspacePaths(getCurrentWorkspaceId());
+export function loadLatestHarvest(workspaceId?: string): HarvestBundle {
+  const paths = getWorkspacePaths(workspaceId ?? getCurrentWorkspaceId());
   if (!fs.existsSync(paths.latestHarvestPointer)) {
     throw new Error(
       "No harvest found. Run quillby_fetch_articles then quillby_save_cards first."
@@ -114,8 +115,8 @@ export function loadLatestHarvest(): HarvestBundle {
   return HarvestBundleSchema.parse(raw);
 }
 
-export function latestHarvestExists(): boolean {
-  const paths = getWorkspacePaths(getCurrentWorkspaceId());
+export function latestHarvestExists(workspaceId?: string): boolean {
+  const paths = getWorkspacePaths(workspaceId ?? getCurrentWorkspaceId());
   if (!fs.existsSync(paths.latestHarvestPointer)) return false;
   const bundlePath = fs.readFileSync(paths.latestHarvestPointer, "utf-8").trim();
   return Boolean(bundlePath) && fs.existsSync(bundlePath);
@@ -124,9 +125,10 @@ export function latestHarvestExists(): boolean {
 export function saveDraft(
   content: string,
   platform: string,
-  cardId?: number
+  cardId?: number,
+  workspaceId?: string
 ): string {
-  const paths = getWorkspacePaths(getCurrentWorkspaceId());
+  const paths = getWorkspacePaths(workspaceId ?? getCurrentWorkspaceId());
   const bundlePath = fs.existsSync(paths.latestHarvestPointer)
     ? fs.readFileSync(paths.latestHarvestPointer, "utf-8").trim()
     : null;
@@ -140,9 +142,10 @@ export function saveDraft(
 }
 
 export function saveCurationState(
-  state: Record<string, CurationStatus>
+  state: Record<string, CurationStatus>,
+  workspaceId?: string
 ): void {
-  const paths = getWorkspacePaths(getCurrentWorkspaceId());
+  const paths = getWorkspacePaths(workspaceId ?? getCurrentWorkspaceId());
   if (!fs.existsSync(paths.latestHarvestPointer)) {
     throw new Error("No harvest found. Save cards first before curating.");
   }
@@ -165,8 +168,8 @@ export type DraftSummary = {
   preview: string;
 };
 
-export function listLocalDrafts(): DraftSummary[] {
-  const paths = getWorkspacePaths(getCurrentWorkspaceId());
+export function listLocalDrafts(workspaceId?: string): DraftSummary[] {
+  const paths = getWorkspacePaths(workspaceId ?? getCurrentWorkspaceId());
   const bundlePath = fs.existsSync(paths.latestHarvestPointer)
     ? fs.readFileSync(paths.latestHarvestPointer, "utf-8").trim()
     : null;
