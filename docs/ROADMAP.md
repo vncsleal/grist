@@ -146,15 +146,15 @@ Exit criteria:
 - Quillby can be added as a custom remote connector
 - workspace selection is clear in Claude
 
-### v1.0: Hosted Quillby
+### v1.0: Hosted Quillby ✓
 
 Goal: release the first supported hosted Quillby connector.
 
 Scope:
 
-- stable hosted MCP service
-- local mode still supported
-- explicit local-to-hosted migration or import path
+- stable hosted MCP service ✓
+- local mode still supported ✓
+- explicit local-to-hosted migration path (`npm run migrate`) ✓
 
 ### v1.1+: MCP App And Paid Tiers
 

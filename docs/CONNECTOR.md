@@ -51,7 +51,7 @@ Verify it is running:
 
 ```bash
 curl https://your-quillby.example.com/health
-# {"status":"ok","version":"0.9.0",...}
+# {"status":"ok","version":"1.0.0",...}
 ```
 
 ---
@@ -83,7 +83,38 @@ npm run keys revoke <keyId>
 
 ---
 
-## 3. Add Quillby to Claude.ai
+## 3. Migrate existing local data (optional)
+
+If you have been using Quillby locally (`~/.quillby`), you can copy your workspaces, context, memory, sources, and latest harvest into the hosted database — without losing any history.
+
+**Step 1 — make sure your `.env` points at the hosted DB:**
+
+```env
+QUILLBY_AUTH_DB_URL=libsql://quillby-<org>.turso.io
+LIBSQL_AUTH_TOKEN=<token>
+```
+
+**Step 2 — dry-run first to preview what will be migrated:**
+
+```bash
+npm run migrate -- <userId> --dry-run
+# Uses ~/.quillby by default; pass a path as second arg to use a different directory:
+npm run migrate -- <userId> /custom/path/.quillby --dry-run
+```
+
+**Step 3 — run live:**
+
+```bash
+npm run migrate -- <userId>
+```
+
+The script is **idempotent**: workspaces already in the hosted DB are silently skipped, so it is safe to re-run. Each migrated workspace preserves its original creation timestamp, context, memory, sources, seen-URL cache, and latest harvest bundle.
+
+> **Note:** migration only reads your local data — it does not modify or delete anything in `~/.quillby`.
+
+---
+
+## 4. Add Quillby to Claude.ai
 
 1. Open [claude.ai](https://claude.ai) in a browser.
 2. Go to **Settings → Integrations** (or **Connectors**, depending on your plan).
@@ -97,7 +128,7 @@ npm run keys revoke <keyId>
 
 ---
 
-## 4. First use
+## 5. First use
 
 Open a new Claude chat and say:
 

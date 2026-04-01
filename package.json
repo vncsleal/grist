@@ -1,6 +1,6 @@
 {
   "name": "@vncsleal/quillby",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "Quillby — AI copywriting assistant. Reads the internet and writes content in your voice.",
   "license": "MIT",
   "author": "Vinicius Leal",
@@ -47,7 +47,8 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "keys": "tsx scripts/manage-keys.ts"
+    "keys": "tsx scripts/manage-keys.ts",
+    "migrate": "tsx scripts/migrate-local-to-hosted.ts"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.5.6",

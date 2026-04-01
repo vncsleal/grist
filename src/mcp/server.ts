@@ -34,7 +34,7 @@ const MEMORY_TYPES = {
 
 type MemoryTypeInput = keyof typeof MEMORY_TYPES;
 
-const SERVER_INFO = { name: "quillby-mcp", version: "0.9.0" } as const;
+const SERVER_INFO = { name: "quillby-mcp", version: "1.0.0" } as const;
 
 function createMcpServer(): McpServer {
   return new McpServer(
@@ -1641,7 +1641,7 @@ if (TRANSPORT_MODE === "http") {
       // Health check — unauthenticated, fast
       // ------------------------------------------------------------------
       if (url.pathname === "/health" && req.method === "GET") {
-        const body = JSON.stringify({ status: "ok", version: "0.9.0", uptime: Math.floor(process.uptime()), sessions: sessions.size });
+        const body = JSON.stringify({ status: "ok", version: "1.0.0", uptime: Math.floor(process.uptime()), sessions: sessions.size });
         res.writeHead(200, { "Content-Type": "application/json" }).end(body);
         finish(200);
         return;
@@ -1655,7 +1655,7 @@ if (TRANSPORT_MODE === "http") {
           name: "Quillby",
           description: "Guided Research & Insight Synthesis Tool — RSS content intelligence MCP server. Fetches, scores, and structures articles into content cards for social media posts.",
           url: `${BASE_URL}/mcp`,
-          version: "0.9.0",
+          version: "1.0.0",
           capabilities: {
             streaming: true,
             pushNotifications: false,
