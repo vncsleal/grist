@@ -59,6 +59,31 @@ import { randomUUID } from "node:crypto";
 const DEFAULT_QUILLBY_HOME = `${process.env.HOME ?? ""}/.quillby`;
 const DEFAULT_WORKSPACE_ID = "default";
 
+type HostedPlan = "free" | "pro";
+type PlanLimits = {
+  maxOwnedWorkspaces: number | null;
+  maxDraftsPerWorkspace: number | null;
+  harvestCooldownMs: number | null;
+};
+
+const PLAN_LIMITS: Record<HostedPlan, PlanLimits> = {
+  free: {
+    maxOwnedWorkspaces: 3,
+    maxDraftsPerWorkspace: 20,
+    harvestCooldownMs: 30 * 60 * 1000,
+  },
+  pro: {
+    maxOwnedWorkspaces: null,
+    maxDraftsPerWorkspace: null,
+    harvestCooldownMs: null,
+  },
+};
+
+function isPlanEnforcementEnabled(): boolean {
+  const raw = (process.env.QUILLBY_ENFORCE_PLAN_LIMITS ?? "").trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
 function sanitizeUserId(userId: string): string {
   return userId
     .toLowerCase()
@@ -288,6 +313,70 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
   /** The user whose data rows are read/written for content operations. */
   private get _effectiveUserId(): string { return this._ownerUserId ?? this.userId; }
 
+  private async _limitsForCurrentUser(): Promise<PlanLimits> {
+    if (!isPlanEnforcementEnabled()) return PLAN_LIMITS.pro;
+    const plan = await this.getPlan();
+    return PLAN_LIMITS[plan];
+  }
+
+  private async _enforceOwnedWorkspaceLimit(): Promise<void> {
+    const limits = await this._limitsForCurrentUser();
+    if (limits.maxOwnedWorkspaces == null) return;
+    const rows = await this.db
+      .select({ id: hostedWorkspaceTable.workspaceId })
+      .from(hostedWorkspaceTable)
+      .where(eq(hostedWorkspaceTable.userId, this.userId));
+    if (rows.length >= limits.maxOwnedWorkspaces) {
+      throw new Error(
+        `Free plan limit reached: ${limits.maxOwnedWorkspaces} workspaces. Upgrade to pro to create more.`
+      );
+    }
+  }
+
+  private async _enforceDraftLimit(workspaceId: string): Promise<void> {
+    const limits = await this._limitsForCurrentUser();
+    if (limits.maxDraftsPerWorkspace == null) return;
+    const rows = await this.db
+      .select({ id: hostedWorkspaceDraft.id })
+      .from(hostedWorkspaceDraft)
+      .where(
+        and(
+          eq(hostedWorkspaceDraft.userId, this._effectiveUserId),
+          eq(hostedWorkspaceDraft.workspaceId, workspaceId)
+        )
+      );
+    if (rows.length >= limits.maxDraftsPerWorkspace) {
+      throw new Error(
+        `Free plan limit reached: ${limits.maxDraftsPerWorkspace} drafts per workspace. Upgrade to pro to save more drafts.`
+      );
+    }
+  }
+
+  private async _enforceHarvestCooldown(workspaceId: string): Promise<void> {
+    const limits = await this._limitsForCurrentUser();
+    if (limits.harvestCooldownMs == null) return;
+    const rows = await this.db
+      .select({ generatedAt: hostedWorkspaceHarvest.generatedAt })
+      .from(hostedWorkspaceHarvest)
+      .where(
+        and(
+          eq(hostedWorkspaceHarvest.userId, this._effectiveUserId),
+          eq(hostedWorkspaceHarvest.workspaceId, workspaceId)
+        )
+      )
+      .limit(1);
+    const last = rows[0]?.generatedAt;
+    if (!last) return;
+    const lastTs = last instanceof Date ? last.getTime() : new Date(last).getTime();
+    const waitMs = lastTs + limits.harvestCooldownMs - Date.now();
+    if (waitMs > 0) {
+      const waitMinutes = Math.ceil(waitMs / (60 * 1000));
+      throw new Error(
+        `Free plan harvest cooldown active. Try again in about ${waitMinutes} minute(s), or upgrade to pro.`
+      );
+    }
+  }
+
   private async ensureInit(): Promise<void> {
     if (!this.initPromise) {
       this.initPromise = (async () => {
@@ -405,6 +494,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
 
   async createWorkspace(input: CreateWorkspaceInput): Promise<WorkspaceMetadata> {
     await this.ensureInit();
+    await this._enforceOwnedWorkspaceLimit();
     const workspaceId = slugifyWorkspaceId(input.id ?? input.name);
     if (await this.workspaceExists(workspaceId)) {
       throw new Error(`Workspace "${workspaceId}" already exists.`);
@@ -608,6 +698,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
   async saveHarvestOutput(cards: CardInput[], _seenUrls?: Set<string>): Promise<string> {
     await this.ensureInit();
     const currentId = await this.getCurrentWorkspaceId();
+    await this._enforceHarvestCooldown(currentId);
     const dateLabel = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
     const structCards: StructureCard[] = cards.map((raw, index) => ({
       ...CardInputSchema.parse(raw),
@@ -636,6 +727,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage {
   async saveDraft(content: string, platform: string, cardId?: number): Promise<string> {
     await this.ensureInit();
     const currentId = await this.getCurrentWorkspaceId();
+    await this._enforceDraftLimit(currentId);
     const id = randomUUID();
     await this.db.insert(hostedWorkspaceDraft).values({
       id,
