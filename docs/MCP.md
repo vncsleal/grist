@@ -34,6 +34,13 @@ npm run build
 | `quillby_set_context` | `context` object (required) | Confirmation |
 | `quillby_get_context` | — | Profile JSON |
 
+### Briefing
+
+| Tool | Parameters | Returns |
+|---|---|---|
+| `quillby_open_briefing` | — | Latest saved Briefing (instant, no network) |
+| `quillby_daily_brief` | `topN` (number, default 10) | Fresh Briefing via Sampling |
+
 ### Feed Management
 
 | Tool | Parameters | Returns |
@@ -53,7 +60,6 @@ npm run build
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_daily_brief` | `topN` (number, default 15) | Full brief with scored cards |
 | `quillby_analyze_articles` | `sources[]`, `topN` | Cards from full pipeline |
 
 ### Cards & Drafts
@@ -108,7 +114,7 @@ For standard local usage, no API key is required.
 
 ### HTTP mode
 
-Set `Quillby_TRANSPORT=http` to run as a remote MCP server.
+Set `Quillby_TRANSPORT=http` to run as a remote MCP server. See [CONNECTOR.md](CONNECTOR.md) for the full custom connector setup guide.
 
 | Variable | Default | Description |
 |---|---|---|

@@ -34,7 +34,7 @@ const MEMORY_TYPES = {
 
 type MemoryTypeInput = keyof typeof MEMORY_TYPES;
 
-const SERVER_INFO = { name: "quillby-mcp", version: "0.8.0" } as const;
+const SERVER_INFO = { name: "quillby-mcp", version: "0.9.0" } as const;
 
 function createMcpServer(): McpServer {
   return new McpServer(
@@ -261,7 +261,7 @@ const TOOLS: Tool[] = [
   {
     name: "quillby_daily_brief",
     description:
-      "Build the ranked Quillby Briefing for the active workspace. Claude should use this behind the scenes to open or refresh the user's daily editorial artifact. Requires Sampling.",
+      "Generate a fresh Quillby Briefing by fetching feeds, scoring headlines semantically, deep-reading top articles, and producing ranked cards via Sampling. Call this only when the Briefing is stale, missing, or the user explicitly asks for a refresh. To open an existing saved Briefing instantly, use quillby_open_briefing instead. Requires Sampling.",
     annotations: { readOnlyHint: false },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -273,6 +273,16 @@ const TOOLS: Tool[] = [
         },
       },
     },
+  },
+
+  // ── Open Briefing (instant, from saved state) ─────────────────────────────
+  {
+    name: "quillby_open_briefing",
+    description:
+      "Open the most recent Quillby Briefing instantly from saved workspace state — no network calls, no Sampling. Always call this first when the user opens Quillby or asks to see their brief. Falls back with a clear message if no Briefing has been generated yet.",
+    annotations: { readOnlyHint: true, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: { type: "object", properties: {} },
   },
 
   // ── Cards ─────────────────────────────────────────────────────────────────
@@ -339,7 +349,7 @@ const TOOLS: Tool[] = [
   // ── Drafts ────────────────────────────────────────────────────────────────
   {
     name: "quillby_save_draft",
-    description: "Save a draft post to disk.",
+    description: "Persist a finished draft post to workspace storage. Call after quillby_generate_post or whenever the user approves a draft to keep.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -786,6 +796,45 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
           return { content: [{ type: "text" as const, text: "Could not retrieve article content (paywalled or fetch failed)." }], structuredContent: { content: null, error: "fetch_failed" } };
         }
         return { content: [{ type: "text" as const, text: content }], structuredContent: { content } };
+      }
+
+      case "quillby_open_briefing": {
+        const [workspace, hasBriefing] = await Promise.all([
+          storage.getCurrentWorkspace(),
+          storage.latestHarvestExists(),
+        ]);
+        if (!hasBriefing) {
+          return {
+            content: [{ type: "text" as const, text: `No Briefing saved yet for workspace "${workspace.name}". Run quillby_daily_brief to generate one.` }],
+            structuredContent: { error: "no_briefing", workspace: workspace.name, workspaceId: workspace.id },
+          };
+        }
+        const [bundle, ctx] = await Promise.all([
+          storage.loadLatestHarvest(),
+          storage.loadContext(),
+        ]);
+        const sorted = [...bundle.cards].sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
+        const briefing = {
+          workspace: workspace.name,
+          workspaceId: workspace.id,
+          generatedAt: bundle.generatedAt,
+          totalCards: bundle.cards.length,
+          profile: ctx ? { role: ctx.role, industry: ctx.industry, topics: ctx.topics } : null,
+          cards: sorted.map((c) => ({
+            id: c.id,
+            score: c.relevanceScore,
+            title: c.title,
+            source: c.source,
+            thesis: c.thesis,
+            topAngle: c.angleOptions?.[0] ?? null,
+            topHook: c.hookOptions?.[0] ?? null,
+            trendTags: c.trendTags,
+          })),
+        };
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(briefing, null, 2) }],
+          structuredContent: briefing as unknown as Record<string, unknown>,
+        };
       }
 
       case "quillby_save_cards": {
@@ -1592,7 +1641,7 @@ if (TRANSPORT_MODE === "http") {
       // Health check — unauthenticated, fast
       // ------------------------------------------------------------------
       if (url.pathname === "/health" && req.method === "GET") {
-        const body = JSON.stringify({ status: "ok", version: "0.8.0", uptime: Math.floor(process.uptime()), sessions: sessions.size });
+        const body = JSON.stringify({ status: "ok", version: "0.9.0", uptime: Math.floor(process.uptime()), sessions: sessions.size });
         res.writeHead(200, { "Content-Type": "application/json" }).end(body);
         finish(200);
         return;
@@ -1606,7 +1655,7 @@ if (TRANSPORT_MODE === "http") {
           name: "Quillby",
           description: "Guided Research & Insight Synthesis Tool — RSS content intelligence MCP server. Fetches, scores, and structures articles into content cards for social media posts.",
           url: `${BASE_URL}/mcp`,
-          version: "0.8.0",
+          version: "0.9.0",
           capabilities: {
             streaming: true,
             pushNotifications: false,
