@@ -31,6 +31,7 @@ npm run build
 | `quillby_select_workspace` | `workspaceId` | Active workspace |
 | `quillby_get_workspace` | `workspaceId?` | Workspace metadata + active state |
 | `quillby_get_plan` | — | Current plan + mode + limits metadata |
+| `quillby_manage_subscription` | `action` (`upgrade`/`downgrade`/`manage`) | Cloud billing lifecycle URL |
 | `quillby_server_info` | — | Runtime mode, version, transport, DB status |
 | `quillby_open_briefing` | — | Opens the cached Briefing MCP App instantly from saved local state |
 | `quillby_set_context` | `context` object (required) | Confirmation |
@@ -148,6 +149,8 @@ Set `QUILLBY_DEPLOYMENT_MODE` explicitly when running HTTP:
 | `QUILLBY_ENFORCE_PLAN_LIMITS` | `true` in `cloud`, `false` otherwise | Plan limits are cloud-only by default |
 | `QUILLBY_STRIPE_WEBHOOK_SECRET` | *(unset)* | Cloud only. Secret used to verify Stripe webhook signatures. |
 | `QUILLBY_STRIPE_PRO_PRICE_ID` | *(unset)* | Cloud only. Stripe price ID mapped to `pro`. |
+| `QUILLBY_STRIPE_CHECKOUT_URL_PRO` | *(unset)* | Cloud only. URL for pro upgrade checkout flow. |
+| `QUILLBY_STRIPE_CHECKOUT_URL_FREE` | *(unset)* | Cloud only. Optional URL for downgrade/free checkout flow. |
 | `QUILLBY_CLOUD_BILLING_PORTAL_URL` | *(unset)* | Cloud only. Returned by `quillby_get_plan` as billing portal link. |
 
 HTTP mode endpoints:
@@ -159,6 +162,9 @@ HTTP mode endpoints:
 | `POST /api/auth/sign-up/email` | none | Register a new user |
 | `POST /api/auth/sign-in/email` | none | Sign in, get session |
 | `POST /api/billing/stripe/webhook` | Stripe signature | Cloud only. Sync subscription events to `hosted_user_state.plan`. |
+| `GET /api/billing/upgrade` | Bearer API key | Cloud only. Redirect to configured upgrade checkout URL. |
+| `GET /api/billing/downgrade` | Bearer API key | Cloud only. Redirect to configured downgrade/portal URL. |
+| `GET /api/billing/portal` | Bearer API key | Cloud only. Redirect to configured billing portal URL. |
 | `POST /mcp` | Bearer API key | MCP Streamable HTTP transport |
 | `GET /mcp` | Bearer API key | SSE stream for an existing session |
 | `DELETE /mcp` | Bearer API key | Close an existing session |

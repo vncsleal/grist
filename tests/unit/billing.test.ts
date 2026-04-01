@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
 import {
+  getBillingActionUrl,
   getBillingPortalUrl,
+  getCheckoutUrlForPlan,
   isCloudMode,
   isPlanEnforcementEnabled,
   verifyStripeWebhookSignature,
@@ -30,5 +32,25 @@ describe("billing mode separation", () => {
 
     expect(verifyStripeWebhookSignature(rawBody, header)).toBe(true);
     expect(verifyStripeWebhookSignature(rawBody, `t=${timestamp},v1=bad`)).toBe(false);
+  });
+
+  it("builds billing lifecycle URLs in cloud mode", () => {
+    process.env.QUILLBY_DEPLOYMENT_MODE = "cloud";
+    process.env.QUILLBY_STRIPE_CHECKOUT_URL_PRO = "https://checkout.example.com/pro";
+    process.env.QUILLBY_CLOUD_BILLING_PORTAL_URL = "https://billing.example.com/portal";
+
+    const checkout = getCheckoutUrlForPlan("pro", "user-1");
+    expect(checkout).toContain("checkout.example.com/pro");
+    expect(checkout).toContain("quillbyUserId=user-1");
+
+    const upgrade = getBillingActionUrl("upgrade", "free", "user-1");
+    const downgrade = getBillingActionUrl("downgrade", "pro", "user-1");
+    const manage = getBillingActionUrl("manage", "pro", "user-1");
+
+    expect(upgrade).toContain("checkout.example.com/pro");
+    expect(downgrade).toContain("billing.example.com/portal");
+    expect(downgrade).toContain("action=downgrade");
+    expect(manage).toContain("billing.example.com/portal");
+    expect(manage).toContain("action=manage");
   });
 });

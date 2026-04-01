@@ -42,6 +42,38 @@ export function getBillingPortalUrl(): string | null {
   return url && /^https?:\/\//i.test(url) ? url : null;
 }
 
+export type BillingAction = "upgrade" | "downgrade" | "manage";
+
+function withQuery(baseUrl: string, query: Record<string, string>): string {
+  const url = new URL(baseUrl);
+  for (const [k, v] of Object.entries(query)) {
+    url.searchParams.set(k, v);
+  }
+  return url.toString();
+}
+
+export function getCheckoutUrlForPlan(plan: HostedPlan, userId?: string): string | null {
+  if (!isCloudMode()) return null;
+  const key = plan === "pro" ? "QUILLBY_STRIPE_CHECKOUT_URL_PRO" : "QUILLBY_STRIPE_CHECKOUT_URL_FREE";
+  const raw = process.env[key]?.trim();
+  if (!raw || !/^https?:\/\//i.test(raw)) return null;
+  return withQuery(raw, userId
+    ? { quillbyUserId: userId, plan }
+    : { plan });
+}
+
+export function getBillingActionUrl(action: BillingAction, currentPlan: HostedPlan, userId?: string): string | null {
+  if (!isCloudMode()) return null;
+  if (action === "upgrade") {
+    return getCheckoutUrlForPlan("pro", userId);
+  }
+  const portal = getBillingPortalUrl();
+  if (!portal) return null;
+  return withQuery(portal, userId
+    ? { quillbyUserId: userId, action, plan: currentPlan }
+    : { action, plan: currentPlan });
+}
+
 export function getPlanLimits(plan: HostedPlan): PlanLimits {
   return PLAN_LIMITS[plan];
 }

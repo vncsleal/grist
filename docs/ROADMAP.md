@@ -197,15 +197,15 @@ Goal: remove the last friction points for cloud and self-hosted use.
 - shared workspace content is read/written as the owner's data (grantee sees
   the same cards, drafts, and memory as the owner for that workspace)
 
-### v1.3: Quillby Cloud Billing (in progress)
+### v1.3: Quillby Cloud Billing ✓
 
 Goal: productize Quillby Cloud.
 
 - Stripe webhook integration for plan sync (free/pro) ✓
 - usage limits enforced per plan (harvest frequency, workspace count, draft storage) ✓
 - billing portal link exposed via `quillby_get_plan` ✓
-- self-hosted users are unaffected — plan enforcement is behind deployment mode gating ✓
-- remaining: checkout + subscription lifecycle UX (upgrade/downgrade flows)
+- checkout + subscription lifecycle UX (`quillby_manage_subscription` + billing action endpoints) ✓
+- self-hosted users are unaffected — plan enforcement and billing routes are deployment-mode gated ✓
 
 Mode: **Cloud** only
 

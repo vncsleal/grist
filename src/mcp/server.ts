@@ -25,6 +25,7 @@ import { getHostedUserStorage, storage, type WorkspaceStorage } from "../storage
 import { db } from "../db.js";
 import {
   applyStripeWebhookEvent,
+  getBillingActionUrl,
   getBillingPortalUrl,
   getPlanLimits,
   isCloudMode,
@@ -139,6 +140,19 @@ const TOOLS: Tool[] = [
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
     inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "quillby_manage_subscription",
+    description: "Cloud billing lifecycle actions: upgrade, downgrade, or open billing portal.",
+    annotations: { readOnlyHint: true, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        action: { type: "string", enum: ["upgrade", "downgrade", "manage"] },
+      },
+      required: ["action"],
+    },
   },
   {
     name: "quillby_share_workspace",
@@ -709,6 +723,11 @@ async function handleToolCall(
               planEnforcementEnabled: isPlanEnforcementEnabled(),
               limits,
               billingPortalUrl: portalUrl,
+              lifecycleActions: {
+                upgrade: isCloudMode() ? "quillby_manage_subscription(action=upgrade)" : null,
+                downgrade: isCloudMode() ? "quillby_manage_subscription(action=downgrade)" : null,
+                manage: isCloudMode() ? "quillby_manage_subscription(action=manage)" : null,
+              },
             }, null, 2),
           }],
           structuredContent: {
@@ -717,9 +736,36 @@ async function handleToolCall(
             planEnforcementEnabled: isPlanEnforcementEnabled(),
             limits,
             billingPortalUrl: portalUrl,
+              lifecycleActions: {
+                upgrade: isCloudMode() ? "quillby_manage_subscription(action=upgrade)" : null,
+                downgrade: isCloudMode() ? "quillby_manage_subscription(action=downgrade)" : null,
+                manage: isCloudMode() ? "quillby_manage_subscription(action=manage)" : null,
+              },
           },
         };
       }
+
+        case "quillby_manage_subscription": {
+          const { action } = args as { action: "upgrade" | "downgrade" | "manage" };
+          const plan = await storage.getPlan();
+          if (!isCloudMode()) {
+            return {
+              content: [{ type: "text" as const, text: "Subscription management is only available in Quillby Cloud mode." }],
+              structuredContent: { action, available: false, reason: "not_cloud_mode", plan, mode: getDeploymentMode() },
+            };
+          }
+          const url = getBillingActionUrl(action, plan);
+          if (!url) {
+            return {
+              content: [{ type: "text" as const, text: `Billing action URL for ${action} is not configured.` }],
+              structuredContent: { action, available: false, reason: "missing_configuration", plan },
+            };
+          }
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify({ action, plan, url }, null, 2) }],
+            structuredContent: { action, plan, url, available: true },
+          };
+        }
 
       case "quillby_share_workspace": {
         const { workspaceId, granteeUserId, role } = args as { workspaceId: string; granteeUserId: string; role: "viewer" | "editor" };
@@ -1998,6 +2044,57 @@ if (TRANSPORT_MODE === "http") {
       if (url.pathname.startsWith("/api/auth")) {
         await toNodeHandler(auth)(req, res);
         finish(res.statusCode ?? 200);
+        return;
+      }
+
+      // ------------------------------------------------------------------
+      // Cloud billing lifecycle endpoints (upgrade/downgrade/manage)
+      // Requires Bearer API key; disabled outside cloud mode.
+      // ------------------------------------------------------------------
+      if (url.pathname.startsWith("/api/billing/") && req.method === "GET") {
+        if (!isCloudMode()) {
+          res.writeHead(404).end("Not found");
+          finish(404);
+          return;
+        }
+        const authHeader = req.headers.authorization ?? "";
+        const bearerMatch = authHeader.match(/^Bearer (.+)$/i);
+        if (!bearerMatch) {
+          res.writeHead(401, { "WWW-Authenticate": 'Bearer realm="quillby-mcp"' }).end("Unauthorized");
+          finish(401);
+          return;
+        }
+        const verification = await auth.api.verifyApiKey({ body: { key: bearerMatch[1] } });
+        if (!verification.valid) {
+          res.writeHead(401, { "WWW-Authenticate": 'Bearer realm="quillby-mcp"' }).end("Unauthorized");
+          finish(401);
+          return;
+        }
+        const userId = verification.key?.referenceId ?? "unknown";
+        const userStorage = getHostedUserStorage(userId);
+        const plan = await userStorage.getPlan();
+
+        const action = url.pathname.endsWith("/upgrade")
+          ? "upgrade"
+          : url.pathname.endsWith("/downgrade")
+            ? "downgrade"
+            : url.pathname.endsWith("/portal")
+              ? "manage"
+              : null;
+        if (!action) {
+          res.writeHead(404).end("Not found");
+          finish(404);
+          return;
+        }
+
+        const target = getBillingActionUrl(action, plan, userId);
+        if (!target) {
+          res.writeHead(501).end("Billing action not configured");
+          finish(501);
+          return;
+        }
+        res.writeHead(302, { Location: target }).end();
+        finish(302);
         return;
       }
 
