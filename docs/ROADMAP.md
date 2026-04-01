@@ -108,7 +108,7 @@ Mode: **Local**
 
 ### v0.5: Dual-Mode Refactor ✓
 
-Goal: make self-hosted and managed hosted possible without rewriting Quillby.
+Goal: make self-hosted and cloud modes possible without rewriting Quillby.
 
 - `WorkspaceStorage` interface separates domain logic from storage backend ✓
 - local filesystem becomes one swappable backend ✓

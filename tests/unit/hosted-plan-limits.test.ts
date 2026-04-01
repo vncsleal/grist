@@ -5,21 +5,46 @@ import * as path from "node:path";
 import { eq } from "drizzle-orm";
 import { createDb, HostedDbWorkspaceStorage } from "../../src/storage.js";
 import { hostedUserState } from "../../src/db/schema.js";
+import type { CardInput } from "../../src/types.js";
 
 let tempDir = "";
 let tempDbPath = "";
 let previousEnforce = "";
+let previousMode = "";
+
+function mkCard(title: string, link: string, thesis = "X"): CardInput {
+  return {
+    title,
+    source: "S",
+    link,
+    thesis,
+    relevanceScore: 0,
+    relevanceReason: "",
+    keyInsights: [],
+    insightOptions: [],
+    takeOptions: [],
+    angleOptions: [],
+    hookOptions: [],
+    wireframeOptions: [],
+    trendTags: [],
+    transposabilityHint: "",
+  };
+}
 
 beforeEach(() => {
   tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "quillby-hosted-plan-"));
   tempDbPath = path.join(tempDir, "test.db");
   previousEnforce = process.env.QUILLBY_ENFORCE_PLAN_LIMITS ?? "";
+  previousMode = process.env.QUILLBY_DEPLOYMENT_MODE ?? "";
+  process.env.QUILLBY_DEPLOYMENT_MODE = "cloud";
   process.env.QUILLBY_ENFORCE_PLAN_LIMITS = "1";
 });
 
 afterEach(() => {
   if (previousEnforce) process.env.QUILLBY_ENFORCE_PLAN_LIMITS = previousEnforce;
   else delete process.env.QUILLBY_ENFORCE_PLAN_LIMITS;
+  if (previousMode) process.env.QUILLBY_DEPLOYMENT_MODE = previousMode;
+  else delete process.env.QUILLBY_DEPLOYMENT_MODE;
   fs.rmSync(tempDir, { recursive: true, force: true });
 });
 
@@ -43,12 +68,12 @@ describe("hosted plan limits", () => {
     const user = new HostedDbWorkspaceStorage("cooldown-user", db);
 
     await user.saveHarvestOutput([
-      { title: "T1", source: "S", link: "https://example.com/1", thesis: "X" },
+      mkCard("T1", "https://example.com/1", "X"),
     ]);
 
     await expect(
       user.saveHarvestOutput([
-        { title: "T2", source: "S", link: "https://example.com/2", thesis: "Y" },
+        mkCard("T2", "https://example.com/2", "Y"),
       ])
     ).rejects.toThrow(/cooldown/i);
   });
@@ -70,11 +95,32 @@ describe("hosted plan limits", () => {
     await user.createWorkspace({ name: "Four", id: "four" });
 
     await user.saveHarvestOutput([
-      { title: "A", source: "S", link: "https://example.com/a", thesis: "A" },
+      mkCard("A", "https://example.com/a", "A"),
     ]);
     await expect(
       user.saveHarvestOutput([
-        { title: "B", source: "S", link: "https://example.com/b", thesis: "B" },
+        mkCard("B", "https://example.com/b", "B"),
+      ])
+    ).resolves.toBeTypeOf("string");
+  });
+
+  it("does not enforce SaaS limits in self-hosted mode", async () => {
+    process.env.QUILLBY_DEPLOYMENT_MODE = "self-hosted";
+    const { db } = createDb(`file:${tempDbPath}`);
+    const user = new HostedDbWorkspaceStorage("selfhost-user", db);
+
+    await user.listWorkspaces();
+    await user.createWorkspace({ name: "One", id: "one" });
+    await user.createWorkspace({ name: "Two", id: "two" });
+    await user.createWorkspace({ name: "Three", id: "three" });
+    await user.createWorkspace({ name: "Four", id: "four" });
+
+    await user.saveHarvestOutput([
+      mkCard("H1", "https://example.com/h1", "X"),
+    ]);
+    await expect(
+      user.saveHarvestOutput([
+        mkCard("H2", "https://example.com/h2", "Y"),
       ])
     ).resolves.toBeTypeOf("string");
   });

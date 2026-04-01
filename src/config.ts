@@ -4,6 +4,30 @@ import * as os from "os";
 
 const DEFAULT_DATA_DIR = path.join(os.homedir(), ".quillby");
 
+export type DeploymentMode = "local" | "self-hosted" | "cloud";
+
+/**
+ * Resolve how Quillby is being run:
+ * - local: stdio binary on a user's machine
+ * - self-hosted: user-operated HTTP deployment
+ * - cloud: Quillby-operated managed deployment
+ */
+export function getDeploymentMode(): DeploymentMode {
+  const explicit = process.env.QUILLBY_DEPLOYMENT_MODE?.trim().toLowerCase();
+  if (explicit === "local" || explicit === "self-hosted" || explicit === "cloud") {
+    return explicit;
+  }
+
+  const transport = (
+    process.env.Quillby_TRANSPORT ??
+    process.env.QUILLBY_TRANSPORT ??
+    "stdio"
+  ).trim().toLowerCase();
+
+  // Default heuristic keeps local installs simple and subscription-free.
+  return transport === "http" ? "self-hosted" : "local";
+}
+
 export const CONFIG = {
   get DATA_DIR() {
     return process.env.QUILLBY_HOME?.trim() || DEFAULT_DATA_DIR;

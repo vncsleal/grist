@@ -116,15 +116,26 @@ For standard local usage, no API key is required.
 
 Set `Quillby_TRANSPORT=http` to run as a remote MCP server. See [CONNECTOR.md](CONNECTOR.md) for the full custom connector setup guide.
 
+Deployment behavior is intentionally separated:
+- `local` mode: stdio usage, no DB provisioning, no subscriptions
+- `self-hosted` mode: your own HTTP + DB infra, no SaaS billing logic
+- `cloud` mode: Quillby-managed hosted deployment with plan/billing enforcement
+
+Set `QUILLBY_DEPLOYMENT_MODE` explicitly when running HTTP:
+- `self-hosted` (recommended default for user-operated servers)
+- `cloud` (only for managed Quillby Cloud environments)
+
 | Variable | Default | Description |
 |---|---|---|
 | `Quillby_TRANSPORT` | `stdio` | Set to `http` to enable HTTP mode |
+| `QUILLBY_DEPLOYMENT_MODE` | auto (`local` for stdio, `self-hosted` for http) | Runtime mode: `local`, `self-hosted`, or `cloud` |
 | `PORT` | `3000` | TCP port to bind |
 | `QUILLBY_HTTP_HOST` | `0.0.0.0` | Host interface to bind (`127.0.0.1` for local-only) |
 | `QUILLBY_BASE_URL` | `http://localhost:PORT` | Public base URL (used in agent card) |
 | `QUILLBY_AUTH_DB_URL` | `file:./quillby-auth.db` | libSQL connection string. Swap to `libsql://<db>.turso.io` for remote. |
 | `LIBSQL_AUTH_TOKEN` | *(unset)* | Auth token for remote Turso connections only. |
 | `QUILLBY_RATE_LIMIT` | `60` | Default max requests per minute per API key. |
+| `QUILLBY_ENFORCE_PLAN_LIMITS` | `true` in `cloud`, `false` otherwise | Plan limits are cloud-only by default |
 
 HTTP mode endpoints:
 

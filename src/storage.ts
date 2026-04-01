@@ -55,6 +55,7 @@ import {
 import { eq, and } from "drizzle-orm";
 import { ensureHostedTables } from "./db/migrate-hosted.js";
 import { randomUUID } from "node:crypto";
+import { getDeploymentMode } from "./config.js";
 
 const DEFAULT_QUILLBY_HOME = `${process.env.HOME ?? ""}/.quillby`;
 const DEFAULT_WORKSPACE_ID = "default";
@@ -80,7 +81,9 @@ const PLAN_LIMITS: Record<HostedPlan, PlanLimits> = {
 };
 
 function isPlanEnforcementEnabled(): boolean {
+  if (getDeploymentMode() !== "cloud") return false;
   const raw = (process.env.QUILLBY_ENFORCE_PLAN_LIMITS ?? "").trim().toLowerCase();
+  if (!raw) return true;
   return raw === "1" || raw === "true" || raw === "yes";
 }
 
