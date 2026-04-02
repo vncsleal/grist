@@ -344,6 +344,28 @@ const claudeConfig = `{
       .sec-body { font-size:1.0625rem; color:var(--muted); max-width:52ch; line-height:1.75; }
 
       /* PROBLEM/SOLUTION */
+      .mode-sec { padding:clamp(4rem,8vw,7rem) 0; border-bottom:1px solid var(--border); }
+      .mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3rem; }
+      .mode-card {
+        background:linear-gradient(180deg, rgba(17,13,30,0.95), rgba(12,9,21,0.96));
+        border:1px solid var(--border);
+        border-radius:16px;
+        padding:2rem;
+        display:flex;
+        flex-direction:column;
+        gap:1rem;
+        min-height:280px;
+        transition:border-color 0.25s, transform 0.2s, box-shadow 0.25s;
+      }
+      .mode-card:hover { border-color:var(--border-h); transform:translateY(-3px); box-shadow:0 16px 50px rgba(0,0,0,0.3), 0 0 24px rgba(124,58,237,0.08); }
+      .mode-kicker { font-family:var(--mono); font-size:0.65rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--violet); opacity:0.8; }
+      .mode-name { font-family:var(--serif); font-size:1.45rem; font-weight:700; letter-spacing:-0.02em; color:var(--text); }
+      .mode-desc { font-size:0.9rem; color:var(--muted); line-height:1.7; flex:1; }
+      .mode-list { list-style:none; display:flex; flex-direction:column; gap:0.55rem; font-size:0.8rem; color:var(--faint); }
+      .mode-list li strong { color:var(--text); font-weight:600; }
+      .mode-link { display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none; color:var(--violet-3); font-weight:700; font-size:0.88rem; }
+
+      /* PROBLEM/SOLUTION */
       .problem-sec { padding:clamp(5rem,9vw,9rem) 0; border-bottom:1px solid var(--border); }
       .ps-grid {
         display:grid; grid-template-columns:1fr 1fr; gap:2px;
@@ -525,6 +547,7 @@ const claudeConfig = `{
 
       /* RESPONSIVE */
       @media (max-width:1024px) {
+        .mode-grid { grid-template-columns:1fr; }
         .steps-row { grid-template-columns:1fr 1fr; }
         .feat-grid { grid-template-columns:1fr 1fr; }
         .ind-grid { grid-template-columns:repeat(3,1fr); }
@@ -558,9 +581,9 @@ const claudeConfig = `{
       </a>
       <ul class="nav-links">
         <li><a href="#how-it-works">How it works</a></li>
-        <li><a href="#install">Install</a></li>
+        <li><a href="#modes">Modes</a></li>
         <li><a href="https://github.com/vncsleal/quillby" target="_blank" rel="noopener">GitHub</a></li>
-        <li><a href="#install" class="nav-pill">Install free</a></li>
+        <li><a href="/local" class="nav-pill">Install free</a></li>
       </ul>
     </nav>
 
@@ -577,8 +600,8 @@ const claudeConfig = `{
           Ask Claude <strong>"what should I post today?"</strong> and get a ranked brief and a ready-to-publish draft — sourced from your feeds, filtered for your audience, written in your voice. Use one workspace per client, brand, newsletter, or Claude Project.
         </p>
         <div class="hero-actions">
-          <a href="#install" class="btn-primary">Install free →</a>
-          <a href="https://github.com/vncsleal/quillby" target="_blank" rel="noopener" class="btn-secondary">View on GitHub ↗</a>
+          <a href="/local" class="btn-primary">Install locally →</a>
+          <a href="/cloud" class="btn-secondary">Explore cloud ↗</a>
         </div>
         <p class="hero-proof">Free forever · Local-first · Multiple workspaces · No new apps</p>
       </div>
@@ -596,6 +619,49 @@ const claudeConfig = `{
           <svg class="sparkle-svg sp5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L13.5 9.5L21 11L13.5 12.5L12 20L10.5 12.5L3 11L10.5 9.5L12 2Z" fill="#c4b5fd" opacity="0.65"/></svg>
           <svg class="sparkle-svg sp6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L13.5 9.5L21 11L13.5 12.5L12 20L10.5 12.5L3 11L10.5 9.5L12 2Z" fill="#a78bfa" opacity="0.5"/></svg>
           <img src="/quillby.png" alt="Quillby mascot" class="mascot-img" />
+        </div>
+      </div>
+    </section>
+
+    <section class="mode-sec" id="modes">
+      <div class="container">
+        <div class="eyebrow">Choose your mode</div>
+        <h2 class="sec-title">One product.<br /><em>Three deployment models.</em></h2>
+        <p class="sec-body">Quillby runs locally in Claude, on your own infrastructure, or as a managed cloud service. Pick the operating model first, then follow the setup path built for it.</p>
+        <div class="mode-grid">
+          <article data-reveal class="mode-card">
+            <div class="mode-kicker">Default</div>
+            <h3 class="mode-name">Local</h3>
+            <p class="mode-desc">Install Quillby on your machine and let Claude Desktop or another stdio-capable MCP client run it locally. No account. No server. Your workspace data stays under <code>~/.quillby</code>.</p>
+            <ul class="mode-list">
+              <li><strong>Best for:</strong> solo local-first use</li>
+              <li><strong>Transport:</strong> stdio MCP</li>
+              <li><strong>Setup:</strong> installer, script, or npm</li>
+            </ul>
+            <a href="/local" class="mode-link">Open local setup →</a>
+          </article>
+          <article data-reveal class="mode-card">
+            <div class="mode-kicker">Bring your own infra</div>
+            <h3 class="mode-name">Self-Host</h3>
+            <p class="mode-desc">Deploy the Quillby HTTP server yourself with Docker or your own platform, then connect Claude.ai custom connectors, ChatGPT/OpenAI tooling, or the Quillby dashboard to your endpoint.</p>
+            <ul class="mode-list">
+              <li><strong>Best for:</strong> technical teams and agencies</li>
+              <li><strong>Transport:</strong> HTTPS MCP endpoint</li>
+              <li><strong>Setup:</strong> Docker-first</li>
+            </ul>
+            <a href="/self-host" class="mode-link">Open self-host guide →</a>
+          </article>
+          <article data-reveal class="mode-card">
+            <div class="mode-kicker">Managed</div>
+            <h3 class="mode-name">Cloud</h3>
+            <p class="mode-desc">Use Quillby as a hosted service with a managed dashboard, billing, and connector onboarding. The browser app should sign you in and attach you to the managed backend automatically.</p>
+            <ul class="mode-list">
+              <li><strong>Best for:</strong> cross-device use without ops work</li>
+              <li><strong>Transport:</strong> managed hosted MCP</li>
+              <li><strong>Setup:</strong> account and connector onboarding</li>
+            </ul>
+            <a href="/cloud" class="mode-link">Open cloud overview →</a>
+          </article>
         </div>
       </div>
     </section>

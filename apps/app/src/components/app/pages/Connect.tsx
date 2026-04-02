@@ -47,7 +47,7 @@ export function Connect() {
             Quillby
           </h1>
           <p className="text-sm" style={{ color: "#9c8db5" }}>
-            Connect to your Quillby server to manage cards and drafts.
+            Connect to a self-hosted Quillby server to manage cards and drafts.
           </p>
         </div>
 
@@ -82,7 +82,7 @@ export function Connect() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#9c8db5" }}>
-              API Key
+              Self-hosted API Key
             </label>
             <input
               required
@@ -100,7 +100,7 @@ export function Connect() {
               }}
             />
             <p className="text-xs" style={{ color: "rgba(156,141,181,0.6)" }}>
-              Generate a key with{" "}
+              For self-hosted deployments, generate a key with{" "}
               <code style={{ fontFamily: "var(--font-mono, monospace)", color: "#c4b5fd" }}>
                 npm run keys create &lt;userId&gt; &lt;label&gt;
               </code>
@@ -130,9 +130,18 @@ export function Connect() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-xs" style={{ color: "rgba(156,141,181,0.5)" }}>
-          Your credentials are stored only in your browser's localStorage.
-        </p>
+        <div className="mt-6 text-center text-xs" style={{ color: "rgba(156,141,181,0.5)" }}>
+          Your self-hosted connection details are stored in this browser only.
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => navigate("/cloud")}
+              style={{ background: "none", border: "none", color: "#c4b5fd", cursor: "pointer", padding: 0 }}
+            >
+              Looking for Quillby Cloud instead?
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

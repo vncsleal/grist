@@ -7,6 +7,21 @@ import * as schema from "./db/schema.js";
 // QUILLBY_RATE_LIMIT sets the default max requests per minute for new API keys.
 // Individual keys can override this at creation time via manage-keys.ts.
 const defaultRateLimitMax = parseInt(process.env.QUILLBY_RATE_LIMIT ?? "60", 10);
+type BetterAuthOptions = Parameters<typeof betterAuth>[0];
+
+const apiKeyPlugin = apiKey({
+  // Keys are validated on every /mcp request — enableSessionForAPIKeys
+  // is OFF to avoid the per-request double-hit on rate limit counters.
+  enableSessionForAPIKeys: false,
+
+  // Default rate-limit window: 60 requests per 60 seconds.
+  // These defaults apply when a key is created without explicit limits.
+  rateLimit: {
+    enabled: true,
+    maxRequests: defaultRateLimitMax,
+    timeWindow: 60_000,
+  },
+}) as unknown as NonNullable<BetterAuthOptions["plugins"]>[number];
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -25,22 +40,6 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: true },
 
   plugins: [
-    apiKey({
-      // Keys are validated on every /mcp request — enableSessionForAPIKeys
-      // is OFF to avoid the per-request double-hit on rate limit counters.
-      enableSessionForAPIKeys: false,
-
-      // Default rate-limit window: 60 requests per 60 seconds.
-      // These defaults apply when a key is created without explicit limits.
-      rateLimit: {
-        enabled: true,
-        maxRequests: defaultRateLimitMax,
-        timeWindow: 60_000,
-      },
-    }),
+    apiKeyPlugin,
   ],
 });
-
-// Re-export the key-related API surface so callers don't need to reach into
-// auth.api directly. Types are inferred from better-auth.
-export type AuthApiKey = Awaited<ReturnType<typeof auth.api.verifyApiKey>>;

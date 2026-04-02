@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { signOut, useSession } from "./auth";
 import { clearConnection, getConnection } from "./api";
 
 interface LayoutProps {
@@ -10,15 +11,21 @@ interface LayoutProps {
 export function Layout({ children, activeWorkspace }: LayoutProps) {
   const navigate = useNavigate();
   const conn = getConnection();
+  const session = useSession();
 
-  function disconnect() {
+  async function disconnect() {
+    if (!conn && session.data) {
+      await signOut();
+      navigate("/");
+      return;
+    }
     clearConnection();
-    navigate("/connect");
+    navigate("/");
   }
 
   const serverDisplay = conn?.serverUrl
     ? conn.serverUrl.replace(/^https?:\/\//, "")
-    : "";
+    : session.data?.user.email ?? "";
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#0c0915", color: "#f0ecfa" }}>
@@ -44,6 +51,7 @@ export function Layout({ children, activeWorkspace }: LayoutProps) {
             <NavItem to="/workspaces" label="Workspaces" />
             <NavItem to="/cards" label="Cards" />
             <NavItem to="/drafts" label="Drafts" />
+            <NavItem to="/connectors" label="Connectors" />
           </div>
         </div>
 
@@ -67,7 +75,7 @@ export function Layout({ children, activeWorkspace }: LayoutProps) {
             onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.color = "#f0ecfa"; }}
             onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.color = "#9c8db5"; }}
           >
-            Disconnect
+            {conn ? "Disconnect" : "Sign out"}
           </button>
         </div>
       </nav>

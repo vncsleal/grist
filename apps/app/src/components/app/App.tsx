@@ -1,10 +1,14 @@
 import React, { Component } from "react";
 import { HashRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useSession } from "./auth";
 import { getConnection } from "./api";
+import { Home } from "./pages/Home";
+import { Cloud } from "./pages/Cloud";
 import { Connect } from "./pages/Connect";
 import { Workspaces } from "./pages/Workspaces";
 import { Cards } from "./pages/Cards";
 import { Drafts } from "./pages/Drafts";
+import { Connectors } from "./pages/Connectors";
 
 class ErrorBoundary extends Component<
   { children: React.ReactNode },
@@ -31,12 +35,22 @@ class ErrorBoundary extends Component<
   }
 }
 
-/** Redirect to /connect if there is no saved connection. */
+/** Redirect to the hosted entrypoint if there is no saved self-hosted connection. */
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const conn = getConnection();
-  if (!conn) {
-    return <Navigate to="/connect" state={{ from: location }} replace />;
+  const session = useSession();
+
+  if (session.isPending) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0c0915", color: "#f0ecfa" }}>
+        Loading Quillby…
+      </div>
+    );
+  }
+
+  if (!conn && !session.data) {
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
   return <>{children}</>;
 }
@@ -46,7 +60,10 @@ export function App() {
     <ErrorBoundary>
       <HashRouter>
         <Routes>
-          <Route path="/connect" element={<Connect />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/cloud" element={<Cloud />} />
+          <Route path="/connect" element={<Navigate to="/connect/self-hosted" replace />} />
+          <Route path="/connect/self-hosted" element={<Connect />} />
           <Route
             path="/workspaces"
             element={
@@ -71,8 +88,15 @@ export function App() {
               </RequireAuth>
             }
           />
-          {/* Default: go to workspaces if connected, else connect */}
-          <Route path="*" element={<Navigate to="/workspaces" replace />} />
+          <Route
+            path="/connectors"
+            element={
+              <RequireAuth>
+                <Connectors />
+              </RequireAuth>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>
     </ErrorBoundary>

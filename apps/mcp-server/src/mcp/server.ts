@@ -1976,6 +1976,152 @@ if (TRANSPORT_MODE === "http") {
     userId: string;
   }>();
 
+  const toHeaders = (headers: http.IncomingHttpHeaders) => {
+    const result = new Headers();
+    for (const [key, value] of Object.entries(headers)) {
+      if (Array.isArray(value)) {
+        for (const entry of value) {
+          result.append(key, entry);
+        }
+      } else if (value !== undefined) {
+        result.set(key, value);
+      }
+    }
+    return result;
+  };
+
+  const readJsonBody = async <T>(req: http.IncomingMessage): Promise<T> => {
+    const chunks: Buffer[] = [];
+    let totalBytes = 0;
+    for await (const chunk of req) {
+      totalBytes += (chunk as Buffer).length;
+      if (totalBytes > HTTP_BODY_LIMIT) {
+        throw new Error("Payload too large");
+      }
+      chunks.push(chunk as Buffer);
+    }
+    return JSON.parse(Buffer.concat(chunks).toString("utf-8")) as T;
+  };
+
+  const resolveAppAuth = async (req: http.IncomingMessage): Promise<{ userId: string; mode: "session" | "apiKey" } | null> => {
+    try {
+      const session = await auth.api.getSession({
+        headers: toHeaders(req.headers),
+      });
+      if (session?.user?.id) {
+        return { userId: session.user.id, mode: "session" };
+      }
+    } catch {
+      // Fall back to API key auth below.
+    }
+
+    const authHeader = req.headers.authorization ?? "";
+    const bearerMatch = authHeader.match(/^Bearer (.+)$/i);
+    if (!bearerMatch) return null;
+
+    const verification = await verifyApiKey(bearerMatch[1]);
+    if (!verification.valid) return null;
+
+    return {
+      userId: verification.key?.referenceId ?? "unknown",
+      mode: "apiKey",
+    };
+  };
+
+  const mapCurationToAppStatus = (status?: "shortlisted" | "approved" | "skipped"): "pending" | "approved" | "rejected" | "flagged" => {
+    switch (status) {
+      case "approved":
+        return "approved";
+      case "shortlisted":
+        return "flagged";
+      case "skipped":
+        return "rejected";
+      default:
+        return "pending";
+    }
+  };
+
+  const mapAppStatusToCurationAction = (status: "approved" | "rejected" | "flagged"): "approve" | "skip" | "shortlist" => {
+    switch (status) {
+      case "approved":
+        return "approve";
+      case "flagged":
+        return "shortlist";
+      case "rejected":
+      default:
+        return "skip";
+    }
+  };
+
+  interface VerifiedApiKey {
+    valid: boolean;
+    key?: {
+      referenceId?: string | null;
+    } | null;
+  }
+
+  interface ListedApiKey {
+    id: string;
+    name?: string | null;
+    prefix?: string | null;
+    start?: string | null;
+    enabled?: boolean | null;
+    createdAt?: Date | string | number | null;
+    expiresAt?: Date | string | number | null;
+    rateLimitMax?: number | null;
+    rateLimitTimeWindow?: number | null;
+  }
+
+  const verifyApiKey = (key: string): Promise<VerifiedApiKey> =>
+    (auth.api as unknown as {
+      verifyApiKey(input: { body: { key: string } }): Promise<VerifiedApiKey>;
+    }).verifyApiKey({ body: { key } });
+
+  const listApiKeys = (userId: string): Promise<ListedApiKey[]> =>
+    (auth.api as unknown as {
+      listApiKeys(input: { body: { userId: string } }): Promise<ListedApiKey[]>;
+    }).listApiKeys({ body: { userId } });
+
+  const createApiKey = (userId: string, name: string, rateLimitMax: number) =>
+    (auth.api as unknown as {
+      createApiKey(input: {
+        body: {
+          userId: string;
+          name: string;
+          prefix: string;
+          rateLimitEnabled: boolean;
+          rateLimitTimeWindow: number;
+          rateLimitMax: number;
+        };
+      }): Promise<{ id: string; key: string }>;
+    }).createApiKey({
+      body: {
+        userId,
+        name,
+        prefix: "qb",
+        rateLimitEnabled: true,
+        rateLimitTimeWindow: 60_000,
+        rateLimitMax,
+      },
+    });
+
+  const deleteApiKey = (keyId: string): Promise<void> =>
+    (auth.api as unknown as {
+      deleteApiKey(input: { body: { keyId: string } }): Promise<void>;
+    }).deleteApiKey({ body: { keyId } });
+
+  const serializeApiKey = (key: ListedApiKey) => ({
+    id: key.id,
+    name: key.name ?? "Unnamed key",
+    prefix: key.prefix ?? null,
+    start: key.start ?? null,
+    enabled: key.enabled ?? true,
+    createdAt: key.createdAt ? new Date(key.createdAt).toISOString() : undefined,
+    expiresAt: key.expiresAt ? new Date(key.expiresAt).toISOString() : null,
+    rateLimitMax: key.rateLimitMax ?? null,
+    rateLimitTimeWindow: key.rateLimitTimeWindow ?? null,
+  });
+
   const httpServer = http.createServer(async (req, res) => {
     const start = Date.now();
     const url = new URL(req.url ?? "/", BASE_URL);
@@ -1987,10 +2133,13 @@ if (TRANSPORT_MODE === "http") {
     // CORS — allow browser-based MCP App to connect from any origin
     // ------------------------------------------------------------------
     const allowedOrigin = process.env.QUILLBY_CORS_ORIGIN ?? "*";
-    res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+    const requestOrigin = req.headers.origin;
+    const corsOrigin = allowedOrigin === "*" && requestOrigin ? requestOrigin : allowedOrigin;
+    res.setHeader("Access-Control-Allow-Origin", corsOrigin);
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id, Last-Event-ID");
     res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
 
     if (req.method === "OPTIONS") {
       res.writeHead(204).end();
@@ -2066,6 +2215,188 @@ if (TRANSPORT_MODE === "http") {
         return;
       }
 
+      if (url.pathname.startsWith("/api/app")) {
+        const authState = await resolveAppAuth(req);
+        if (!authState) {
+          res.writeHead(401).end(JSON.stringify({ error: "Unauthorized" }));
+          finish(401);
+          return;
+        }
+
+        const storage = getHostedUserStorage(authState.userId);
+        const workspaceId = url.searchParams.get("workspaceId") ?? undefined;
+        const activeStorage = workspaceId ? await storage.withWorkspace(workspaceId) : storage;
+
+        if (url.pathname === "/api/app/workspaces" && req.method === "GET") {
+          const currentWorkspaceId = await storage.getCurrentWorkspaceId();
+          const workspaces = (await storage.listWorkspaces()).map((workspace) => ({
+            id: workspace.id,
+            name: workspace.name,
+            createdAt: workspace.createdAt,
+            isActive: workspace.id === currentWorkspaceId,
+          }));
+          res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ currentWorkspaceId, workspaces }));
+          finish(200);
+          return;
+        }
+
+        if (url.pathname === "/api/app/workspaces/select" && req.method === "POST") {
+          const body = await readJsonBody<{ workspaceId?: string }>(req);
+          if (!body.workspaceId) {
+            res.writeHead(400).end(JSON.stringify({ error: "workspaceId is required" }));
+            finish(400);
+            return;
+          }
+          const workspace = await storage.setCurrentWorkspace(body.workspaceId);
+          res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(workspace));
+          finish(200);
+          return;
+        }
+
+        if (url.pathname === "/api/app/cards" && req.method === "GET") {
+          if (!await activeStorage.latestHarvestExists()) {
+            res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ cards: [] }));
+            finish(200);
+            return;
+          }
+
+          const requestedStatus = url.searchParams.get("status");
+          const bundle = await activeStorage.loadLatestHarvest();
+          const curation = bundle.curationState ?? {};
+          const currentWorkspace = workspaceId ? null : await activeStorage.getCurrentWorkspace();
+          const cards = bundle.cards
+            .map((card) => ({
+              id: String(card.id),
+              title: card.title,
+              source: card.source,
+              url: card.link,
+              score: card.relevanceScore,
+              summary: card.thesis,
+              curationStatus: mapCurationToAppStatus(curation[String(card.id)]),
+              createdAt: bundle.generatedAt,
+              workspaceId: workspaceId ?? currentWorkspace?.id,
+            }))
+            .filter((card) => !requestedStatus || requestedStatus === "all" || card.curationStatus === requestedStatus)
+            .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+          res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ cards }));
+          finish(200);
+          return;
+        }
+
+        if (url.pathname === "/api/app/cards/curate" && req.method === "POST") {
+          const body = await readJsonBody<{ cardId?: string; status?: "approved" | "rejected" | "flagged"; workspaceId?: string }>(req);
+          if (!body.cardId || !body.status) {
+            res.writeHead(400).end(JSON.stringify({ error: "cardId and status are required" }));
+            finish(400);
+            return;
+          }
+          const targetStorage = body.workspaceId ? await storage.withWorkspace(body.workspaceId) : storage;
+          if (!await targetStorage.latestHarvestExists()) {
+            res.writeHead(404).end(JSON.stringify({ error: "No harvest found for this workspace" }));
+            finish(404);
+            return;
+          }
+          const bundle = await targetStorage.loadLatestHarvest();
+          const cardId = Number(body.cardId);
+          const card = bundle.cards.find((entry) => entry.id === cardId);
+          if (!card) {
+            res.writeHead(404).end(JSON.stringify({ error: "Card not found" }));
+            finish(404);
+            return;
+          }
+
+          const action = mapAppStatusToCurationAction(body.status);
+          const statusMap: Record<"shortlist" | "approve" | "skip", "shortlisted" | "approved" | "skipped"> = {
+            shortlist: "shortlisted",
+            approve: "approved",
+            skip: "skipped",
+          };
+          await targetStorage.saveCurationState({ [String(cardId)]: statusMap[action] });
+          res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({
+            cardId: String(cardId),
+            status: body.status,
+            title: card.title,
+          }));
+          finish(200);
+          return;
+        }
+
+        if (url.pathname === "/api/app/drafts" && req.method === "GET") {
+          const drafts = await activeStorage.listDrafts();
+          res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ drafts }));
+          finish(200);
+          return;
+        }
+
+        if (url.pathname === "/api/app/plan" && req.method === "GET") {
+          const plan = await storage.getPlan();
+          const mode = getDeploymentMode();
+          const limits = getPlanLimits(plan);
+          const billingPortalUrl = getBillingPortalUrl();
+          res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({
+            plan,
+            mode,
+            planEnforcementEnabled: isPlanEnforcementEnabled(),
+            limits,
+            billingPortalUrl,
+          }));
+          finish(200);
+          return;
+        }
+
+        if (url.pathname === "/api/app/api-keys" && req.method === "GET") {
+          const keys = await listApiKeys(authState.userId);
+          res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({
+            keys: keys.map(serializeApiKey),
+          }));
+          finish(200);
+          return;
+        }
+
+        if (url.pathname === "/api/app/api-keys" && req.method === "POST") {
+          const body = await readJsonBody<{ name?: string; rateLimitMax?: number }>(req);
+          const keyName = body.name?.trim();
+          if (!keyName) {
+            res.writeHead(400).end(JSON.stringify({ error: "name is required" }));
+            finish(400);
+            return;
+          }
+
+          const rateLimitMax = typeof body.rateLimitMax === "number" && Number.isFinite(body.rateLimitMax)
+            ? Math.max(1, Math.floor(body.rateLimitMax))
+            : parseInt(process.env.QUILLBY_RATE_LIMIT ?? "60", 10);
+
+          const result = await createApiKey(authState.userId, keyName, rateLimitMax);
+          const keys = await listApiKeys(authState.userId);
+          const meta = keys.find((entry) => entry.id === result.id);
+
+          res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({
+            key: result.key,
+            meta: serializeApiKey(meta ?? { id: result.id, name: keyName, rateLimitMax, rateLimitTimeWindow: 60_000 }),
+          }));
+          finish(200);
+          return;
+        }
+
+        if (url.pathname === "/api/app/api-keys" && req.method === "DELETE") {
+          const body = await readJsonBody<{ keyId?: string }>(req);
+          if (!body.keyId) {
+            res.writeHead(400).end(JSON.stringify({ error: "keyId is required" }));
+            finish(400);
+            return;
+          }
+          await deleteApiKey(body.keyId);
+          res.writeHead(204).end();
+          finish(204);
+          return;
+        }
+
+        res.writeHead(404).end(JSON.stringify({ error: "Not found" }));
+        finish(404);
+        return;
+      }
+
       // ------------------------------------------------------------------
       // Cloud billing lifecycle endpoints (upgrade/downgrade/manage)
       // Requires Bearer API key; disabled outside cloud mode.
@@ -2083,7 +2414,7 @@ if (TRANSPORT_MODE === "http") {
           finish(401);
           return;
         }
-        const verification = await auth.api.verifyApiKey({ body: { key: bearerMatch[1] } });
+        const verification = await verifyApiKey(bearerMatch[1]);
         if (!verification.valid) {
           res.writeHead(401, { "WWW-Authenticate": 'Bearer realm="quillby-mcp"' }).end("Unauthorized");
           finish(401);
@@ -2183,7 +2514,7 @@ if (TRANSPORT_MODE === "http") {
         return;
       }
 
-      const verification = await auth.api.verifyApiKey({ body: { key: bearerMatch[1] } });
+      const verification = await verifyApiKey(bearerMatch[1]);
       if (!verification.valid) {
         res.writeHead(401, { "WWW-Authenticate": 'Bearer realm="quillby-mcp"' }).end("Unauthorized");
         finish(401);

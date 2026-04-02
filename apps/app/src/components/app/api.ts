@@ -1,15 +1,56 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Quillby MCP App — browser-side API client
+// Quillby App — browser-side API client
 //
-// All calls go through the Streamable HTTP MCP transport (POST /mcp).
-// Connection settings (serverUrl + apiKey) are persisted in localStorage.
+// Self-hosted connections are persisted in localStorage. Cloud sessions rely
+// on browser cookies and the server-side Better Auth session.
 // ─────────────────────────────────────────────────────────────────────────────
+
+import { getDefaultApiBaseUrl } from "./auth";
 
 const STORAGE_KEY = "quillby_connection";
 
 export interface Connection {
   serverUrl: string; // e.g. "https://quillby.cloud" or "http://localhost:3000"
   apiKey: string;
+}
+
+function getApiBaseUrl(): string {
+  return (getConnection()?.serverUrl ?? getDefaultApiBaseUrl()).replace(/\/$/, "");
+}
+
+export function getResolvedApiBaseUrl(): string {
+  return getApiBaseUrl();
+}
+
+function getAuthHeaders(): HeadersInit {
+  const conn = getConnection();
+  if (!conn) return {};
+  return { Authorization: `Bearer ${conn.apiKey}` };
+}
+
+async function callAppApi<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${getApiBaseUrl()}${path}`, {
+    credentials: "include",
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+      ...(init.headers ?? {}),
+    },
+  });
+
+  if (!res.ok) {
+    let message = `HTTP ${res.status}: ${res.statusText}`;
+    try {
+      const data = (await res.json()) as { error?: string };
+      if (data?.error) message = data.error;
+    } catch {
+      // fall back to status text
+    }
+    throw new Error(message);
+  }
+
+  return (await res.json()) as T;
 }
 
 export function getConnection(): Connection | null {
@@ -29,83 +70,6 @@ export function saveConnection(conn: Connection): void {
 
 export function clearConnection(): void {
   localStorage.removeItem(STORAGE_KEY);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Core MCP call — handles both application/json and text/event-stream responses
-// ─────────────────────────────────────────────────────────────────────────────
-
-let _idSeq = 0;
-
-async function callTool(
-  name: string,
-  args: Record<string, unknown> = {}
-): Promise<unknown> {
-  const conn = getConnection();
-  if (!conn) throw new Error("Not connected");
-
-  const id = ++_idSeq;
-  const res = await fetch(`${conn.serverUrl}/mcp`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${conn.apiKey}`,
-      Accept: "application/json, text/event-stream",
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id,
-      method: "tools/call",
-      params: { name, arguments: args },
-    }),
-  });
-
-  if (!res.ok && res.status !== 200) {
-    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-  }
-
-  const contentType = res.headers.get("content-type") ?? "";
-
-  if (contentType.includes("application/json")) {
-    const data = (await res.json()) as JsonRpcResponse;
-    return extractToolResult(data);
-  }
-
-  // SSE stream — read all events, return first result
-  const text = await res.text();
-  for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("data:")) {
-      const json = trimmed.slice(5).trim();
-      if (!json || json === "[DONE]") continue;
-      try {
-        const data = JSON.parse(json) as JsonRpcResponse;
-        if ("result" in data || "error" in data) {
-          return extractToolResult(data);
-        }
-      } catch {
-        // skip malformed lines
-      }
-    }
-  }
-
-  throw new Error("No result received from server");
-}
-
-interface JsonRpcResponse {
-  result?: { content?: Array<{ type: string; text?: string }> };
-  error?: { message: string; code?: number };
-}
-
-function extractToolResult(data: JsonRpcResponse): unknown {
-  if (data.error) throw new Error(data.error.message ?? "Tool call failed");
-  const text = data.result?.content?.find((c) => c.type === "text")?.text;
-  if (text === undefined) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -148,11 +112,22 @@ export interface PlanInfo {
   billingPortalUrl?: string;
 }
 
+export interface ConnectorApiKey {
+  id: string;
+  name: string;
+  prefix?: string | null;
+  start?: string | null;
+  enabled?: boolean;
+  createdAt?: string;
+  expiresAt?: string | null;
+  rateLimitMax?: number | null;
+  rateLimitTimeWindow?: number | null;
+}
+
 export async function ping(): Promise<string> {
-  const conn = getConnection();
-  if (!conn) throw new Error("Not connected");
-  const res = await fetch(`${conn.serverUrl}/health`, {
-    headers: { Authorization: `Bearer ${conn.apiKey}` },
+  const res = await fetch(`${getApiBaseUrl()}/health`, {
+    credentials: "include",
+    headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = (await res.json()) as { status: string; version?: string };
@@ -160,26 +135,29 @@ export async function ping(): Promise<string> {
 }
 
 export async function listWorkspaces(): Promise<Workspace[]> {
-  const result = (await callTool("quillby_list_workspaces")) as {
+  const result = await callAppApi<{
     workspaces?: Workspace[];
-  };
+  }>("/api/app/workspaces");
   return result?.workspaces ?? [];
 }
 
 export async function selectWorkspace(workspaceId: string): Promise<void> {
-  await callTool("quillby_select_workspace", { workspaceId });
+  await callAppApi("/api/app/workspaces/select", {
+    method: "POST",
+    body: JSON.stringify({ workspaceId }),
+  });
 }
 
 export async function listCards(
   workspaceId?: string,
   status?: string
 ): Promise<Card[]> {
-  const args: Record<string, unknown> = {};
-  if (workspaceId) args.workspaceId = workspaceId;
-  if (status && status !== "all") args.status = status;
-  const result = (await callTool("quillby_list_cards", args)) as {
+  const params = new URLSearchParams();
+  if (workspaceId) params.set("workspaceId", workspaceId);
+  if (status && status !== "all") params.set("status", status);
+  const result = await callAppApi<{
     cards?: Card[];
-  };
+  }>(`/api/app/cards${params.size ? `?${params}` : ""}`);
   return result?.cards ?? [];
 }
 
@@ -188,21 +166,41 @@ export async function curateCard(
   status: "approved" | "rejected" | "flagged",
   workspaceId?: string
 ): Promise<void> {
-  const args: Record<string, unknown> = { cardId, status };
-  if (workspaceId) args.workspaceId = workspaceId;
-  await callTool("quillby_curate_card", args);
+  await callAppApi("/api/app/cards/curate", {
+    method: "POST",
+    body: JSON.stringify({ cardId, status, workspaceId }),
+  });
 }
 
 export async function listDrafts(workspaceId?: string): Promise<Draft[]> {
-  const args: Record<string, unknown> = {};
-  if (workspaceId) args.workspaceId = workspaceId;
-  const result = (await callTool("quillby_list_drafts", args)) as {
+  const params = new URLSearchParams();
+  if (workspaceId) params.set("workspaceId", workspaceId);
+  const result = await callAppApi<{
     drafts?: Draft[];
-  };
+  }>(`/api/app/drafts${params.size ? `?${params}` : ""}`);
   return result?.drafts ?? [];
 }
 
 export async function getPlan(): Promise<PlanInfo> {
-  const result = await callTool("quillby_get_plan");
+  const result = await callAppApi<PlanInfo>("/api/app/plan");
   return result as PlanInfo;
+}
+
+export async function listConnectorApiKeys(): Promise<ConnectorApiKey[]> {
+  const result = await callAppApi<{ keys?: ConnectorApiKey[] }>("/api/app/api-keys");
+  return result.keys ?? [];
+}
+
+export async function createConnectorApiKey(name: string, rateLimitMax?: number): Promise<{ key: string; meta: ConnectorApiKey }> {
+  return await callAppApi<{ key: string; meta: ConnectorApiKey }>("/api/app/api-keys", {
+    method: "POST",
+    body: JSON.stringify({ name, rateLimitMax }),
+  });
+}
+
+export async function revokeConnectorApiKey(keyId: string): Promise<void> {
+  await callAppApi("/api/app/api-keys", {
+    method: "DELETE",
+    body: JSON.stringify({ keyId }),
+  });
 }
