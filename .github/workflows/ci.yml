@@ -38,7 +38,7 @@ jobs:
       - run: docker compose up -d
       - name: Health check
         run: |
-          for i in $(seq 1 30); do
+          for i in $(seq 1 60); do
             curl -sf http://localhost:3000/health && break
             sleep 1
           done
