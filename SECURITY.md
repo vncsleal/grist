@@ -19,3 +19,10 @@ Include:
 - Suggested mitigation (if any)
 
 We aim to acknowledge reports within 72 hours.
+
+## Git History Scan
+
+- **Date:** 2026-05-21
+- **Tool:** Gitleaks (default ruleset)
+- **Scope:** Full git history (62 commits, ~2.6 MB scanned)
+- **Result:** Zero secrets found. Clean.

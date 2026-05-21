@@ -1,177 +1,394 @@
 # Quillby Roadmap
 
-## Product Direction
+## Deployment Model
 
-Quillby should evolve in clear stages:
+Quillby is an AI agent for copywriters. It runs in three distinct modes. Every mode
+uses the same codebase and the same MCP tool surface — only the storage backend and
+transport differ.
 
-1. Published single-workspace local binary
-2. Multi-workspace local binary
-3. Dual-mode architecture for local and hosted runtimes
-4. Hosted remote MCP connector
-5. MCP App and paid hosted tiers
+---
 
-This keeps the product stable while moving from a local-first tool to a more native Claude integration.
+### Local
+
+The default mode. No server. No account. No setup beyond dropping a config block
+into Claude Desktop (or any MCP-compatible client).
+
+- Transport: stdio
+- Storage: local filesystem under `~/.quillby/`
+- Auth: none — the process is owned by the user's machine
+- Cost: free, always
+- Trade-off: data lives on one machine; no sharing; no cross-device access
+
+Suitable for: individual copywriters who want a personal writing assistant on their
+own computer.
+
+---
+
+### Self-Hosted
+
+An advanced user deploys the Quillby HTTP server on their own infrastructure —
+a VPS, a home server, a container platform, anything they control. They supply
+their own database URL and auth secret, and they point their MCP client at their
+own endpoint.
+
+- Transport: HTTP (Streamable MCP)
+- Storage: user-supplied libSQL/Turso database (or any libSQL-compatible endpoint)
+- Auth: better-auth + API keys; configured by the deployer
+- Cost: whatever the user pays for their own infra (Quillby itself is free)
+- Trade-off: full control and data ownership, but the user is responsible for
+  uptime, backups, and upgrades
+
+Suitable for: technical users who want cross-device or team access on their own terms.
+Also suitable as a private multi-user instance for a small team or agency.
+
+---
+
+### Cloud (Quillby Cloud)
+
+Quillby runs the infrastructure. The user signs up, gets an endpoint, and connects
+their MCP client to it — no server to configure, no database to provision.
+
+- Transport: HTTP (Streamable MCP)
+- Storage: Quillby-managed database, isolated per user
+- Auth: better-auth + API keys, provisioned by Quillby
+- Cost: monthly subscription fee (free tier for basic use; pro tier for higher
+  limits and team features)
+- Trade-off: no ops burden, but data is on Quillby's infrastructure
+
+Suitable for: copywriters who want the benefits of an always-on, cross-device agent
+without managing their own server.
+
+---
+
+> **Key implementation principle**: the same `WorkspaceStorage` interface powers all
+> three modes. `LocalWorkspaceStorage` serves local mode. `HostedDbWorkspaceStorage`
+> (pointed at any libSQL endpoint) serves both self-hosted and cloud.
+> The only difference between the latter two is who provisions the database and who
+> pays for it.
+
+---
 
 ## Principles
 
 - One Quillby workspace per Claude Project, client, brand, or campaign.
 - Keep structured editorial state in Quillby workspaces.
 - Keep large background docs in Claude Project knowledge.
-- Preserve local-first operation and backward compatibility.
-- Do not force hosted storage on users who want local-only usage.
+- Preserve local-first operation — local mode must always work without any external
+  dependency.
+- Self-hosted must be fully operable with a single `docker run` or equivalent.
+- Quillby Cloud is built on top of the same open codebase; no features are locked
+  behind proprietary backends.
+- Prefer simplicity over backward compatibility in early versions.
+- Avoid runtime legacy migration layers unless actively needed.
+- Do not force cloud storage on users who want local-only usage.
+
+---
 
 ## Current State
 
-The current published version is a local MCP binary with one effective workspace.
+- **Local mode**: stable, multi-workspace, tested. ✓
+- **Self-hosted mode**: HTTP server + DB-backed storage + auth layer shipped. ✓  
+  Users can deploy with `QUILLBY_DB_URL` + `QUILLBY_AUTH_SECRET` and reach a
+  working MCP endpoint.
+- **Cloud mode**: browser sign-in, hosted dashboard, billing hooks, connector
+  API key management, and cloud account lifecycle are now implemented. ✓
+- **Monorepo**: repo reorganized into `apps/`, `packages/`, `infra/`, and
+  audience-focused docs. Workspace tooling, root lint/build/typecheck/test, and
+  separated marketing/app surfaces are in place. ✓
 
-This branch upgrades Quillby to a local multi-workspace model:
+### Status Snapshot (2026-04-02)
 
-- Dynamic Quillby home via `QUILLBY_HOME`
-- Workspace-scoped storage under `~/.quillby/workspaces/<workspaceId>/`
-- Current-workspace selection
-- Legacy single-profile migration into a `default` workspace
-- Typed memory buckets:
-  - voice examples
-  - style rules
-  - audience insights
-  - do-not-say rules
-  - successful posts
-  - campaign context
-  - source preferences
-- Expanded MCP surface:
-  - `quillby_list_workspaces`
-  - `quillby_create_workspace`
-  - `quillby_select_workspace`
-  - `quillby_get_workspace`
-  - `quillby_get_memory`
+What is now shipped in the repo:
+
+- `apps/web`: public marketing and mode-selection surface (`/`, `/local`,
+  `/self-host`, `/cloud`) ✓
+- `apps/app`: Vite + React hosted dashboard with:
+  - cloud sign-in/sign-up flow ✓
+  - self-hosted connect flow ✓
+  - workspace switcher ✓
+  - card curation view ✓
+  - draft history ✓
+  - connector/API key management ✓
+  - account settings page (profile, change password, session management, delete account) ✓
+  - user pill nav with settings link and sign-out dropdown ✓
+  - post-signup onboarding banner guiding first workspace + connector creation ✓
+- `apps/mcp-server`: shared runtime for local, self-hosted, and cloud ✓
+- extracted shared packages for core/config/workspace/database/billing/storage ✓
+
+What is still not fully productized:
+
+- self-host operations polish and smoke-tested deployment flows
+- remaining package extraction (`auth`, `content`, `extractors`, `mcp-kit`,
+  `ui-contracts`, `observability`)
+- final docs/CI hardening
+
+---
 
 ## Release Plan
 
-### v0.4: Local Multi-Workspace
+### v0.4: Local Multi-Workspace ✓
 
-Goal: make the workspace model the new stable local foundation.
+Goal: make the workspace model the stable local foundation.
 
-Scope:
+- multi-workspace filesystem storage ✓
+- local stdio MCP as primary distribution ✓
 
-- ship multi-workspace local storage
-- migrate legacy users safely into `default`
-- keep local stdio MCP as the primary distribution
-- update docs and tests around workspace-based usage
+Mode: **Local**
 
-Exit criteria:
+### v0.5: Dual-Mode Refactor ✓
 
-- migration works without data loss
-- workspace switching is clear in Claude
-- tests pass against isolated local state
+Goal: make self-hosted and cloud modes possible without rewriting Quillby.
 
-### v0.5: Dual-Mode Refactor
+- `WorkspaceStorage` interface separates domain logic from storage backend ✓
+- local filesystem becomes one swappable backend ✓
 
-Goal: make hosted mode possible without rewriting Quillby.
+Mode: **Local** (unchanged) + **Self-Hosted/Cloud** (foundation)
 
-Scope:
+### v0.6: HTTP MCP Server ✓
 
-- separate business logic from filesystem layout
-- add service and repository boundaries
-- keep local mode behavior unchanged
+Goal: turn HTTP transport into a deployable MCP server.
 
-Exit criteria:
+- production-ready `/mcp` endpoint ✓
+- Streamable HTTP transport ✓
 
-- local filesystem becomes one storage backend
-- domain logic no longer depends directly on raw file paths
+Mode: **Self-Hosted**, **Cloud**
 
-### v0.6: Harden Remote HTTP MCP
-
-Goal: turn HTTP transport into a real deployable MCP server.
-
-Scope:
-
-- production-ready `/mcp` endpoint
-- Streamable HTTP as the canonical remote transport
-- deployment config, health checks, structured logs
-
-Exit criteria:
-
-- Quillby can run as a stable hosted MCP endpoint
-
-### v0.7: Auth Layer
+### v0.7: Auth Layer ✓
 
 Goal: make hosted Quillby user-scoped and safe.
 
-Scope:
+- better-auth + API key plugin ✓
+- per-user request scoping ✓
 
-- user accounts or equivalent identity model
-- per-user authentication
-- ideally OAuth-compatible connector auth
+Mode: **Self-Hosted**, **Cloud**
 
-Exit criteria:
-
-- each MCP request maps to an authenticated user
-- no shared global hosted state
-
-### v0.8: Hosted Persistence
+### v0.8: Hosted Persistence ✓
 
 Goal: move hosted state off the local filesystem.
 
-Scope:
+- DB-backed storage (libSQL/Turso) for workspaces, context, memory, sources,
+  harvests, cards, drafts ✓
+- filesystem storage kept for local mode ✓
 
-- database-backed hosted storage for:
-  - workspaces
-  - context
-  - typed memory
-  - sources
-  - harvests
-  - cards
-  - drafts
-- keep filesystem storage for local mode
+Mode: **Self-Hosted** ✓, **Cloud** ✓
 
-Exit criteria:
+### v0.9: Connector Readiness ✓
 
-- local mode uses filesystem storage
-- hosted mode uses user-scoped backend storage
-- both run on the same domain model
+Goal: make Quillby coherent as a remote MCP connector.
 
-### v0.9: Claude Connector Readiness
+- polished tool surface ✓
+- custom connector setup docs ✓
 
-Goal: make Quillby feel coherent as a remote connector.
+Mode: **Self-Hosted**, **Cloud**
 
-Scope:
-
-- narrow and polish the tool surface
-- improve read/write tool metadata
-- write custom connector setup docs
-- test through Claude custom connector flows
-
-Exit criteria:
-
-- Quillby can be added as a custom remote connector
-- workspace selection is clear in Claude
-
-### v1.0: Hosted Quillby
+### v1.0: First Hosted Release ✓
 
 Goal: release the first supported hosted Quillby connector.
 
-Scope:
+- stable hosted MCP service ✓
+- local mode still supported ✓
+- local-to-hosted migration path (`npm run migrate`) ✓
 
-- stable hosted MCP service
-- local mode still supported
-- explicit local-to-hosted migration or import path
+Mode: **All three**
 
-### v1.1+: MCP App And Paid Tiers
+### v1.1: Card Curation ✓
 
-Goal: improve the native experience and productize hosted Quillby.
+Goal: let Claude help the user curate harvested cards before drafting.
 
-Scope:
+- `quillby_curate_card`: approve, reject, or flag individual cards ✓
+- `quillby_list_cards`: filter by curation status ✓
+- curation state persisted per harvest in both local and hosted storage ✓
+- draft listing (`quillby_list_drafts`) ✓
 
-- MCP App for shortlist review, filters, approvals, and workspace switching
-- hosted plans and billing
-- optional team/shared use cases
+Mode: **All three**
+
+### v1.2: Per-Workspace Override + Plans + Team Access ✓
+
+Goal: remove the last friction points for cloud and self-hosted use.
+
+**Per-tool workspace override** (all modes)
+
+- every content tool accepts an optional `workspaceId` parameter
+- Claude can operate across workspaces in a single conversation without
+  changing the global selection
+- `storage.withWorkspace(id)` returns a scoped storage view without side effects
+
+**Hosted plans scaffold** (Cloud)
+
+- `plan: "free" | "pro"` field on user state
+- `quillby_get_plan` tool exposes current plan to Claude
+- no billing integration yet — groundwork for v1.3
+
+**Team / shared workspaces** (Self-Hosted, Cloud)
+
+- workspace owner can grant `viewer` or `editor` access to other users
+- `quillby_share_workspace`, `quillby_revoke_access`, `quillby_list_workspace_access`
+- shared workspace content is read/written as the owner's data (grantee sees
+  the same cards, drafts, and memory as the owner for that workspace)
+
+### v1.3: Quillby Cloud Billing ✓
+
+Goal: productize Quillby Cloud.
+
+- Stripe webhook integration for plan sync (free/pro) ✓
+- usage limits enforced per plan (harvest frequency, workspace count, draft storage) ✓
+- billing portal link exposed via `quillby_get_plan` ✓
+- checkout + subscription lifecycle UX (`quillby_manage_subscription` + billing action endpoints) ✓
+- self-hosted users are unaffected — plan enforcement and billing routes are deployment-mode gated ✓
+
+Mode: **Cloud** only
+
+### v1.4: Self-Hosted Operations Kit ✓
+
+Goal: make self-hosting genuinely easy.
+
+- official Docker image and `docker-compose.yml`
+- one-command bootstrap: `docker compose up` gives a working MCP endpoint
+- environment variable reference and deployment checklist in docs
+- upgrade path: pull new image, restart, DDL migrations run automatically
+- optional: `quillby_server_info` tool that reports version, mode, and DB status
+
+Mode: **Self-Hosted** only (local mode unaffected)
+
+### v1.5: MCP App ✓
+
+Goal: give managed hosted users a native GUI alongside Claude.
+
+- card review, curation filters, and approval flows ✓
+- workspace switcher ✓
+- draft history browser ✓
+- connects to the same HTTP API as the MCP server ✓
+- CORS headers added to HTTP server for browser clients ✓
+- ships as a standalone GUI deployable that can be linked from the marketing site ✓
+
+Mode: **Cloud** (self-hosted users can run it against their own endpoint)
+
+### v1.6: Cloud Auth + Connector Management ✓
+
+Goal: make the hosted app behave like a real SaaS surface instead of a generic
+remote connector shell.
+
+- cloud-first browser sign-in/sign-up flow in the app ✓
+- self-hosted connection flow split from cloud onboarding ✓
+- app uses session-backed `/api/app/*` endpoints instead of MCP tool calls ✓
+- authenticated connector management UI for creating, listing, and revoking API keys ✓
+- connector setup guidance inside the app for Claude and other hosted MCP clients ✓
+
+Mode: **Cloud** primary, **Self-Hosted** compatible
+
+### v1.7: Cloud Account Lifecycle ✓
+
+Goal: move from "basic auth works" to a complete managed product experience.
+
+- account settings page (display name, email) ✓
+- change password form ✓
+- active session list with per-session revoke and sign-out-everywhere ✓
+- account deletion with password confirmation ✓
+- user pill in the nav (initials avatar, name/email, dropdown with settings + sign out) ✓
+- post-signup onboarding banner guiding first workspace and connector setup ✓
+
+Mode: **Cloud**
+
+---
+
+## Missing / Next To Implement
+
+These are the highest-value remaining items to make Quillby feel complete and
+operationally credible.
+
+### 1. Cloud Account Lifecycle ✓
+
+Goal: move from “basic auth works” to a complete managed product experience.
+
+Shipped in v1.7:
+- account settings, change password, session management, account deletion ✓
+- user pill nav and post-signup onboarding banner ✓
+
+Still missing:
+- password reset via email (requires email provider integration)
+- email verification / account confirmation
+- account settings page
+- profile/session management
+- post-signup onboarding into first workspace and first connector
+
+Mode: **Cloud**
+
+### 2. Self-Hosted Operations Hardening
+
+Goal: make self-hosting genuinely low-friction for technical users.
+
+- `src/cli/keys.ts` compiled into Docker image — `docker exec` key management works ✓
+- `infra/docker/.env.example` with all required vars and inline comments ✓
+- `docker-compose.yml` healthcheck, `env_file` support, upgrade + backup instructions ✓
+- `CONNECTOR.md` Docker exec path for user/key creation ✓
+- reverse proxy + HTTPS guidance
+- smoke-tested `docker compose` path in CI
+
+Mode: **Self-Hosted**
+
+### 3. Connector Docs by Client
+
+Goal: make every supported MCP client path explicit instead of burying it in
+general docs.
+
+- Claude Desktop local setup
+- Claude.ai hosted connector setup
+- ChatGPT / OpenAI remote connector setup
+- Cursor / VS Code setup where supported
+- transport/auth matrix: stdio vs HTTP, session vs Bearer key
+
+Mode: **All three**
+
+### 4. Remaining Package Extraction
+
+Goal: finish the monorepo architecture so `apps/mcp-server` becomes a thinner
+composition layer.
+
+- `packages/auth`
+- `packages/content`
+- `packages/extractors`
+- `packages/mcp-kit`
+- `packages/ui-contracts`
+- optional `packages/observability`
+
+Mode: **All three**
+
+### 5. CI and Operational Compliance
+
+Goal: move from local validation to repeatable repo guarantees.
+
+- general CI workflow for lint/build/typecheck/test
+- self-host smoke test workflow
+- release verification across app/web/server outputs
+- optional container/image validation
+
+Mode: **All three**
+
+### 6. Documentation Rewrite Around Final Architecture
+
+Goal: make docs match the actual product and repository shape.
+
+- rewrite `README.md` around Local / Self-Hosted / Cloud
+- move architecture details into `docs/architecture`
+- move deploy/runbook material into `docs/operations`
+- publish explicit deployment and connector matrices
+
+Mode: **All three**
+
+---
 
 ## Near-Term Follow-Ups
 
-After local multi-workspace lands, the next local hardening steps should be:
+Priority order recommended from the current codebase:
 
-1. Add per-tool workspace overrides so Claude can operate across workspaces without changing the global selection.
-2. Add explicit schema versions and migrations.
-3. Add atomic writes and file locking around workspace state.
-4. Add richer memory entries with timestamps, tags, and provenance.
-5. Add source trust, freshness, and duplicate clustering metadata.
+1. Cloud account lifecycle and onboarding
+2. Self-host deployment hardening and smoke tests
+3. Remaining package extraction
+4. Connector docs by client
+5. Final CI/docs pass
+
+1. Explicit schema versions and DDL migrations with version table.
+2. Atomic writes and file locking for local mode workspace state.
+3. Richer memory entries: timestamps, tags, and provenance.
+4. Source trust, freshness, and duplicate clustering metadata.
+5. Rate limiting and abuse protection for Quillby Cloud endpoints.

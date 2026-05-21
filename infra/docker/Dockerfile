@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1
+
+FROM node:22-alpine AS base
+WORKDIR /app
+RUN corepack enable
+
+FROM base AS deps
+COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY apps/mcp-server/package.json ./apps/mcp-server/package.json
+COPY packages/core/package.json ./packages/core/package.json
+COPY packages/config/package.json ./packages/config/package.json
+COPY packages/workspace/package.json ./packages/workspace/package.json
+COPY packages/database/package.json ./packages/database/package.json
+COPY packages/billing/package.json ./packages/billing/package.json
+COPY packages/storage-fs/package.json ./packages/storage-fs/package.json
+COPY packages/storage-db/package.json ./packages/storage-db/package.json
+COPY packages/providers/package.json ./packages/providers/package.json
+COPY tooling/scripts ./tooling/scripts
+COPY tooling/tsconfig ./tooling/tsconfig
+RUN pnpm install --filter @vncsleal/quillby... --no-frozen-lockfile
+
+FROM deps AS build
+COPY . .
+RUN pnpm --filter @vncsleal/quillby build
+
+# ─── App (SPA) build ─────────────────────────────────────────────────────────────────
+FROM base AS build-app
+COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY apps/app/package.json ./apps/app/package.json
+COPY tooling/tsconfig ./tooling/tsconfig
+RUN pnpm install --filter @quillby/app --no-frozen-lockfile
+COPY apps/app ./apps/app
+ARG VITE_QUILLBY_DEPLOYMENT_MODE=self-hosted
+ARG VITE_QUILLBY_API_BASE_URL=/
+RUN pnpm --filter @quillby/app build
+
+FROM node:22-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+ENV QUILLBY_TRANSPORT=http
+ENV PORT=3000
+ENV QUILLBY_HTTP_HOST=0.0.0.0
+ENV QUILLBY_AUTH_DB_URL=file:/data/quillby-auth.db
+ENV QUILLBY_DEPLOYMENT_MODE=self-hosted
+
+COPY --from=build /app/apps/mcp-server/package.json ./package.json
+COPY --from=build /app/apps/mcp-server/bin ./bin
+COPY --from=build /app/apps/mcp-server/dist ./dist
+COPY --from=build-app /app/apps/app/dist ./public/app
+
+VOLUME ["/data"]
+EXPOSE 3000
+
+CMD ["node", "dist/mcp/server.js"]

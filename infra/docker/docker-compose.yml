@@ -1,0 +1,50 @@
+# Quillby self-hosted — quick start:
+#
+#   1. Copy .env.example to .env and fill in BETTER_AUTH_SECRET.
+#   2. docker compose up -d
+#   3. Create your first user and API key:
+#        docker exec -it quillby node /app/dist/cli/keys.js create-user you@example.com yourpassword "Your Name"
+#        docker exec -it quillby node /app/dist/cli/keys.js create <userId> quillby-connector
+#      The second command prints the key — copy it now, it is only shown once.
+#   4. Add the key as a Bearer token when connecting from your MCP client.
+#      See docs/CONNECTOR.md for client-specific setup guides.
+#
+# Upgrade:
+#   docker compose pull && docker compose up -d
+#   (DB migrations run automatically on startup.)
+#
+# Backup (local SQLite):
+#   docker run --rm -v quillby_data:/data -v $(pwd):/backup alpine \
+#     tar czf /backup/quillby-backup-$(date +%Y%m%d).tar.gz /data
+
+services:
+  quillby:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    image: vncsleal/quillby:latest
+    container_name: quillby
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      QUILLBY_TRANSPORT: http
+      QUILLBY_HTTP_HOST: 0.0.0.0
+      PORT: 3000
+      QUILLBY_DEPLOYMENT_MODE: self-hosted
+      QUILLBY_AUTH_DB_URL: file:/data/quillby-auth.db
+      QUILLBY_RATE_LIMIT: 60
+    ports:
+      - "3000:3000"
+    volumes:
+      - quillby_data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  quillby_data:
