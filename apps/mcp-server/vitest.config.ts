@@ -10,7 +10,13 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      exclude: ["src/mcp/server.ts"], // integration-tested separately
+      exclude: ["src/mcp/server.ts"],
+      thresholds: {
+        statements: 45,
+        branches: 40,
+        functions: 35,
+        lines: 45,
+      }, // integration-tested separately
     },
   },
 });
