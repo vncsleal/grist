@@ -7,14 +7,16 @@ RUN corepack enable
 FROM base AS deps
 COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps/mcp-server/package.json ./apps/mcp-server/package.json
-COPY packages/core/package.json ./packages/core/package.json
-COPY packages/config/package.json ./packages/config/package.json
-COPY packages/workspace/package.json ./packages/workspace/package.json
-COPY packages/database/package.json ./packages/database/package.json
+COPY apps/app/package.json ./apps/app/package.json
 COPY packages/billing/package.json ./packages/billing/package.json
-COPY packages/storage-fs/package.json ./packages/storage-fs/package.json
-COPY packages/storage-db/package.json ./packages/storage-db/package.json
+COPY packages/config/package.json ./packages/config/package.json
+COPY packages/content/package.json ./packages/content/package.json
+COPY packages/core/package.json ./packages/core/package.json
+COPY packages/database/package.json ./packages/database/package.json
 COPY packages/providers/package.json ./packages/providers/package.json
+COPY packages/storage-db/package.json ./packages/storage-db/package.json
+COPY packages/storage-fs/package.json ./packages/storage-fs/package.json
+COPY packages/workspace/package.json ./packages/workspace/package.json
 COPY tooling/scripts ./tooling/scripts
 COPY tooling/tsconfig ./tooling/tsconfig
 RUN pnpm install --filter @vncsleal/quillby... --no-frozen-lockfile
