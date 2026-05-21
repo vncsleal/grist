@@ -26,3 +26,23 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test:unit
       - run: pnpm build
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/docker
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose build
+      - run: docker compose up -d
+      - name: Health check
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/health && break
+            sleep 1
+          done
+          curl -sf http://localhost:3000/health
+      - name: Teardown
+        run: docker compose down
+        if: always()
