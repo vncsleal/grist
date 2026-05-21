@@ -28,7 +28,7 @@ COPY packages/workspace/package.json ./packages/workspace/package.json
 COPY packages/workspace/tsconfig.json ./packages/workspace/tsconfig.json
 COPY tooling/scripts ./tooling/scripts
 COPY tooling/tsconfig ./tooling/tsconfig
-RUN pnpm install --filter @vncsleal/quillby... --no-frozen-lockfile
+RUN pnpm install --filter @vncsleal/quillby... --no-frozen-lockfile --ignore-scripts
 
 FROM deps AS build
 COPY . .
