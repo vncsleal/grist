@@ -17,6 +17,7 @@ export async function columnExists(
     );
     return (rows?.count ?? 0) > 0;
   } catch {
+    // Query failed — safer to assume column does not exist
     return false;
   }
 }
@@ -31,6 +32,7 @@ export async function getSchemaVersion(db: QuillbyDb): Promise<number> {
     );
     return row?.v ?? 0;
   } catch {
+    // Query failed — assume no migrations applied
     return 0;
   }
 }

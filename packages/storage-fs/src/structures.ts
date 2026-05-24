@@ -53,6 +53,7 @@ export function saveHarvestOutput(rawCards: CardInput[], _seenUrls?: Set<string>
         // Reuse the same output directory so the pointer stays stable.
         outputDir = path.dirname(existingBundlePath);
       } catch {
+        // Corrupted harvest bundle — create fresh output dir
         outputDir = createTimestampedOutputDir(wsId);
       }
     } else {

@@ -20,6 +20,7 @@ function readJobs(workspaceId?: string): GenerationJob[] {
     const raw = JSON.parse(fs.readFileSync(file, "utf-8")) as unknown[];
     return raw.map((r) => GenerationJobSchema.parse(r));
   } catch {
+    // Corrupted jobs file — return empty rather than crashing
     return [];
   }
 }

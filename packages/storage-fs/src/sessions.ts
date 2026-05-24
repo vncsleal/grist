@@ -24,6 +24,7 @@ function readSessions(workspaceId?: string): Session[] {
       try {
         return SessionSchema.parse(JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")));
       } catch {
+        // Corrupted session file — skip it
         return null;
       }
     })
@@ -41,6 +42,7 @@ export function loadSession(sessionId: string, workspaceId?: string): Session | 
   try {
     return SessionSchema.parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
+    // Corrupted session file — return null
     return null;
   }
 }

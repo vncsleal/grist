@@ -136,7 +136,6 @@ Uses Bun for cross-compilation (`bun build --compile`).
 2. **Binary changes need rebuild** — Clients use `bin/quillby-mcp` which runs `dist/mcp/server.js`
 3. **MCP sampling required** — `quillby_daily_brief` and `quillby_analyze_articles` need client support
 4. **HTTP mode needs `BETTER_AUTH_SECRET`** — Generate with `openssl rand -base64 32`
-5. **Vitest false positives** — `dangerouslyIgnoreUnhandledErrors: true` set due to sourcemap issues
 
 ## File Locations
 

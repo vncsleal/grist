@@ -920,7 +920,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
 
   private rowToPlan(r: typeof hostedPlan.$inferSelect): ContentPlan {
     let tags: string[] = [];
-    try { tags = JSON.parse(r.tags) as string[]; } catch { tags = []; }
+    try { tags = JSON.parse(r.tags) as string[]; } catch { tags = []; /* Corrupted tags JSON — fall back to empty */ }
     return ContentPlanSchema.parse({
       id: r.id,
       name: r.name,

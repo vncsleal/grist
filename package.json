@@ -13,7 +13,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:unit": "pnpm --filter @vncsleal/quillby test:unit",
-    "clean": "turbo run clean --continue && rm -rf node_modules .turbo"
+    "clean": "turbo run clean --continue && rm -rf node_modules .turbo",
+    "postinstall": "lefthook install || true"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",

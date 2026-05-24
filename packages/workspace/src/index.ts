@@ -172,7 +172,7 @@ export function listWorkspaces(): WorkspaceMetadata[] {
           const raw = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
           return WorkspaceMetadataSchema.parse(raw);
         } catch {
-          // fall through to rebuild minimal metadata
+          // Corrupted metadata JSON — fall through to rebuild minimal metadata
         }
       }
       const fallback: WorkspaceMetadata = {
@@ -199,6 +199,7 @@ export function loadWorkspace(workspaceId: string): WorkspaceMetadata | null {
   try {
     return WorkspaceMetadataSchema.parse(JSON.parse(fs.readFileSync(metaPath, "utf-8")));
   } catch {
+    // Corrupted workspace metadata — return null
     return null;
   }
 }
@@ -294,6 +295,7 @@ export function loadWorkspaceContext(workspaceId: string): UserContext | null {
   try {
     return UserContextSchema.parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
+    // Corrupted context file — return null
     return null;
   }
 }
@@ -313,6 +315,7 @@ export function loadTypedMemory(workspaceId: string): TypedMemory {
   try {
     return TypedMemorySchema.parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
+    // Corrupted memory file — return empty
     return TypedMemorySchema.parse({});
   }
 }
@@ -386,7 +389,7 @@ export function getSeenUrls(workspaceId: string): Set<string> {
       return new Set(JSON.parse(fs.readFileSync(cacheFile, "utf-8")) as string[]);
     }
   } catch {
-    // Ignore malformed cache.
+    // Malformed seen-URLs cache — rebuild from scratch
   }
   return new Set();
 }
