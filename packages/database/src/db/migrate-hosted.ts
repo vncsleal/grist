@@ -63,7 +63,9 @@ export async function recordMigration(
  */
 export async function ensureHostedTables(dbInstance: QuillbyDb): Promise<void> {
   const run = (stmt: ReturnType<typeof sql.raw>) =>
-    dbInstance.run(stmt).catch(() => {});
+    dbInstance.run(stmt).catch(() => {
+      // Expected — table/view may already exist for CREATE/ALTER IF NOT EXISTS
+    });
 
   // ── v1: Base tables ────────────────────────────────────────────────────────
   const baseTables = [
