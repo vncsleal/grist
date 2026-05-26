@@ -1,9 +1,15 @@
 export type LogLevel = "info" | "warn" | "error" | "fatal";
 
 export function slog(level: LogLevel, msg: string, extra?: Record<string, unknown>): void {
-  process.stderr.write(
-    JSON.stringify({ ts: new Date().toISOString(), level, msg, ...extra }) + "\n",
-  );
+  try {
+    process.stderr.write(
+      JSON.stringify({ ts: new Date().toISOString(), level, msg, ...extra }) + "\n",
+    );
+  } catch {
+    process.stderr.write(
+      JSON.stringify({ ts: new Date().toISOString(), level, msg, _logError: "serialization failed" }) + "\n",
+    );
+  }
 }
 
 export function logInfo(msg: string, extra?: Record<string, unknown>): void {

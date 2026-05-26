@@ -123,10 +123,16 @@ const MEMORY_TYPES = {
 type MemoryTypeInput = keyof typeof MEMORY_TYPES;
 
 const activeJobCounts: Record<string, number> = {};
+function safeParseInt(raw: string | undefined, fallback: number): number {
+  if (raw === undefined || raw === null) return fallback;
+  const val = parseInt(raw, 10);
+  return Number.isNaN(val) || val < 1 ? fallback : val;
+}
+
 const JOB_CONCURRENCY_LIMITS = {
-  image: parseInt(process.env.QUILLBY_MAX_CONCURRENT_IMAGE ?? "5", 10),
-  audio: parseInt(process.env.QUILLBY_MAX_CONCURRENT_AUDIO ?? "3", 10),
-  video: parseInt(process.env.QUILLBY_MAX_CONCURRENT_VIDEO ?? "2", 10),
+  image: safeParseInt(process.env.QUILLBY_MAX_CONCURRENT_IMAGE, 5),
+  audio: safeParseInt(process.env.QUILLBY_MAX_CONCURRENT_AUDIO, 3),
+  video: safeParseInt(process.env.QUILLBY_MAX_CONCURRENT_VIDEO, 2),
 };
 
 /** Singleton provider router — tier1 is wired after connect in stdio mode; tier2 from cloud env vars. */
@@ -1700,7 +1706,7 @@ ${guide}
           },
           {
             name: "pro",
-            price: process.env.QUILLBY_STRIPE_PRO_PRICE ? "$29/mo" : "$29/mo",
+            price: "$29/mo",
             description: "Unlimited workspaces, drafts, and AI generation credits",
             limits: getPlanLimits("pro"),
           },
@@ -2254,7 +2260,7 @@ if (TRANSPORT_MODE === "http") {
     ".txt":  "text/plain; charset=utf-8",
   };
 
-  const MCP_SESSION_TTL_MS = parseInt(process.env.QUILLBY_MCP_SESSION_TTL_MS ?? (24 * 60 * 60 * 1000).toString(), 10);
+  const MCP_SESSION_TTL_MS = safeParseInt(process.env.QUILLBY_MCP_SESSION_TTL_MS, 24 * 60 * 60 * 1000);
 
   // Map of sessionId → transport, so we can route GET/DELETE back to the right session.
   const sessions = new Map<string, {
@@ -2270,7 +2276,7 @@ if (TRANSPORT_MODE === "http") {
     for (const [sid, session] of sessions) {
       if (now - session.createdAt > MCP_SESSION_TTL_MS) {
         slog("info", "session_ttl_expired", { sessionId: sid, userId: session.userId });
-        session.server.close().catch(() => {});
+        session.server.close().catch((err) => slog("warn", "session_close_error", { error: String(err) }));
         sessions.delete(sid);
       }
     }
@@ -2310,9 +2316,9 @@ if (TRANSPORT_MODE === "http") {
   // localStorage and JavaScript memory after the initial exchange.
   // ------------------------------------------------------------------
   const APP_SESSION_COOKIE = "qb-app-sess";
-  const APP_SESSION_TTL_MS = parseInt(process.env.QUILLBY_APP_SESSION_TTL_MS ?? (7 * 24 * 60 * 60 * 1000).toString(), 10);
+  const APP_SESSION_TTL_MS = safeParseInt(process.env.QUILLBY_APP_SESSION_TTL_MS, 7 * 24 * 60 * 60 * 1000);
 
-  const appSessions = new Map<string, { userId: string; expiresAt: number; createdAt: number }>();
+  const appSessions = new Map<string, { userId: string; expiresAt: number }>();
 
   function parseCookies(req: http.IncomingMessage): Map<string, string> {
     const map = new Map<string, string>();
@@ -2612,7 +2618,7 @@ if (TRANSPORT_MODE === "http") {
           const userId = verification.key?.referenceId ?? "unknown";
           // Two UUIDs concatenated for extra entropy — 256 bits total.
           const token = `${randomUUID()}-${randomUUID()}`;
-          appSessions.set(token, { userId, expiresAt: Date.now() + APP_SESSION_TTL_MS, createdAt: Date.now() });
+          appSessions.set(token, { userId, expiresAt: Date.now() + APP_SESSION_TTL_MS });
           res.setHeader("Set-Cookie", buildSessionCookie(token, APP_SESSION_TTL_MS / 1000));
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ ok: true }));
           finish(200);
