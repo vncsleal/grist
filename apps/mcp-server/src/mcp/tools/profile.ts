@@ -5,7 +5,7 @@ import { resolveElevenLabsApiKey } from "../../provider-config.js";
 import { SetCloneIdentityArgsSchema, CloneVoiceArgsSchema } from "../schemas.js";
 import type { ToolContext } from "./index.js";
 
-export const toolDefinitions: Partial<Tool>[] = [
+export const toolDefinitions: Tool[] = [
   {
     name: "quillby_list_workspaces",
     description: "List Quillby workspaces. Use one workspace per Claude Project, client, publication, or campaign.",
@@ -52,42 +52,42 @@ export const toolDefinitions: Partial<Tool>[] = [
   },
   {
     name: "quillby_set_clone_identity",
-    description: "Set workspace-level identity clone references and consent.",
+    description: "Set workspace-level identity clone references (face image URL and voice audio URL) and explicit consent flag. Clone generation will be blocked unless consent is granted.",
     annotations: { destructiveHint: false, idempotentHint: true },
     outputSchema: { type: "object" as const },
     inputSchema: {
       type: "object",
       properties: {
-        workspaceId: { type: "string" },
-        faceReferenceImageUrl: { type: "string" },
-        voiceReferenceAudioUrl: { type: "string" },
-        cloneConsentGranted: { type: "boolean" },
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
+        faceReferenceImageUrl: { type: "string", description: "Publicly reachable image URL of the consenting user's face reference." },
+        voiceReferenceAudioUrl: { type: "string", description: "Publicly reachable audio URL of the consenting user's voice sample." },
+        cloneConsentGranted: { type: "boolean", description: "Must be true before identity clone generation is allowed." },
       },
       required: ["cloneConsentGranted"],
     },
   },
   {
     name: "quillby_clone_voice",
-    description: "Create a persistent ElevenLabs voice clone.",
+    description: "Create a persistent ElevenLabs voice clone from the workspace voice reference audio URL. Uploads the audio to ElevenLabs once and stores the returned voiceId in workspace metadata for all subsequent audio generation calls. Requires clone consent to be granted and an ElevenLabs provider to be configured. Idempotent — if a cloned voice ID is already saved, returns it without re-cloning unless overwrite is true.",
     annotations: { destructiveHint: false, idempotentHint: false },
     outputSchema: { type: "object" as const },
     inputSchema: {
       type: "object",
       properties: {
-        workspaceId: { type: "string" },
-        name: { type: "string" },
-        overwrite: { type: "boolean" },
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
+        name: { type: "string", description: "Display name for the cloned voice in ElevenLabs. Defaults to the workspace name." },
+        overwrite: { type: "boolean", description: "If true, delete the existing cloned voice and create a fresh one. Defaults to false." },
       },
     },
   },
   {
     name: "quillby_delete_voice_clone",
-    description: "Delete the persistent ElevenLabs voice clone.",
+    description: "Delete the persistent ElevenLabs voice clone associated with this workspace. Removes the voice from ElevenLabs and clears the stored voiceId. Consent and reference URL are preserved so you can re-clone later.",
     annotations: { destructiveHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
     inputSchema: {
       type: "object",
-      properties: { workspaceId: { type: "string" } },
+      properties: { workspaceId: { type: "string", description: "Optional workspace override without changing global selection." } },
     },
   },
   {
@@ -98,7 +98,7 @@ export const toolDefinitions: Partial<Tool>[] = [
     inputSchema: {
       type: "object",
       properties: {
-        workspaceId: { type: "string" },
+        workspaceId: { type: "string", description: "Optional workspace override without changing global selection." },
         context: {
           type: "object",
           properties: {
@@ -125,7 +125,7 @@ export const toolDefinitions: Partial<Tool>[] = [
     outputSchema: { type: "object" as const },
     inputSchema: {
       type: "object",
-      properties: { workspaceId: { type: "string" } },
+      properties: { workspaceId: { type: "string", description: "Optional workspace override without changing global selection." } },
     },
   },
 ];
@@ -279,7 +279,7 @@ export function handleProfileTool(
           throw new Error("No voiceReferenceAudioUrl set. Call quillby_set_clone_identity with a voice sample URL first.");
         }
 
-        const elevenLabsApiKey = resolveElevenLabsApiKey(ctx.deploymentMode as "local" | "self-hosted" | "cloud");
+        const elevenLabsApiKey = resolveElevenLabsApiKey(ctx.deploymentMode);
         if (!elevenLabsApiKey) {
           throw new Error("ElevenLabs is not configured. Set QUILLBY_ELEVENLABS_API_KEY or configure the audio provider via quillby_set_provider.");
         }
@@ -338,7 +338,7 @@ export function handleProfileTool(
           };
         }
 
-        const elevenLabsApiKey = resolveElevenLabsApiKey(ctx.deploymentMode as "local" | "self-hosted" | "cloud");
+        const elevenLabsApiKey = resolveElevenLabsApiKey(ctx.deploymentMode);
         if (elevenLabsApiKey) {
           await ElevenLabsAdapter.deleteVoiceClone(elevenLabsApiKey, workspace.elevenlabsClonedVoiceId)
             .catch(() => process.stderr.write("[quillby] Non-fatal: ElevenLabs deleteVoiceClone failed in delete handler\n"));
@@ -356,12 +356,12 @@ export function handleProfileTool(
     case "quillby_set_context": {
       return (async () => {
         const activeStorage = await resolveStorage();
-        const { context } = args as { context: Record<string, unknown> };
-        const parsed = UserContextSchema.parse(context);
-        await activeStorage.saveContext(parsed);
+        const context = UserContextSchema.parse((args as { context: unknown }).context);
+        await activeStorage.saveContext(context);
+        const setCtxWs = await activeStorage.getCurrentWorkspace();
         return {
-          content: [{ type: "text" as const, text: "User context saved." }],
-          structuredContent: { saved: true },
+          content: [{ type: "text" as const, text: `Context saved for workspace "${setCtxWs.name}". Role: ${context.role}. Topics: ${context.topics.join(", ")}. Platforms: ${context.platforms.join(", ")}.` }],
+          structuredContent: { saved: true, workspaceId: setCtxWs.id, role: context.role, topics: context.topics, platforms: context.platforms },
         };
       })();
     }
@@ -369,10 +369,14 @@ export function handleProfileTool(
     case "quillby_get_context": {
       return (async () => {
         const activeStorage = await resolveStorage();
-        const ctxData = await activeStorage.loadContext();
+        if (!await activeStorage.contextExists()) {
+          return { content: [{ type: "text" as const, text: "No context saved for this workspace yet. Start by setting up Quillby for it." }], structuredContent: { error: "no_context" } };
+        }
+        const ctxData = (await activeStorage.loadContext()) as Record<string, unknown>;
+        const getCtxWs = await activeStorage.getCurrentWorkspace();
         return {
-          content: [{ type: "text" as const, text: JSON.stringify(ctxData, null, 2) }],
-          structuredContent: ctxData ?? undefined,
+          content: [{ type: "text" as const, text: JSON.stringify({ workspace: getCtxWs, context: ctxData }, null, 2) }],
+          structuredContent: { workspace: getCtxWs, context: ctxData },
         };
       })();
     }

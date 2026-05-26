@@ -81,10 +81,9 @@ import {
   handleSessionClose,
 } from "./sessions.js";
 import {
-  toolDefinitions as _profileToolDefinitions,
+  toolDefinitions as profileToolDefinitions,
   handleProfileTool,
 } from "./tools/profile.js";
-const profileToolDefinitions = _profileToolDefinitions as Tool[];
 import type { PlanStorage, SessionStore } from "@quillby/workspace";
 import {
   buildDirectAdaptersFromConfig,
@@ -936,7 +935,7 @@ async function handleToolCall(
     ]);
 
     if (PROFILE_TOOL_NAMES.has(name)) {
-      return handleProfileTool(name, args, { server, storage, deploymentMode: deploymentMode as "local" | "self-hosted" | "cloud", providerRouter });
+      return handleProfileTool(name, args, { server, storage, deploymentMode, providerRouter });
     }
 
     switch (name) {
