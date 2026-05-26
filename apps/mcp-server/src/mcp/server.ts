@@ -82,6 +82,7 @@ import {
 import {
   toolDefinitions as profileToolDefinitions,
   handleProfileTool,
+  PROFILE_TOOL_NAMES,
 } from "./tools/profile.js";
 import {
   toolDefinitions as feedToolDefinitions,
@@ -864,12 +865,6 @@ async function handleToolCall(
       if (!workspaceId) return storage as WorkspaceStorage & JobStorage;
       return storage.withWorkspace(workspaceId) as Promise<WorkspaceStorage & JobStorage>;
     };
-
-    const PROFILE_TOOL_NAMES = new Set([
-      "list_workspaces", "create_workspace", "select_workspace",
-      "get_workspace", "set_clone_identity", "clone_voice",
-      "delete_voice_clone", "set_context", "get_context",
-    ]);
 
     if (PROFILE_TOOL_NAMES.has(name)) {
       return handleProfileTool(name, args, { server, storage, deploymentMode, providerRouter, sample: (prompt, maxTokens) => sample(server, prompt, maxTokens) });

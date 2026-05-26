@@ -21,7 +21,7 @@ export interface ToolStorage {
   loadContext(): Promise<Record<string, unknown> | null>;
   saveContext(ctx: Record<string, unknown>): Promise<void>;
   loadTypedMemory(): Promise<Record<string, unknown> | null>;
-  loadSources(): Promise<unknown[]>;
+  loadSources(): Promise<string[]>;
   appendSources(urls: string[]): Promise<{ added: number; skipped: number }>;
   updateWorkspaceMetadata(meta: Record<string, unknown>): Promise<{ id: string; [key: string]: unknown }>;
   latestHarvestExists(): Promise<boolean>;

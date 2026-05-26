@@ -3,6 +3,13 @@ import { getGoogleNewsFeeds, getMediumTagFeeds, getFeedlyFeeds } from "../../age
 import { enrichArticle } from "../../extractors/content.js";
 import type { ToolContext, ToolStorage } from "./index.js";
 
+function extractContextTopics(ctx: Record<string, unknown> | null): string[] {
+  if (!ctx) return [];
+  const topics = ctx.topics;
+  if (Array.isArray(topics) && topics.every((t): t is string => typeof t === "string")) return topics;
+  return [];
+}
+
 const FEED_TOOL_NAMES = new Set([
   "add_feeds", "discover_feeds", "list_feeds", "read_article",
 ]);
@@ -93,7 +100,7 @@ export function handleFeedTool(
         const ctxExists = await storage.contextExists();
         const savedCtx = ctxExists ? await storage.loadContext() : null;
         const { topics: topicOverride, locale = "en-US", country = "US" } = args as { topics?: string[]; locale?: string; country?: string };
-        const topics: string[] = topicOverride?.length ? topicOverride : (savedCtx && typeof savedCtx === "object" && "topics" in savedCtx ? (savedCtx as Record<string, unknown>).topics as string[] : []);
+        const topics: string[] = topicOverride?.length ? topicOverride : extractContextTopics(savedCtx);
         if (topics.length === 0) {
           return { content: [{ type: "text" as const, text: "No topics are saved for this workspace yet. Update the Quillby setup first." }], structuredContent: { error: "no_topics" } };
         }
