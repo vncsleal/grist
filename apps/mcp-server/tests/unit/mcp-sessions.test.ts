@@ -81,6 +81,88 @@ describe("handleSessionStatus", () => {
     const data = result.structuredContent as { active: boolean };
     expect(data.active).toBe(false);
   });
+
+  it("loads a session by specific sessionId", async () => {
+    const store = mockStore();
+    (store.loadSession as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "s-specific",
+      state: "executing",
+      lastActivityAt: new Date().toISOString(),
+      degradation: { warnings: [] },
+    });
+    const result = await handleSessionStatus(store, store, { sessionId: "s-specific" });
+    const data = result.structuredContent as { session: { id: string } };
+    expect(data.session.id).toBe("s-specific");
+    expect(store.loadSession).toHaveBeenCalledWith("s-specific");
+  });
+
+  it("returns most recent active session when multiple exist", async () => {
+    const store = mockStore();
+    const now = Date.now();
+    (store.listSessions as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: "s-old", state: "executing", lastActivityAt: new Date(now - 60000).toISOString(), degradation: { warnings: [] } },
+      { id: "s-recent", state: "executing", lastActivityAt: new Date(now).toISOString(), degradation: { warnings: [] } },
+    ]);
+    const result = await handleSessionStatus(store, store, {});
+    const data = result.structuredContent as { session: { id: string } };
+    expect(data.session.id).toBe("s-recent");
+  });
+
+  it("filters out closing sessions from active list", async () => {
+    const store = mockStore();
+    (store.listSessions as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: "s-closing", state: "closing", lastActivityAt: new Date().toISOString(), degradation: { warnings: [] } },
+    ]);
+    const result = await handleSessionStatus(store, store, {});
+    const data = result.structuredContent as { active: boolean };
+    expect(data.active).toBe(false);
+  });
+});
+
+describe("session degradation", () => {
+  it("warns when session is stale beyond warning threshold", async () => {
+    const store = mockStore();
+    const oldDate = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+    (store.listSessions as ReturnType<typeof vi.fn>).mockResolvedValue([{
+      id: "s-stale",
+      state: "executing",
+      lastActivityAt: oldDate,
+      degradation: { tokenBudget: undefined, tokensUsed: undefined, warnings: [] },
+    }]);
+    const result = await handleSessionStatus(store, store, {});
+    const data = result.structuredContent as { degradation: { warnings: string[]; stale: boolean; staleMinutes: number } };
+    expect(data.degradation.stale).toBe(true);
+    expect(data.degradation.staleMinutes).toBeGreaterThanOrEqual(15);
+    expect(data.degradation.warnings.length).toBeGreaterThan(0);
+  });
+
+  it("warns when token budget is near exhaustion", async () => {
+    const store = mockStore();
+    (store.listSessions as ReturnType<typeof vi.fn>).mockResolvedValue([{
+      id: "s-tokens",
+      state: "executing",
+      lastActivityAt: new Date().toISOString(),
+      degradation: { tokenBudget: 1000, tokensUsed: 900, warnings: [] },
+    }]);
+    const result = await handleSessionStatus(store, store, {});
+    const data = result.structuredContent as { degradation: { tokenBudgetExhausted: boolean; warnings: string[] } };
+    expect(data.degradation.warnings.some((w) => w.includes("Token budget"))).toBe(true);
+    expect(data.degradation.tokenBudgetExhausted).toBe(false);
+  });
+
+  it("marks token budget as exhausted at 100%", async () => {
+    const store = mockStore();
+    (store.listSessions as ReturnType<typeof vi.fn>).mockResolvedValue([{
+      id: "s-exhausted",
+      state: "executing",
+      lastActivityAt: new Date().toISOString(),
+      degradation: { tokenBudget: 500, tokensUsed: 500, warnings: [] },
+    }]);
+    const result = await handleSessionStatus(store, store, {});
+    const data = result.structuredContent as { degradation: { tokenBudgetExhausted: boolean; tokenUsagePct: number } };
+    expect(data.degradation.tokenBudgetExhausted).toBe(true);
+    expect(data.degradation.tokenUsagePct).toBe(100);
+  });
 });
 
 describe("handleSessionClose", () => {
