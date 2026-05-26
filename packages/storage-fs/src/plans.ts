@@ -31,6 +31,7 @@ function readPlans(workspaceId?: string): ContentPlan[] {
       try {
         return ContentPlanSchema.parse(JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")));
       } catch {
+        // Corrupted plan file — skip it
         return null;
       }
     })
@@ -44,6 +45,7 @@ function readTasks(planId: string, workspaceId?: string): ContentTask[] {
     const raw = JSON.parse(fs.readFileSync(file, "utf-8")) as unknown[];
     return raw.map((r) => ContentTaskSchema.parse(r));
   } catch {
+    // Corrupted tasks file — return empty
     return [];
   }
 }
@@ -64,6 +66,7 @@ export function loadPlan(planId: string, workspaceId?: string): ContentPlan | nu
   try {
     return ContentPlanSchema.parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
+    // Corrupted plan file — return null
     return null;
   }
 }

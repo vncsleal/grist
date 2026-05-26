@@ -107,6 +107,7 @@ export function verifyStripeWebhookSignature(rawBody: string, signatureHeader: s
   try {
     return timingSafeEqual(Buffer.from(expected), Buffer.from(parsed.v1));
   } catch {
+    // Buffer comparison failed — signature is invalid
     return false;
   }
 }

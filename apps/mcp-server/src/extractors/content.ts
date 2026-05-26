@@ -62,8 +62,8 @@ export function extractTextFromHTML(html: string, url: string): string {
   void url;
   try {
     const { document } = parseHTML(html);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const article = new Readability(document as any).parse();
+    type ReadabilityDoc = ConstructorParameters<typeof Readability>[0];
+    const article = new Readability(document as unknown as ReadabilityDoc).parse();
     if (article?.textContent) {
       return article.textContent.replace(/\s+/g, " ").trim().slice(0, CONFIG.ENRICHMENT.MAX_CONTENT_LENGTH);
     }

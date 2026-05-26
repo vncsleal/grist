@@ -28,23 +28,31 @@ All three modes share the same codebase and MCP tool surface. Only storage backe
 - Cloud dashboard (Vite+React SPA) with sign-in, workspace management, card curation, draft history, billing scaffold
 - 9 active packages (billing, config, content, core, database, providers, storage-db, storage-fs, workspace)
 
-**Critical gaps (production blockers):**
+**Fixed gaps:**
+
+| Gap | Status | Resolution |
+|-----|--------|------------|
+| `.bak-*` auth DB backups not in `.gitignore` | ✅ DONE | `.gitignore` now has `*.bak-*`, `*.bak-*/*` |
+| No pre-commit secret scanning | ✅ DONE | `lefthook.yml` runs gitleaks + lint + typecheck pre-commit |
+| Source maps disabled | ✅ DONE | `tsconfig.json: sourceMap: true`, `vite.config.ts: build.sourcemap: true` |
+| `dangerouslyIgnoreUnhandledErrors: true` in Vitest | ✅ DONE | Removed from config; 355 unit tests pass clean |
+| No CI for lint/typecheck/test | ✅ DONE | `.github/workflows/ci.yml` has `ci`, `integration`, `docker-smoke` jobs |
+| Git history audit | ✅ DONE | `gitleaks` scanned 76 commits — zero secrets found |
+| No Docker image smoke test in CI | ✅ DONE | `docker-smoke` job builds, starts, health-checks, tears down |
+
+**Remaining gaps:**
 
 | Gap | Severity | Location |
 |-----|----------|----------|
-| `.bak-*` auth DB backups not in `.gitignore` (11 files on disk, could be accidentally committed) | **HIGH** | `apps/mcp-server/quillby-auth.db.bak-*` |
-| No pre-commit secret scanning | **HIGH** | Repository-wide |
-| Source maps disabled | **HIGH** | `apps/mcp-server/tsconfig.json` → `sourceMap: false` |
-| `dangerouslyIgnoreUnhandledErrors: true` in Vitest | **HIGH** | `apps/mcp-server/vitest.config.ts` |
 | No changesets/versioning | **HIGH** | `.changeset/` is empty stub, root version `0.0.0` |
 | SPA bundle 523KB, no code splitting | **MEDIUM** | `apps/app/vite.config.ts` |
 | 52 tools in a single 3768-line handler | **MEDIUM** | `apps/mcp-server/src/mcp/server.ts` |
 | 5 stub packages (only README.md) | **MEDIUM** | `packages/{auth,extractors,mcp-kit,observability,ui-contracts}` |
 | Rate limiting disabled by default | **MEDIUM** | `.env` → `QUILLBY_ENFORCE_PLAN_LIMITS=false` |
-| No CI for lint/typecheck/test | **HIGH** | Only `release.yml` exists |
 | Auth DB in two locations (root + mcp-server) | **LOW** | `./quillby-auth.db` + `apps/mcp-server/quillby-auth.db` |
 | No email provider integration | **MEDIUM** | Password reset, email verification missing |
-| No Docker image smoke test in CI | **MEDIUM** | `infra/docker/` exists but untested |
+| Unit test coverage at 45% threshold | **MEDIUM** | `vitest.config.ts` — need >80% for full sign-off |
+| No credential management docs | **LOW** | `docs/operations/secrets.md` not yet created |
 
 ---
 
@@ -52,9 +60,9 @@ All three modes share the same codebase and MCP tool surface. Only storage backe
 
 Quillby is **production ready** when:
 
-1. **Security**: No secrets in git history. `.env` already in `.gitignore` (confirmed never tracked). `.bak-*` patterns added to `.gitignore`. Pre-commit secret scanning active. Source maps enabled for debugging. Builds do not leak file paths.
+1. **Security**: No secrets in git history (gitleaks audit ✅). `.env` in `.gitignore` (confirmed never tracked). `.bak-*` patterns in `.gitignore`. Pre-commit secret scanning active via lefthook + gitleaks. Source maps enabled for debugging. Builds do not leak file paths.
 
-2. **Reliability**: Test suite catches real failures (no `dangerouslyIgnoreUnhandledErrors`). CI runs lint → typecheck → test → build on every PR and push to main. Integration tests run in CI.
+2. **Reliability**: Test suite catches real failures (no `dangerouslyIgnoreUnhandledErrors`). CI runs lint → typecheck → test → build → integration → docker-smoke on every PR and push to main. Coverage thresholds at 45/40/35/45 with path to 80%.
 
 3. **Versioning**: Changesets configured. Every release is versioned, tagged, and has a changelog. Root version is bumped from `0.0.0`.
 
@@ -304,12 +312,12 @@ Phases 1, 2, 3, 4 can be worked in parallel after Phase 0 is complete.
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Secrets in git history | `.env` never tracked (confirmed), `.bak-*` untracked but unprotected | Zero confirmed via automated scan |
-| `.bak-*` in `.gitignore` | Not covered | Covered |
-| Pre-commit secret scanning | None | Active |
-| CI workflows | 1 (release only) | 3+ (lint, test, integration, docker smoke) |
-| Test false negatives | Yes (dangerouslyIgnoreUnhandledErrors) | Zero |
-| Source maps | Disabled | Enabled |
+| Secrets in git history | ✅ Zero confirmed via gitleaks scan of 76 commits | Zero |
+| `.bak-*` in `.gitignore` | ✅ Covered (`*.bak-*`, `*.bak-*/*`) | Covered |
+| Pre-commit secret scanning | ✅ Active via lefthook + gitleaks | Active |
+| CI workflows | ✅ 3 jobs (ci, integration, docker-smoke) | 3+ |
+| Test false negatives | ✅ Zero — `dangerouslyIgnoreUnhandledErrors` removed, 355 tests pass | Zero |
+| Source maps | ✅ Enabled (tsconfig + vite) | Enabled |
 | Version | `0.0.0` | Semver with changesets |
 | Stub packages | 5 (README-only) | 0 (populated or removed) |
 | server.ts LOC | 3768 | <1000 per file (decomposed) |

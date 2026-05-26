@@ -6,7 +6,13 @@ import * as schema from "./db/schema.js";
 
 // QUILLBY_RATE_LIMIT sets the default max requests per minute for new API keys.
 // Individual keys can override this at creation time via manage-keys.ts.
-const defaultRateLimitMax = parseInt(process.env.QUILLBY_RATE_LIMIT ?? "60", 10);
+export function parseRateLimit(raw?: string): number {
+  const value = parseInt(raw ?? "60", 10);
+  if (Number.isNaN(value) || value < 1) return 60;
+  return value;
+}
+
+const defaultRateLimitMax = parseRateLimit(process.env.QUILLBY_RATE_LIMIT);
 type BetterAuthOptions = Parameters<typeof betterAuth>[0];
 
 const apiKeyPlugin = apiKey({

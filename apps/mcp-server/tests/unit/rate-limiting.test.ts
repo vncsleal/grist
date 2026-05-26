@@ -1,4 +1,15 @@
-import { beforeEach, afterEach, describe, expect, it } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("better-auth", () => ({ betterAuth: vi.fn() }));
+vi.mock("better-auth/adapters/drizzle", () => ({ drizzleAdapter: vi.fn() }));
+vi.mock("@better-auth/api-key", () => ({ apiKey: vi.fn(() => ({})) }));
+vi.mock("../../src/db.js", () => ({ db: {} }));
+vi.mock("../../src/db/schema.js", async (importOriginal) => {
+  const actual: Record<string, unknown> = await importOriginal();
+  return actual;
+});
+
+import { parseRateLimit } from "../../src/auth.js";
 
 function getConcurrencyLimits(overrides?: {
   image?: string;
@@ -78,5 +89,28 @@ describe("concurrency limit env var overrides", () => {
     expect(limits.image).toBe(1);
     expect(limits.audio).toBe(3);
     expect(limits.video).toBe(2);
+  });
+});
+
+describe("parseRateLimit", () => {
+  it("defaults to 60 when no env var is set", () => {
+    expect(parseRateLimit(undefined)).toBe(60);
+  });
+
+  it("defaults to 60 when env var is empty string", () => {
+    expect(parseRateLimit("")).toBe(60);
+  });
+
+  it("reads and parses a valid env var", () => {
+    expect(parseRateLimit("120")).toBe(120);
+  });
+
+  it("defaults to 60 when env var is NaN", () => {
+    expect(parseRateLimit("not-a-number")).toBe(60);
+  });
+
+  it("defaults to 60 when env var is less than 1", () => {
+    expect(parseRateLimit("0")).toBe(60);
+    expect(parseRateLimit("-5")).toBe(60);
   });
 });

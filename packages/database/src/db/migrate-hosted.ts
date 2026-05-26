@@ -17,6 +17,7 @@ export async function columnExists(
     );
     return (rows?.count ?? 0) > 0;
   } catch {
+    // Query failed — safer to assume column does not exist
     return false;
   }
 }
@@ -31,6 +32,7 @@ export async function getSchemaVersion(db: QuillbyDb): Promise<number> {
     );
     return row?.v ?? 0;
   } catch {
+    // Query failed — assume no migrations applied
     return 0;
   }
 }
@@ -61,7 +63,9 @@ export async function recordMigration(
  */
 export async function ensureHostedTables(dbInstance: QuillbyDb): Promise<void> {
   const run = (stmt: ReturnType<typeof sql.raw>) =>
-    dbInstance.run(stmt).catch(() => {});
+    dbInstance.run(stmt).catch(() => {
+      // Expected — table/view may already exist for CREATE/ALTER IF NOT EXISTS
+    });
 
   // ── v1: Base tables ────────────────────────────────────────────────────────
   const baseTables = [
