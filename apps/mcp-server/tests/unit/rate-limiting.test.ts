@@ -1,15 +1,6 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it } from "vitest";
 
-vi.mock("better-auth", () => ({ betterAuth: vi.fn() }));
-vi.mock("better-auth/adapters/drizzle", () => ({ drizzleAdapter: vi.fn() }));
-vi.mock("@better-auth/api-key", () => ({ apiKey: vi.fn(() => ({})) }));
-vi.mock("../../src/db.js", () => ({ db: {} }));
-vi.mock("../../src/db/schema.js", async (importOriginal) => {
-  const actual: Record<string, unknown> = await importOriginal();
-  return actual;
-});
-
-import { parseRateLimit } from "../../src/auth.js";
+import { parseRateLimit } from "@quillby/auth";
 
 function getConcurrencyLimits(overrides?: {
   image?: string;

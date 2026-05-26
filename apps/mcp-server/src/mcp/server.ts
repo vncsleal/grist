@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { toNodeHandler } from "better-auth/node";
 import { slog, logInfo, logWarn, logError, logFatal } from "../logger.js";
 import { auth } from "../auth.js";
+import { AuthApi, serializeApiKey, listApiKeysFromDb, deleteApiKeyFromDb, type ListedApiKey } from "@quillby/auth";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -16,7 +17,6 @@ import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { eq } from "drizzle-orm";
 import { UserContextSchema, CardInputSchema } from "../types.js";
 import {
   contextToPromptText,
@@ -145,6 +145,8 @@ for (const warning of verifyProviderEnv()) {
 }
 
 const SERVER_INFO = { name: "quillby-mcp", version: "2.0.0" } as const;
+
+const authApi = new AuthApi(auth);
 
 function validateEnv(): void {
   const mode = getDeploymentMode();
@@ -2373,7 +2375,7 @@ if (TRANSPORT_MODE === "http") {
     const bearerMatch = authHeader.match(/^Bearer (.+)$/i);
     if (!bearerMatch) return null;
 
-    const verification = await verifyApiKey(bearerMatch[1]);
+    const verification = await authApi.verifyApiKey(bearerMatch[1]);
     if (!verification.valid) return null;
 
     return {
@@ -2403,71 +2405,6 @@ if (TRANSPORT_MODE === "http") {
         return "skip";
     }
   };
-
-  interface VerifiedApiKey {
-    valid: boolean;
-    key?: {
-      referenceId?: string | null;
-    } | null;
-  }
-
-  interface ListedApiKey {
-    id: string;
-    name?: string | null;
-    prefix?: string | null;
-    start?: string | null;
-    enabled?: boolean | null;
-    createdAt?: Date | string | number | null;
-    expiresAt?: Date | string | number | null;
-    rateLimitMax?: number | null;
-    rateLimitTimeWindow?: number | null;
-  }
-
-  const verifyApiKey = (key: string): Promise<VerifiedApiKey> =>
-    (auth.api as unknown as {
-      verifyApiKey(input: { body: { key: string } }): Promise<VerifiedApiKey>;
-    }).verifyApiKey({ body: { key } });
-
-  const listApiKeys = (userId: string): Promise<ListedApiKey[]> =>
-    db.select().from(apikeyTable).where(eq(apikeyTable.referenceId, userId)) as Promise<ListedApiKey[]>;
-
-  const createApiKey = (userId: string, name: string, rateLimitMax: number) =>
-    (auth.api as unknown as {
-      createApiKey(input: {
-        body: {
-          userId: string;
-          name: string;
-          prefix: string;
-          rateLimitEnabled: boolean;
-          rateLimitTimeWindow: number;
-          rateLimitMax: number;
-        };
-      }): Promise<{ id: string; key: string }>;
-    }).createApiKey({
-      body: {
-        userId,
-        name,
-        prefix: "qb",
-        rateLimitEnabled: true,
-        rateLimitTimeWindow: 60_000,
-        rateLimitMax,
-      },
-    });
-
-  const deleteApiKey = (keyId: string): Promise<void> =>
-    db.delete(apikeyTable).where(eq(apikeyTable.id, keyId)).then(() => undefined);
-
-  const serializeApiKey = (key: ListedApiKey) => ({
-    id: key.id,
-    name: key.name ?? "Unnamed key",
-    prefix: key.prefix ?? null,
-    start: key.start ?? null,
-    enabled: key.enabled ?? true,
-    createdAt: key.createdAt ? new Date(key.createdAt).toISOString() : undefined,
-    expiresAt: key.expiresAt ? new Date(key.expiresAt).toISOString() : null,
-    rateLimitMax: key.rateLimitMax ?? null,
-    rateLimitTimeWindow: key.rateLimitTimeWindow ?? null,
-  });
 
   const httpServer = http.createServer(async (req, res) => {
     const start = Date.now();
@@ -2609,7 +2546,7 @@ if (TRANSPORT_MODE === "http") {
             finish(400);
             return;
           }
-          const verification = await verifyApiKey(body.apiKey);
+          const verification = await authApi.verifyApiKey(body.apiKey);
           if (!verification.valid) {
             res.writeHead(401).end(JSON.stringify({ error: "Invalid API key" }));
             finish(401);
@@ -2894,7 +2831,7 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/api-keys" && req.method === "GET") {
-          const keys = await listApiKeys(authState.userId);
+          const keys = await listApiKeysFromDb(db, apikeyTable, authState.userId);
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({
             keys: keys.map(serializeApiKey),
           }));
@@ -2915,9 +2852,9 @@ if (TRANSPORT_MODE === "http") {
             ? Math.max(1, Math.floor(body.rateLimitMax))
             : parseInt(process.env.QUILLBY_RATE_LIMIT ?? "60", 10);
 
-          const result = await createApiKey(authState.userId, keyName, rateLimitMax);
-          const keys = await listApiKeys(authState.userId);
-          const meta = keys.find((entry) => entry.id === result.id);
+          const result = await authApi.createApiKey(authState.userId, keyName, rateLimitMax);
+          const keys = await listApiKeysFromDb(db, apikeyTable, authState.userId);
+          const meta = keys.find((entry: ListedApiKey) => entry.id === result.id);
 
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({
             key: result.key,
@@ -2934,7 +2871,7 @@ if (TRANSPORT_MODE === "http") {
             finish(400);
             return;
           }
-          await deleteApiKey(body.keyId);
+          await deleteApiKeyFromDb(db, apikeyTable, body.keyId);
           res.writeHead(204).end();
           finish(204);
           return;
@@ -3161,7 +3098,7 @@ if (TRANSPORT_MODE === "http") {
         return;
       }
 
-      const verification = await verifyApiKey(bearerMatch[1]);
+      const verification = await authApi.verifyApiKey(bearerMatch[1]);
       if (!verification.valid) {
         res.writeHead(401, { "WWW-Authenticate": 'Bearer realm="quillby-mcp"' }).end("Unauthorized");
         finish(401);
@@ -3292,9 +3229,7 @@ if (TRANSPORT_MODE === "http") {
   let stdioStorage = storage as unknown as WorkspaceStorage & JobStorage & PlanStorage & SessionStore;
   const rawApiKey = process.env.QUILLBY_API_KEY?.trim();
   if (rawApiKey && isCloudMode()) {
-    const verification = await (auth.api as unknown as {
-      verifyApiKey(input: { body: { key: string } }): Promise<{ valid: boolean; key?: { referenceId?: string } }>;
-    }).verifyApiKey({ body: { key: rawApiKey } });
+    const verification = await authApi.verifyApiKey(rawApiKey);
     if (!verification.valid) {
       logFatal("QUILLBY_API_KEY is invalid — aborting");
       process.exit(1);

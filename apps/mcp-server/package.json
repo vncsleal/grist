@@ -28,7 +28,7 @@
   ],
   "type": "module",
   "scripts": {
-    "prebuild": "pnpm --filter @quillby/core --filter @quillby/config --filter @quillby/content --filter @quillby/workspace --filter @quillby/database --filter @quillby/billing --filter @quillby/storage-fs --filter @quillby/storage-db --filter @quillby/providers build",
+    "prebuild": "pnpm --filter @quillby/core --filter @quillby/config --filter @quillby/content --filter @quillby/auth --filter @quillby/workspace --filter @quillby/database --filter @quillby/billing --filter @quillby/storage-fs --filter @quillby/storage-db --filter @quillby/providers build",
     "prepare": "pnpm run build",
     "mcp": "node dist/mcp/server.js",
     "mcp:dev": "tsx src/mcp/server.ts",
@@ -59,6 +59,7 @@
     "@modelcontextprotocol/sdk": "^1.9.0",
     "@mozilla/readability": "^0.6.0",
     "@opentelemetry/api": "^1.9.0",
+    "@quillby/auth": "workspace:*",
     "@quillby/billing": "workspace:*",
     "@quillby/config": "workspace:*",
     "@quillby/content": "workspace:*",
