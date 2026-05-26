@@ -3241,7 +3241,7 @@ if (TRANSPORT_MODE === "http") {
           if (transport.sessionId) {
             const session = sessions.get(transport.sessionId);
             sessions.delete(transport.sessionId);
-            session?.server.close().catch(() => logWarn("server.close failed during session cleanup"));
+            session?.server.close().catch((err) => slog("warn", "session_close_error", { error: String(err) }));
             slog("info", "session_close", { sessionId: transport.sessionId, sessions: sessions.size });
           }
         };
