@@ -66,6 +66,13 @@ import {
   BillingActionArgsSchema,
 } from "./schemas.js";
 import {
+  checkRateLimit,
+  validateMethod,
+  validateContentType,
+  applySecurityHeaders,
+  sendJsonError,
+} from "./middleware.js";
+import {
   handlePlanCreate,
   handlePlanList,
   handlePlanToday,
@@ -2470,6 +2477,39 @@ if (TRANSPORT_MODE === "http") {
     }
 
     try {
+      // Security headers (applied to all responses)
+      applySecurityHeaders(res, BASE_URL);
+
+      // Method validation — reject unsupported HTTP methods early
+      const methodError = validateMethod(req);
+      if (methodError) {
+        sendJsonError(res, 405, methodError);
+        finish(405);
+        return;
+      }
+
+      // Content-Type validation for POST/PUT with body
+      const contentTypeError = validateContentType(req);
+      if (contentTypeError) {
+        sendJsonError(res, 415, contentTypeError);
+        finish(415);
+        return;
+      }
+
+      // Per-IP rate limiting for non-MCP routes (MCP has its own API-key rate limiting via better-auth)
+      if (url.pathname !== "/mcp") {
+        const clientIp = req.socket.remoteAddress ?? "unknown";
+        const rateLimit = checkRateLimit(clientIp);
+        if (!rateLimit.allowed) {
+          const retryAfter = Math.max(1, Math.ceil(rateLimit.resetMs / 1000));
+          res.setHeader("Retry-After", retryAfter.toString());
+          sendJsonError(res, 429, "Too many requests");
+          finish(429);
+          return;
+        }
+        res.setHeader("X-RateLimit-Remaining", rateLimit.remaining.toString());
+      }
+
       // ------------------------------------------------------------------
       // Health check — unauthenticated, fast
       // ------------------------------------------------------------------
