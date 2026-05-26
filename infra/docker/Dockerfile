@@ -54,6 +54,8 @@ ENV QUILLBY_HTTP_HOST=0.0.0.0
 ENV QUILLBY_AUTH_DB_URL=file:/data/quillby-auth.db
 ENV QUILLBY_DEPLOYMENT_MODE=self-hosted
 
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages ./packages
 COPY --from=build /app/apps/mcp-server/package.json ./package.json
 COPY --from=build /app/apps/mcp-server/bin ./bin
 COPY --from=build /app/apps/mcp-server/dist ./dist
