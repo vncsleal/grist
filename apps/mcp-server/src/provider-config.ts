@@ -4,6 +4,7 @@ import { createCipheriv, createDecipheriv, createHash, pbkdf2Sync, randomBytes }
 import { execFileSync } from "node:child_process";
 import { CONFIG, ensureDataDir, getDeploymentMode, type DeploymentMode } from "@quillby/config";
 import type { GenerationModality } from "@quillby/core";
+import { logWarn } from "./logger.js";
 import type { ProviderAdapter } from "@quillby/providers";
 import {
   OpenAiGptImageAdapter,
@@ -67,7 +68,7 @@ function loadConfigFile(): ProviderConfigFile {
   try {
     return JSON.parse(fs.readFileSync(file, "utf-8")) as ProviderConfigFile;
   } catch (e) {
-    process.stderr.write(`[quillby] Corrupt provider config file, starting fresh: ${e}\n`);
+    logWarn("Corrupt provider config file, starting fresh", { error: String(e) });
     return {};
   }
 }
@@ -163,7 +164,7 @@ function getKeychainSecret(modality: GenerationModality): string | null {
       "-w",
     ], { encoding: "utf8" }).trim();
   } catch {
-    process.stderr.write(`[quillby] Keychain secret not found for modality "${modality}"\n`);
+    logWarn("Keychain secret not found", { modality });
     return null;
   }
 }
@@ -178,7 +179,7 @@ function deleteKeychainSecret(modality: GenerationModality): void {
       keychainService(modality),
     ]);
   } catch {
-    process.stderr.write(`[quillby] Keychain secret not found for modality "${modality}" (expected on first delete)\n`);
+    logWarn("Keychain secret not found (expected on first delete)", { modality });
   }
 }
 

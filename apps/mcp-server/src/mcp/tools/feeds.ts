@@ -1,6 +1,7 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { getGoogleNewsFeeds, getMediumTagFeeds, getFeedlyFeeds } from "../../agents/seeds.js";
 import { enrichArticle } from "../../extractors/content.js";
+import { logWarn } from "../../logger.js";
 import type { ToolContext, ToolStorage } from "./index.js";
 
 function extractContextTopics(ctx: Record<string, unknown> | null): string[] {
@@ -132,7 +133,7 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
                 );
               }
             } catch (e) {
-              process.stderr.write(`[quillby] Non-fatal: Sampling response parse failed in discover_feeds: ${e}\n`);
+              logWarn("Sampling response parse failed in discover_feeds", { error: String(e) });
             }
           }
         }
