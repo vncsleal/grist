@@ -22,40 +22,13 @@
  */
 
 import "dotenv/config";
+import { AuthApi, parseRateLimit, listApiKeysFromDb, deleteApiKeyFromDb } from "@quillby/auth";
 import { auth } from "../auth.js";
+import { db, apikey as apikeyTable } from "../db.js";
+
+const authApi = new AuthApi(auth);
 
 const [, , command, ...args] = process.argv;
-
-// ── Type-unsafe but runtime-correct wrappers for @better-auth/api-key methods.
-// These methods exist at runtime via the plugin but are not reflected in the typed API.
-
-const createApiKey = (userId: string, name: string, rateLimitMax: number) =>
-  (auth.api as unknown as {
-    createApiKey(input: {
-      body: {
-        userId: string;
-        name: string;
-        prefix: string;
-        rateLimitEnabled: boolean;
-        rateLimitTimeWindow: number;
-        rateLimitMax: number;
-      };
-    }): Promise<{ id: string; key: string }>;
-  }).createApiKey({
-    body: { userId, name, prefix: "qb", rateLimitEnabled: true, rateLimitTimeWindow: 60_000, rateLimitMax },
-  });
-
-interface ListedApiKey { id: string; name?: string | null; start?: string | null }
-
-const listApiKeys = (userId: string): Promise<ListedApiKey[]> =>
-  (auth.api as unknown as {
-    listApiKeys(input: { body: { userId: string } }): Promise<ListedApiKey[]>;
-  }).listApiKeys({ body: { userId } });
-
-const deleteApiKey = (keyId: string): Promise<void> =>
-  (auth.api as unknown as {
-    deleteApiKey(input: { body: { keyId: string } }): Promise<void>;
-  }).deleteApiKey({ body: { keyId } });
 
 async function main(): Promise<void> {
   switch (command) {
@@ -65,7 +38,7 @@ async function main(): Promise<void> {
         console.error("Usage: keys create-user <email> <password> <name>");
         process.exit(1);
       }
-      const result = await auth.api.signUpEmail({ body: { email, password, name } });
+      const result = await authApi.signUpEmail(email, password, name);
       console.log("Created user:");
       console.log(JSON.stringify({ id: result.user.id, email: result.user.email, name: result.user.name }, null, 2));
       break;
@@ -79,8 +52,8 @@ async function main(): Promise<void> {
       }
       const rateLimitMax = limitArg
         ? parseInt(limitArg, 10)
-        : parseInt(process.env.QUILLBY_RATE_LIMIT ?? "60", 10);
-      const result = await createApiKey(userId, keyName, rateLimitMax);
+        : parseRateLimit(process.env.QUILLBY_RATE_LIMIT);
+      const result = await authApi.createApiKey(userId, keyName, rateLimitMax);
       console.log("Created API key (shown only once — save it now):");
       console.log(JSON.stringify({ key: result.key, id: result.id, name: keyName, userId, rateLimitMax }, null, 2));
       break;
@@ -92,7 +65,7 @@ async function main(): Promise<void> {
         console.error("Usage: keys list <userId>");
         process.exit(1);
       }
-      const keys = await listApiKeys(userId);
+      const keys = await listApiKeysFromDb(db, apikeyTable, userId);
       if (!keys || (Array.isArray(keys) && keys.length === 0)) {
         console.log("No keys found for user:", userId);
       } else {
@@ -107,7 +80,7 @@ async function main(): Promise<void> {
         console.error("Usage: keys revoke <keyId>");
         process.exit(1);
       }
-      await deleteApiKey(keyId);
+      await deleteApiKeyFromDb(db, apikeyTable, keyId);
       console.log(`Revoked key: ${keyId}`);
       break;
     }
