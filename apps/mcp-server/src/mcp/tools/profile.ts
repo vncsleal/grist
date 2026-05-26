@@ -130,6 +130,8 @@ export const toolDefinitions: Tool[] = [
   },
 ];
 
+export const PROFILE_TOOL_NAMES = new Set(toolDefinitions.map((t) => t.name));
+
 export function handleProfileTool(
   name: string,
   args: Record<string, unknown>,
