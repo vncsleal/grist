@@ -35,6 +35,7 @@ services:
       QUILLBY_DEPLOYMENT_MODE: self-hosted
       QUILLBY_AUTH_DB_URL: file:/data/quillby-auth.db
       QUILLBY_RATE_LIMIT: 60
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-quillby-ci-default}
     ports:
       - "3000:3000"
     volumes:
