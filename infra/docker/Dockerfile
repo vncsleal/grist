@@ -47,7 +47,7 @@ RUN pnpm --filter @quillby/app build
 
 # ─── Production deploy (resolves pnpm symlinks for standalone runtime) ──────
 FROM build AS deployed
-RUN pnpm --filter @vncsleal/quillby deploy --prod /deploy
+RUN echo "inject-workspace-packages=true" >> .npmrc && pnpm --filter @vncsleal/quillby deploy --prod /deploy
 
 FROM node:22-alpine AS runtime
 WORKDIR /app
