@@ -2,6 +2,7 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { validateUrl, ElevenLabsAdapter } from "@quillby/providers";
 import { UserContextSchema } from "../../types.js";
 import { resolveElevenLabsApiKey } from "../../provider-config.js";
+import { logWarn } from "../../logger.js";
 import { SetCloneIdentityArgsSchema, CloneVoiceArgsSchema } from "../schemas.js";
 import type { ToolContext } from "./index.js";
 
@@ -303,7 +304,7 @@ export function handleProfileTool(
 
         if (workspace.elevenlabsClonedVoiceId && overwrite) {
           await ElevenLabsAdapter.deleteVoiceClone(elevenLabsApiKey, workspace.elevenlabsClonedVoiceId)
-            .catch(() => process.stderr.write("[quillby] Non-fatal: could not delete old ElevenLabs voice clone\n"));
+            .catch(() => logWarn("could not delete old ElevenLabs voice clone"));
         }
 
         const cloneName = voiceName?.trim() || workspace.name || "Quillby Voice Clone";
@@ -343,7 +344,7 @@ export function handleProfileTool(
         const elevenLabsApiKey = resolveElevenLabsApiKey(ctx.deploymentMode);
         if (elevenLabsApiKey) {
           await ElevenLabsAdapter.deleteVoiceClone(elevenLabsApiKey, workspace.elevenlabsClonedVoiceId)
-            .catch(() => process.stderr.write("[quillby] Non-fatal: ElevenLabs deleteVoiceClone failed in delete handler\n"));
+            .catch(() => logWarn("ElevenLabs deleteVoiceClone failed in delete handler"));
         }
 
         await activeStorage.updateWorkspaceMetadata({ elevenlabsClonedVoiceId: "" });

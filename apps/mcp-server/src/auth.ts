@@ -3,6 +3,8 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { apiKey } from "@better-auth/api-key";
 import { db } from "./db.js";
 import * as schema from "./db/schema.js";
+import { sendVerificationEmail, sendResetPasswordEmail } from "./email.js";
+import { slog } from "./logger.js";
 
 // QUILLBY_RATE_LIMIT sets the default max requests per minute for new API keys.
 // Individual keys can override this at creation time via manage-keys.ts.
@@ -46,9 +48,16 @@ export const auth = betterAuth({
     },
   }),
 
-  // Email + password is the primary way to register users who then generate
-  // API keys. Social providers can be added here in a future version.
-  emailAndPassword: { enabled: true },
+  emailAndPassword: {
+    enabled: true,
+    sendEmailVerification: true,
+    async sendVerificationEmail(data: { user: { email: string; name?: string }; url: string }) {
+      await sendVerificationEmail(data.user, data.url);
+    },
+    async sendResetPassword(data: { user: { email: string; name?: string }; url: string }) {
+      await sendResetPasswordEmail(data.user, data.url);
+    },
+  },
 
   // Allow the app origin (e.g. http://localhost:5173 in dev) to make
   // credentialed auth requests without Better Auth's CSRF 403 rejection.
@@ -58,3 +67,9 @@ export const auth = betterAuth({
     apiKeyPlugin,
   ],
 });
+
+if (process.env.QUILLBY_SMTP_HOST) {
+  slog("info", "SMTP configured — email verification and password reset enabled");
+} else {
+  slog("info", "SMTP not configured — email verification and password reset will log URLs only");
+}

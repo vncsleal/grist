@@ -4,6 +4,7 @@ import * as path from "node:path";
 import * as http from "node:http";
 import { randomUUID } from "node:crypto";
 import { toNodeHandler } from "better-auth/node";
+import { slog, logInfo, logWarn, logError, logFatal } from "../logger.js";
 import { auth } from "../auth.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -134,7 +135,7 @@ const deploymentMode = getDeploymentMode();
 refreshProviderRouter();
 
 for (const warning of verifyProviderEnv()) {
-  process.stderr.write(`[quillby] WARNING: ${warning}\n`);
+    logWarn("env", { warning });
 }
 
 const SERVER_INFO = { name: "quillby-mcp", version: "2.0.0" } as const;
@@ -143,12 +144,12 @@ function validateEnv(): void {
   const mode = getDeploymentMode();
   if (mode === "self-hosted" || mode === "cloud") {
     if (!process.env.BETTER_AUTH_SECRET?.trim()) {
-      process.stderr.write("[quillby] FATAL: BETTER_AUTH_SECRET is required in HTTP mode. Generate with: openssl rand -base64 32\n");
+      logFatal("BETTER_AUTH_SECRET is required in HTTP mode");
       process.exit(1);
     }
   }
   if (mode === "self-hosted" && !process.env.QUILLBY_PROVIDER_ENCRYPTION_KEY?.trim()) {
-    process.stderr.write("[quillby] WARNING: QUILLBY_PROVIDER_ENCRYPTION_KEY not set. Provider config via Settings UI will fail.\n");
+    logWarn("QUILLBY_PROVIDER_ENCRYPTION_KEY not set — provider config via Settings UI will fail");
   }
 }
 
@@ -183,7 +184,7 @@ function guessMimeType(modality: GenerationModality, outputRef: string, meta?: s
       if (parsed.mimeType) return parsed.mimeType;
     }
     } catch {
-    process.stderr.write("[quillby] Non-fatal: malformed meta JSON in guessMimeType\n");
+    logWarn("malformed meta JSON in guessMimeType");
   }
   const lower = outputRef.toLowerCase();
   if (lower.endsWith(".png")) return "image/png";
@@ -227,7 +228,7 @@ async function sample(server: McpServer, prompt: string, maxTokens = 4096): Prom
     if (result.content.type === "text") return result.content.text;
     return null;
   } catch (e) {
-    process.stderr.write(`[quillby] Non-fatal: MCP Sampling createMessage failed: ${e}\n`);
+    logWarn("MCP Sampling createMessage failed", { error: String(e) });
     return null;
   }
 }
@@ -863,7 +864,7 @@ async function handleToolCall(
   args: Record<string, unknown> = {}
 ) {
     const log = (message: string) => {
-    server.sendLoggingMessage({ level: "info", data: message }).catch(() => process.stderr.write("[quillby] Non-fatal: MCP logging message delivery failed\n"));
+    server.sendLoggingMessage({ level: "info", data: message }).catch(() => logWarn("MCP logging message delivery failed"));
   };
 
   try {
@@ -1145,7 +1146,7 @@ Return ONLY a JSON array of integers — the indices of the top ${topN} most rel
                 .slice(0, topN);
             }
           } catch (e) {
-            process.stderr.write(`[quillby] Non-fatal: Sampling score parse failed, falling back to keyword pre-scoring: ${e}\n`);
+            logWarn("Sampling score parse failed, falling back to keyword pre-scoring", { error: String(e) });
           }
         }
         if (topIndices.length === 0) {
@@ -2154,43 +2155,43 @@ async function runGenerationJob(
 async function runScheduledHarvest(): Promise<void> {
   const tag = "[quillby-schedule]";
   if (!await storage.contextExists()) {
-    process.stderr.write(`${tag} No profile saved — skipping.\n`);
+    logInfo("No profile saved — skipping harvest", { tag });
     return;
   }
   const ctx = (await storage.loadContext())!;
   const sources = await storage.loadSources();
   if (sources.length === 0) {
-    process.stderr.write(`${tag} No feeds configured — skipping.\n`);
+    logInfo("No feeds configured — skipping harvest", { tag });
     return;
   }
   const topN = parseInt(process.env.QUILLBY_SCHEDULE_TOP_N ?? "15", 10);
-  process.stderr.write(`${tag} Fetching articles from ${sources.length} feeds...\n`);
+  logInfo("Fetching articles", { tag, count: sources.length });
   try {
     const { articles, seenUrls } = await fetchArticles(
       sources,
       await storage.getSeenUrls(),
-      (msg) => process.stderr.write(`${tag} ${msg}\n`),
+      (msg) => logInfo(msg, { tag }),
       true,
     );
     await storage.saveSeenUrls(seenUrls);
     if (articles.length === 0) {
-      process.stderr.write(`${tag} No new articles.\n`);
+      logInfo("No new articles", { tag });
       return;
     }
     const top = preScoreArticles(articles, ctx.topics).slice(0, topN);
     const cards = top.map((a) =>
       CardInputSchema.parse({
         title: a.title ?? "Untitled",
-        source: (() => { try { return new URL(a.link).hostname; } catch { process.stderr.write("[quillby] Non-fatal: malformed URL in card source\n"); return a.link; } })(),
+        source: (() => { try { return new URL(a.link).hostname; } catch { logWarn("malformed URL in card source"); return a.link; } })(),
         link: a.link,
         thesis: a.snippet ?? a.title ?? "",
         trendTags: [],
       })
     );
     const outputDir = await storage.saveHarvestOutput(cards, seenUrls);
-    process.stderr.write(`${tag} Done. ${cards.length} card(s) saved to ${outputDir}.\n`);
+    logInfo("Harvest complete", { tag, cards: cards.length, outputDir });
   } catch (err) {
-    process.stderr.write(`${tag} Error: ${err instanceof Error ? err.message : String(err)}\n`);
+    logError("Harvest failed", { tag, error: err instanceof Error ? err.message : String(err) });
   }
 }
 
@@ -2199,7 +2200,7 @@ function scheduleDaily(timeStr: string, fn: () => Promise<void>): void {
   const hour = parseInt(parts[0] ?? "", 10);
   const minute = parseInt(parts[1] ?? "0", 10);
   if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-    process.stderr.write(`[quillby-schedule] Invalid QUILLBY_SCHEDULE "${timeStr}" — expected HH:MM. Scheduling disabled.\n`);
+    logError("Invalid QUILLBY_SCHEDULE format", { timeStr });
     return;
   }
   const msUntilNext = (): number => {
@@ -2211,7 +2212,7 @@ function scheduleDaily(timeStr: string, fn: () => Promise<void>): void {
   };
   const tick = (): void => {
     const delay = msUntilNext();
-    process.stderr.write(`[quillby-schedule] Next harvest at ${timeStr} (in ${Math.round(delay / 60000)} min).\n`);
+    logInfo("Next harvest scheduled", { time: timeStr, delayMin: Math.round(delay / 60000) });
     setTimeout(async () => { await fn(); tick(); }, delay).unref();
   };
   tick();
@@ -2222,14 +2223,7 @@ function scheduleDaily(timeStr: string, fn: () => Promise<void>): void {
 const TRANSPORT_MODE = process.env.QUILLBY_TRANSPORT ?? "stdio";
 validateEnv();
 
-// ---------------------------------------------------------------------------
-// Structured logger — used only in HTTP mode so it does not pollute stdio MCP.
-// Emits newline-delimited JSON to stderr.
-// ---------------------------------------------------------------------------
 
-function slog(level: "info" | "warn" | "error", msg: string, extra?: Record<string, unknown>): void {
-  process.stderr.write(JSON.stringify({ ts: new Date().toISOString(), level, msg, ...extra }) + "\n");
-}
 
 const HTTP_BODY_LIMIT = 1 * 1024 * 1024; // 1 MiB
 
@@ -2260,12 +2254,27 @@ if (TRANSPORT_MODE === "http") {
     ".txt":  "text/plain; charset=utf-8",
   };
 
+  const MCP_SESSION_TTL_MS = parseInt(process.env.QUILLBY_MCP_SESSION_TTL_MS ?? (24 * 60 * 60 * 1000).toString(), 10);
+
   // Map of sessionId → transport, so we can route GET/DELETE back to the right session.
   const sessions = new Map<string, {
     transport: StreamableHTTPServerTransport;
     server: McpServer;
     userId: string;
+    createdAt: number;
   }>();
+
+  // Periodic MCP session cleanup — remove sessions older than TTL
+  setInterval(() => {
+    const now = Date.now();
+    for (const [sid, session] of sessions) {
+      if (now - session.createdAt > MCP_SESSION_TTL_MS) {
+        slog("info", "session_ttl_expired", { sessionId: sid, userId: session.userId });
+        session.server.close().catch(() => {});
+        sessions.delete(sid);
+      }
+    }
+  }, Math.min(MCP_SESSION_TTL_MS, 60_000)).unref();
 
   const toHeaders = (headers: http.IncomingHttpHeaders) => {
     const result = new Headers();
@@ -2301,9 +2310,9 @@ if (TRANSPORT_MODE === "http") {
   // localStorage and JavaScript memory after the initial exchange.
   // ------------------------------------------------------------------
   const APP_SESSION_COOKIE = "qb-app-sess";
-  const APP_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const APP_SESSION_TTL_MS = parseInt(process.env.QUILLBY_APP_SESSION_TTL_MS ?? (7 * 24 * 60 * 60 * 1000).toString(), 10);
 
-  const appSessions = new Map<string, { userId: string; expiresAt: number }>();
+  const appSessions = new Map<string, { userId: string; expiresAt: number; createdAt: number }>();
 
   function parseCookies(req: http.IncomingMessage): Map<string, string> {
     const map = new Map<string, string>();
@@ -2313,7 +2322,7 @@ if (TRANSPORT_MODE === "http") {
       try {
         map.set(part.slice(0, idx).trim(), decodeURIComponent(part.slice(idx + 1).trim()));
       } catch {
-        process.stderr.write("[quillby] Non-fatal: malformed cookie value in parseCookies\n");
+        logWarn("malformed cookie value in parseCookies");
       }
     }
     return map;
@@ -2333,6 +2342,8 @@ if (TRANSPORT_MODE === "http") {
     if (sessionToken) {
       const appSession = appSessions.get(sessionToken);
       if (appSession && appSession.expiresAt > Date.now()) {
+        // Touch — extend TTL on each access
+        appSession.expiresAt = Date.now() + APP_SESSION_TTL_MS;
         return { userId: appSession.userId, mode: "session" };
       }
       // Expired or unknown — clean up lazily
@@ -2348,7 +2359,7 @@ if (TRANSPORT_MODE === "http") {
         return { userId: session.user.id, mode: "session" };
       }
     } catch {
-      process.stderr.write("[quillby] Non-fatal: Better Auth session check failed, falling back to API key\n");
+      logWarn("Better Auth session check failed, falling back to API key");
     }
 
     // 3. Bearer API key (MCP clients and legacy)
@@ -2601,7 +2612,7 @@ if (TRANSPORT_MODE === "http") {
           const userId = verification.key?.referenceId ?? "unknown";
           // Two UUIDs concatenated for extra entropy — 256 bits total.
           const token = `${randomUUID()}-${randomUUID()}`;
-          appSessions.set(token, { userId, expiresAt: Date.now() + APP_SESSION_TTL_MS });
+          appSessions.set(token, { userId, expiresAt: Date.now() + APP_SESSION_TTL_MS, createdAt: Date.now() });
           res.setHeader("Set-Cookie", buildSessionCookie(token, APP_SESSION_TTL_MS / 1000));
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ ok: true }));
           finish(200);
@@ -3119,7 +3130,7 @@ if (TRANSPORT_MODE === "http") {
           if (candidate.startsWith(SPA_DIR)) {
             let servePath = candidate;
             let isStaticFile = false;
-            try { isStaticFile = fs.statSync(servePath).isFile(); } catch { process.stderr.write("[quillby] SPA file not found, serving index.html fallback\n"); }
+            try { isStaticFile = fs.statSync(servePath).isFile(); } catch { logWarn("SPA file not found, serving index.html fallback"); }
             if (!isStaticFile) servePath = path.join(SPA_DIR, "index.html");
             const ext = path.extname(servePath).toLowerCase();
             const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
@@ -3192,7 +3203,7 @@ if (TRANSPORT_MODE === "http") {
         }
         const body = Buffer.concat(chunks).toString("utf-8");
         let parsedBody: unknown;
-        try { parsedBody = JSON.parse(body); } catch { process.stderr.write("[quillby] Non-fatal: MCP request body is not valid JSON\n"); parsedBody = undefined; }
+        try { parsedBody = JSON.parse(body); } catch { logWarn("MCP request body is not valid JSON"); parsedBody = undefined; }
 
         const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
@@ -3217,14 +3228,14 @@ if (TRANSPORT_MODE === "http") {
           sessionIdGenerator: () => randomUUID(),
         });
         const sid = transport.sessionId ?? randomUUID();
-        sessions.set(sid, { transport, server: sessionServer, userId });
+        sessions.set(sid, { transport, server: sessionServer, userId, createdAt: Date.now() });
         slog("info", "session_open", { sessionId: sid, userId, sessions: sessions.size });
 
         transport.onclose = () => {
           if (transport.sessionId) {
             const session = sessions.get(transport.sessionId);
             sessions.delete(transport.sessionId);
-            session?.server.close().catch(() => process.stderr.write("[quillby] Non-fatal: server.close failed during session cleanup\n"));
+            session?.server.close().catch(() => logWarn("server.close failed during session cleanup"));
             slog("info", "session_close", { sessionId: transport.sessionId, sessions: sessions.size });
           }
         };
@@ -3279,16 +3290,16 @@ if (TRANSPORT_MODE === "http") {
       verifyApiKey(input: { body: { key: string } }): Promise<{ valid: boolean; key?: { referenceId?: string } }>;
     }).verifyApiKey({ body: { key: rawApiKey } });
     if (!verification.valid) {
-      process.stderr.write("[quillby] QUILLBY_API_KEY is invalid — aborting.\n");
+      logFatal("QUILLBY_API_KEY is invalid — aborting");
       process.exit(1);
     }
     const userId = verification.key?.referenceId;
     if (!userId) {
-      process.stderr.write("[quillby] QUILLBY_API_KEY resolved no user — aborting.\n");
+      logFatal("QUILLBY_API_KEY resolved no user — aborting");
       process.exit(1);
     }
     stdioStorage = getHostedUserStorage(userId) as unknown as WorkspaceStorage & JobStorage & PlanStorage & SessionStore;
-    process.stderr.write(`[quillby] Authenticated as user ${userId} via API key.\n`);
+    logInfo("Authenticated via API key", { userId });
   }
   const server = createMcpServer();
   registerMcpHandlers(server, stdioStorage);
@@ -3302,14 +3313,14 @@ if (TRANSPORT_MODE === "http") {
     const assetsDir = path.join(process.env.QUILLBY_HOME ?? process.env.HOME ?? "~", ".quillby", "assets");
     providerRouter.setTier1(new McpSamplingAdapter(server.server, assetsDir));
   } catch (e) {
-    process.stderr.write(`[quillby] Non-fatal: McpSamplingAdapter init failed (generation falls through to Tier 2): ${e}\n`);
+    logWarn("McpSamplingAdapter init failed (generation falls through to Tier 2)", { error: String(e) });
   }
 }
 
 // Recover orphaned jobs on startup.
 {
   const recovered = await recoverOrphanedJobs(storage as import("@quillby/workspace").JobStorage);
-  if (recovered > 0) process.stderr.write(`[quillby] Recovered ${recovered} orphaned job(s)\n`);
+  if (recovered > 0) logInfo("Recovered orphaned jobs", { count: recovered });
 }
 
 // Scheduled autonomous harvest — fires daily at QUILLBY_SCHEDULE (HH:MM local time).
