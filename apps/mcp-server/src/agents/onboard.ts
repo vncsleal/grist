@@ -59,6 +59,6 @@ Questions to cover:
 6. What are your content goals? (e.g., thought leadership, personal brand, lead generation, community building)
 7. Are there any topics you want to avoid in your content?
 8. Which platforms do you publish on? (LinkedIn, X/Twitter, Instagram, Threads, blog, newsletter, Medium, podcast, TikTok, Reels, YouTube Shorts, etc.)
-Once you have their answers, call the \`quillby_set_context\` tool with the structured data for the current workspace. After saving, let them know the workspace profile is ready and suggest:
-- Running \`quillby_add_feeds\` to add relevant RSS sources.
-- Using \`quillby_remember\` to add example posts that define their voice — these accumulate in workspace memory and improve every post Quillby generates there.`;
+Once you have their answers, call the \`set_context\` tool with the structured data for the current workspace. After saving, let them know the workspace profile is ready and suggest:
+- Running \`add_feeds\` to add relevant RSS sources.
+- Using \`remember\` to add example posts that define their voice — these accumulate in workspace memory and improve every post Quillby generates there.`;

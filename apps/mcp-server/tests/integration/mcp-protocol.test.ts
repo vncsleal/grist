@@ -178,21 +178,21 @@ describe("MCP prompts/list", () => {
       params: {},
     });
     const prompts = (res.result as { prompts: { name: string }[] }).prompts;
-    expect(prompts.map((prompt) => prompt.name)).toContain("quillby_session_start");
-    expect(prompts.map((prompt) => prompt.name)).toContain("quillby_briefing");
-    expect(prompts.map((prompt) => prompt.name)).toContain("quillby_story");
-    expect(prompts.map((prompt) => prompt.name)).toContain("quillby_voice_system");
-    expect(prompts.map((prompt) => prompt.name)).toContain("quillby_projects_playbook");
+    expect(prompts.map((prompt) => prompt.name)).toContain("session_start");
+    expect(prompts.map((prompt) => prompt.name)).toContain("briefing");
+    expect(prompts.map((prompt) => prompt.name)).toContain("story");
+    expect(prompts.map((prompt) => prompt.name)).toContain("voice_system");
+    expect(prompts.map((prompt) => prompt.name)).toContain("projects_playbook");
   });
 });
 
-describe("quillby_remember tool call", () => {
+describe("remember tool call", () => {
   it("responds without error and returns text content", async () => {
     const res = await client.request({
       jsonrpc: "2.0",
       id: 4,
       method: "tools/call",
-      params: { name: "quillby_remember", arguments: { entries: ["Test voice example."], memoryType: "voice_examples" } },
+      params: { name: "remember", arguments: { entries: ["Test voice example."], memoryType: "voice_examples" } },
     });
     expect(res.error).toBeUndefined();
     const content = (res.result as { content: { type: string; text: string }[] }).content;
@@ -201,13 +201,13 @@ describe("quillby_remember tool call", () => {
   });
 });
 
-describe("quillby_get_context tool call", () => {
+describe("get_context tool call", () => {
   it("responds without error and returns text content", async () => {
     const res = await client.request({
       jsonrpc: "2.0",
       id: 5,
       method: "tools/call",
-      params: { name: "quillby_get_context", arguments: {} },
+      params: { name: "get_context", arguments: {} },
     });
     expect(res.error).toBeUndefined();
     const content = (res.result as { content: { type: string; text: string }[] }).content;

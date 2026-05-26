@@ -13,7 +13,7 @@ Create local config files if they do not exist:
 - `apps/mcp-server/config/context.md`
 - `apps/mcp-server/config/rss_sources.txt`
 
-Then call Quillby from your MCP host client via `quillby_harvest`, `quillby_list_cards`, and `quillby_compose`.
+Then start a conversation with Quillby in your MCP host client. Available tools include `onboard`, `daily_brief`, `discover_feeds`, `save_cards`, `generate_post`, and more — run `list_workspaces` to see the full list.
 
 ### Runtime Model
 

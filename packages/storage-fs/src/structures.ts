@@ -135,13 +135,13 @@ export function loadLatestHarvest(workspaceId?: string): HarvestBundle {
   const paths = getWorkspacePaths(workspaceId ?? getCurrentWorkspaceId());
   if (!fs.existsSync(paths.latestHarvestPointer)) {
     throw new Error(
-      "No harvest found. Run quillby_fetch_articles then quillby_save_cards first."
+      "No harvest found. Run fetch_articles then save_cards first."
     );
   }
 
   const bundlePath = fs.readFileSync(paths.latestHarvestPointer, "utf-8").trim();
   if (!bundlePath || !fs.existsSync(bundlePath)) {
-    throw new Error("Latest harvest pointer is invalid. Re-run quillby_fetch_articles.");
+    throw new Error("Latest harvest pointer is invalid. Re-run fetch_articles.");
   }
 
   const raw = JSON.parse(fs.readFileSync(bundlePath, "utf-8"));

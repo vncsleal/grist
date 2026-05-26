@@ -138,14 +138,14 @@ Quillby is **production ready** when:
 | REQ-020 | Configure `@changesets/cli` with proper access and versioning strategy | P1 |
 | REQ-021 | Define version policy — semver, pre-1.0 (0.x) until all phases complete, then 1.0 | P1 |
 | REQ-022 | Publish npm package with correct release flow | P1 |
-| REQ-023 | Add `quillby_server_info` tool returning version + mode + DB status | P2 |
+| REQ-023 | Add `server_info` tool returning version + mode + DB status | P2 |
 | REQ-024 | Add `--version` flag to CLI binary | P2 |
 
 **Tasks:**
 - T-020: `pnpm add -w @changesets/cli` + `.changeset/config.json`
 - T-021: Set root version to `0.0.0` → prepare initial changeset → `changeset version`
 - T-022: Update `.github/workflows/release.yml` to create GitHub release with changelog
-- T-023: Implement `quillby_server_info` tool in server.ts or extract to new tool module
+- T-023: Implement `server_info` tool in server.ts or extract to new tool module
 - T-024: Add `--version` flag to `bin/quillby-mcp`
 
 ---
@@ -217,7 +217,7 @@ Quillby is **production ready** when:
 - T-054: Replace `slog()` with structured logging (pino or native -- with serializers)
 - T-055: Add `GET /health` returning `{ status: "ok", version, uptime, db: "connected"|"error" }`
 - T-056: Write `docs/operations/disaster-recovery.md`
-- T-057: Add `dryRun` parameter to `quillby_delete_*` and `quillby_clear_*` tools
+- T-057: Add `dryRun` parameter to `delete_*` and `clear_*` tools
 
 ---
 

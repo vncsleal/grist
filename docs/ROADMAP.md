@@ -195,10 +195,10 @@ Mode: **All three**
 
 Goal: let Claude help the user curate harvested cards before drafting.
 
-- `quillby_curate_card`: approve, reject, or flag individual cards ✓
-- `quillby_list_cards`: filter by curation status ✓
+- `curate_card`: approve, reject, or flag individual cards ✓
+- `list_cards`: filter by curation status ✓
 - curation state persisted per harvest in both local and hosted storage ✓
-- draft listing (`quillby_list_drafts`) ✓
+- draft listing (`list_drafts`) ✓
 
 Mode: **All three**
 
@@ -216,13 +216,13 @@ Goal: remove the last friction points for cloud and self-hosted use.
 **Hosted plans scaffold** (Cloud)
 
 - `plan: "free" | "pro"` field on user state
-- `quillby_get_plan` tool exposes current plan to Claude
+- `get_plan` tool exposes current plan to Claude
 - no billing integration yet — groundwork for v1.3
 
 **Team / shared workspaces** (Self-Hosted, Cloud)
 
 - workspace owner can grant `viewer` or `editor` access to other users
-- `quillby_share_workspace`, `quillby_revoke_access`, `quillby_list_workspace_access`
+- `share_workspace`, `revoke_access`, `list_workspace_access`
 - shared workspace content is read/written as the owner's data (grantee sees
   the same cards, drafts, and memory as the owner for that workspace)
 
@@ -232,8 +232,8 @@ Goal: productize Quillby Cloud.
 
 - Stripe webhook integration for plan sync (free/pro) ✓
 - usage limits enforced per plan (harvest frequency, workspace count, draft storage) ✓
-- billing portal link exposed via `quillby_get_plan` ✓
-- checkout + subscription lifecycle UX (`quillby_manage_subscription` + billing action endpoints) ✓
+- billing portal link exposed via `get_plan` ✓
+- checkout + subscription lifecycle UX (`manage_subscription` + billing action endpoints) ✓
 - self-hosted users are unaffected — plan enforcement and billing routes are deployment-mode gated ✓
 
 Mode: **Cloud** only
@@ -246,7 +246,7 @@ Goal: make self-hosting genuinely easy.
 - one-command bootstrap: `docker compose up` gives a working MCP endpoint
 - environment variable reference and deployment checklist in docs
 - upgrade path: pull new image, restart, DDL migrations run automatically
-- optional: `quillby_server_info` tool that reports version, mode, and DB status
+- optional: `server_info` tool that reports version, mode, and DB status
 
 Mode: **Self-Hosted** only (local mode unaffected)
 

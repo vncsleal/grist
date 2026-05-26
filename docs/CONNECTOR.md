@@ -144,7 +144,7 @@ Open a new Claude chat and say:
 
 > Open Quillby
 
-Claude calls `quillby_open_briefing`. If no Briefing is saved yet, it guides you through onboarding and feed discovery first. After setup, saying "Open Quillby" always loads your latest Briefing instantly.
+Claude calls `open_briefing`. If no Briefing is saved yet, it guides you through onboarding and feed discovery first. After setup, saying "Open Quillby" always loads your latest Briefing instantly.
 
 To generate a fresh Briefing from current news:
 
