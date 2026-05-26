@@ -52,6 +52,8 @@ jobs:
         working-directory: infra/docker
     steps:
       - uses: actions/checkout@v4
+      - name: Create .env
+        run: echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" > .env
       - run: docker compose build
       - run: docker compose up -d
       - name: Health check
