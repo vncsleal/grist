@@ -26,7 +26,8 @@ services:
     container_name: quillby
     restart: unless-stopped
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       QUILLBY_TRANSPORT: http
       QUILLBY_HTTP_HOST: 0.0.0.0

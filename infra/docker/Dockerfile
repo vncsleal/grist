@@ -2,7 +2,7 @@
 
 FROM node:22-alpine AS base
 WORKDIR /app
-RUN corepack enable && echo "inject-workspace-packages=true" >> .npmrc
+RUN corepack enable
 
 FROM base AS deps
 COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
@@ -45,10 +45,6 @@ ARG VITE_QUILLBY_DEPLOYMENT_MODE=self-hosted
 ARG VITE_QUILLBY_API_BASE_URL=/
 RUN pnpm --filter @quillby/app build
 
-# ─── Production deploy (resolves pnpm symlinks for standalone runtime) ──────
-FROM build AS deployed
-RUN pnpm --filter @vncsleal/quillby deploy --prod /deploy
-
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
@@ -58,8 +54,9 @@ ENV QUILLBY_HTTP_HOST=0.0.0.0
 ENV QUILLBY_AUTH_DB_URL=file:/data/quillby-auth.db
 ENV QUILLBY_DEPLOYMENT_MODE=self-hosted
 
-COPY --from=deployed /deploy .
+COPY --from=build /app/apps/mcp-server/package.json ./package.json
 COPY --from=build /app/apps/mcp-server/bin ./bin
+COPY --from=build /app/apps/mcp-server/dist ./dist
 COPY --from=build-app /app/apps/app/dist ./public/app
 
 VOLUME ["/data"]
