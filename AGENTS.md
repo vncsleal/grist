@@ -134,7 +134,7 @@ Uses Bun for cross-compilation (`bun build --compile`).
 
 1. **Must build before integration tests** — Integration tests use compiled JS
 2. **Binary changes need rebuild** — Clients use `bin/quillby-mcp` which runs `dist/mcp/server.js`
-3. **MCP sampling required** — `quillby_daily_brief` and `quillby_analyze_articles` need client support
+3. **MCP sampling required** — `daily_brief` and `analyze_articles` need client support
 4. **HTTP mode needs `BETTER_AUTH_SECRET`** — Generate with `openssl rand -base64 32`
 
 ## File Locations

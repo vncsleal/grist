@@ -25,70 +25,70 @@ pnpm build
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_onboard` | *(MCP Elicitation — no params)* | Inline questions → profile saved |
-| `quillby_list_workspaces` | — | Workspace list |
-| `quillby_create_workspace` | `name`, `workspaceId?`, `description?`, `makeCurrent?` | Created workspace |
-| `quillby_select_workspace` | `workspaceId` | Active workspace |
-| `quillby_get_workspace` | `workspaceId?` | Workspace metadata + active state |
-| `quillby_get_plan` | — | Current plan + mode + limits metadata |
-| `quillby_manage_subscription` | `action` (`upgrade`/`downgrade`/`manage`) | Cloud billing lifecycle URL |
-| `quillby_server_info` | — | Runtime mode, version, transport, DB status |
-| `quillby_open_briefing` | — | Opens the cached Briefing MCP App instantly from saved local state |
-| `quillby_set_context` | `context` object (required) | Confirmation |
-| `quillby_get_context` | — | Profile JSON |
+| `onboard` | *(MCP Elicitation — no params)* | Inline questions → profile saved |
+| `list_workspaces` | — | Workspace list |
+| `create_workspace` | `name`, `workspaceId?`, `description?`, `makeCurrent?` | Created workspace |
+| `select_workspace` | `workspaceId` | Active workspace |
+| `get_workspace` | `workspaceId?` | Workspace metadata + active state |
+| `get_plan` | — | Current plan + mode + limits metadata |
+| `manage_subscription` | `action` (`upgrade`/`downgrade`/`manage`) | Cloud billing lifecycle URL |
+| `server_info` | — | Runtime mode, version, transport, DB status |
+| `open_briefing` | — | Opens the cached Briefing MCP App instantly from saved local state |
+| `set_context` | `context` object (required) | Confirmation |
+| `get_context` | — | Profile JSON |
 
 ### Team Access (Hosted)
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_share_workspace` | `workspaceId`, `granteeUserId`, `role` | Access granted confirmation |
-| `quillby_revoke_access` | `workspaceId`, `granteeUserId` | Access revoked confirmation |
-| `quillby_list_workspace_access` | `workspaceId` | Current access list |
+| `share_workspace` | `workspaceId`, `granteeUserId`, `role` | Access granted confirmation |
+| `revoke_access` | `workspaceId`, `granteeUserId` | Access revoked confirmation |
+| `list_workspace_access` | `workspaceId` | Current access list |
 
 ### Briefing
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_open_briefing` | — | Latest saved Briefing (instant, no network) |
-| `quillby_daily_brief` | `topN` (number, default 10) | Fresh Briefing via Sampling |
+| `open_briefing` | — | Latest saved Briefing (instant, no network) |
+| `daily_brief` | `topN` (number, default 10) | Fresh Briefing via Sampling |
 
 ### Feed Management
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_discover_feeds` | `topics[]` (optional override) | Suggested feed URLs |
-| `quillby_add_feeds` | `urls[]` (required) | Added / skipped counts |
-| `quillby_list_feeds` | — | Feed URL list |
+| `discover_feeds` | `topics[]` (optional override) | Suggested feed URLs |
+| `add_feeds` | `urls[]` (required) | Added / skipped counts |
+| `list_feeds` | — | Feed URL list |
 
 ### Fetch & Research
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_fetch_articles` | `sources[]` (optional), `slim` (bool) | Article array |
-| `quillby_read_article` | `url` (required) | Full article text |
+| `fetch_articles` | `sources[]` (optional), `slim` (bool) | Article array |
+| `read_article` | `url` (required) | Full article text |
 
 ### Analysis *(requires MCP Sampling)*
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_analyze_articles` | `sources[]`, `topN` | Cards from full pipeline |
+| `analyze_articles` | `sources[]`, `topN` | Cards from full pipeline |
 
 ### Cards & Drafts
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_save_cards` | `cards[]` (CardInput array, required) | Save path |
-| `quillby_list_cards` | `limit`, `minScore` | Card summaries |
-| `quillby_get_card` | `cardId` (number, required) | Full card object |
-| `quillby_generate_post` | `cardId`, `platform` | Post text. Requires Sampling. |
-| `quillby_save_draft` | `content`, `platform`, `cardId`, `addToVoiceExamples` | Save path |
+| `save_cards` | `cards[]` (CardInput array, required) | Save path |
+| `list_cards` | `limit`, `minScore` | Card summaries |
+| `get_card` | `cardId` (number, required) | Full card object |
+| `generate_post` | `cardId`, `platform` | Post text. Requires Sampling. |
+| `save_draft` | `content`, `platform`, `cardId`, `addToVoiceExamples` | Save path |
 
 ### Voice Memory
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `quillby_remember` | `entries[]`, `memoryType?` | Confirmation |
-| `quillby_get_memory` | `memoryType?` | Typed memory |
+| `remember` | `entries[]`, `memoryType?` | Confirmation |
+| `get_memory` | `memoryType?` | Typed memory |
 
 ## Resources
 
@@ -104,12 +104,12 @@ pnpm build
 
 | Prompt | Description |
 |---|---|
-| `quillby_onboarding` | Guided setup |
-| `quillby_session_start` | Session-entry behavior for opening Quillby and its Briefing artifact |
-| `quillby_briefing` | Briefing artifact behavior |
-| `quillby_story` | Story artifact behavior |
-| `quillby_voice_system` | Voice System artifact behavior |
-| `quillby_projects_playbook` | Claude Projects + artifacts playbook |
+| `onboarding` | Guided setup |
+| `session_start` | Session-entry behavior for opening Quillby and its Briefing artifact |
+| `briefing` | Briefing artifact behavior |
+| `story` | Story artifact behavior |
+| `voice_system` | Voice System artifact behavior |
+| `projects_playbook` | Claude Projects + artifacts playbook |
 
 ## Environment
 
@@ -151,7 +151,7 @@ Set `QUILLBY_DEPLOYMENT_MODE` explicitly when running HTTP:
 | `QUILLBY_STRIPE_PRO_PRICE_ID` | *(unset)* | Cloud only. Stripe price ID mapped to `pro`. |
 | `QUILLBY_STRIPE_CHECKOUT_URL_PRO` | *(unset)* | Cloud only. URL for pro upgrade checkout flow. |
 | `QUILLBY_STRIPE_CHECKOUT_URL_FREE` | *(unset)* | Cloud only. Optional URL for downgrade/free checkout flow. |
-| `QUILLBY_CLOUD_BILLING_PORTAL_URL` | *(unset)* | Cloud only. Returned by `quillby_get_plan` as billing portal link. |
+| `QUILLBY_CLOUD_BILLING_PORTAL_URL` | *(unset)* | Cloud only. Returned by `get_plan` as billing portal link. |
 | `QUILLBY_CORS_ORIGIN` | `*` | `Access-Control-Allow-Origin` header sent on all HTTP responses. Lock down to your app domain in production (e.g. `https://app.quillby.com`). |
 
 HTTP mode endpoints:
@@ -207,7 +207,7 @@ That gives a working endpoint at `http://localhost:3000/mcp`.
 4. Set `QUILLBY_BASE_URL` to your public URL behind reverse proxy.
 5. Configure TLS at the proxy layer (Nginx/Caddy/Traefik).
 6. Create user and API keys via `/api/auth/*` or `pnpm --filter @vncsleal/quillby keys` utilities.
-7. Verify with `quillby_server_info`.
+7. Verify with `server_info`.
 
 ### Upgrade path
 
@@ -326,7 +326,7 @@ Gemini tooling emphasizes function/tool use. For MCP-capable clients, use the sa
 ## Notes
 
 - Quillby suppresses normal CLI stdout while tools execute so MCP JSON-RPC output is not corrupted.
-- `quillby_daily_brief` and `quillby_analyze_articles` require MCP Sampling support in the host client (Claude Desktop supports this).
+- `daily_brief` and `analyze_articles` require MCP Sampling support in the host client (Claude Desktop supports this).
 - Saved cards and drafts are written under `~/.quillby/workspaces/<workspace-id>/output/<timestamp>/`.
 - Typed memory is written under `~/.quillby/workspaces/<workspace-id>/memory/typed-memory.json`.
 

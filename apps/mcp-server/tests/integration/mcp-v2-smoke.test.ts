@@ -124,29 +124,29 @@ describe("v2 generation tools", () => {
     toolNames = tools.map((t) => t.name);
   });
 
-  it("lists quillby_get_providers", () => expect(toolNames).toContain("quillby_get_providers"));
-  it("lists quillby_generate_image", () => expect(toolNames).toContain("quillby_generate_image"));
-  it("lists quillby_generate_audio", () => expect(toolNames).toContain("quillby_generate_audio"));
-  it("lists quillby_generate_video", () => expect(toolNames).toContain("quillby_generate_video"));
-  it("lists quillby_get_job", () => expect(toolNames).toContain("quillby_get_job"));
-  it("lists quillby_list_jobs", () => expect(toolNames).toContain("quillby_list_jobs"));
-  it("lists quillby_set_provider", () => expect(toolNames).toContain("quillby_set_provider"));
-  it("lists quillby_clear_provider", () => expect(toolNames).toContain("quillby_clear_provider"));
-  it("lists quillby_set_clone_identity", () => expect(toolNames).toContain("quillby_set_clone_identity"));
-  it("lists quillby_clone_voice", () => expect(toolNames).toContain("quillby_clone_voice"));
-  it("lists quillby_delete_voice_clone", () => expect(toolNames).toContain("quillby_delete_voice_clone"));
+  it("lists get_providers", () => expect(toolNames).toContain("get_providers"));
+  it("lists generate_image", () => expect(toolNames).toContain("generate_image"));
+  it("lists generate_audio", () => expect(toolNames).toContain("generate_audio"));
+  it("lists generate_video", () => expect(toolNames).toContain("generate_video"));
+  it("lists get_job", () => expect(toolNames).toContain("get_job"));
+  it("lists list_jobs", () => expect(toolNames).toContain("list_jobs"));
+  it("lists set_provider", () => expect(toolNames).toContain("set_provider"));
+  it("lists clear_provider", () => expect(toolNames).toContain("clear_provider"));
+  it("lists set_clone_identity", () => expect(toolNames).toContain("set_clone_identity"));
+  it("lists clone_voice", () => expect(toolNames).toContain("clone_voice"));
+  it("lists delete_voice_clone", () => expect(toolNames).toContain("delete_voice_clone"));
   it("total tool count >= 32 (11 v2 + 21+ pre-existing)", () => {
     expect(toolNames.length).toBeGreaterThanOrEqual(32);
   });
 });
 
-describe("quillby_get_providers tool call", () => {
+describe("get_providers tool call", () => {
   it("returns provider policy report without error", async () => {
     const res = await client.request({
       jsonrpc: "2.0",
       id: 3,
       method: "tools/call",
-      params: { name: "quillby_get_providers", arguments: {} },
+      params: { name: "get_providers", arguments: {} },
     });
     expect(res.error).toBeUndefined();
     const content = (res.result as { content: { type: string; text: string }[] }).content;
@@ -157,13 +157,13 @@ describe("quillby_get_providers tool call", () => {
   });
 });
 
-describe("quillby_get_job with non-existent ID", () => {
+describe("get_job with non-existent ID", () => {
   it("returns error for missing job", async () => {
     const res = await client.request({
       jsonrpc: "2.0",
       id: 4,
       method: "tools/call",
-      params: { name: "quillby_get_job", arguments: { jobId: "00000000-0000-0000-0000-000000000000" } },
+      params: { name: "get_job", arguments: { jobId: "00000000-0000-0000-0000-000000000000" } },
     });
     expect(res.error).toBeUndefined();
     const content = (res.result as { content: { type: string; text: string }[] }).content;

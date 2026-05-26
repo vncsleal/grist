@@ -607,7 +607,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
       .where(and(eq(hostedWorkspaceHarvest.userId, this._effectiveUserId), eq(hostedWorkspaceHarvest.workspaceId, currentId)))
       .limit(1);
     if (rows.length === 0) {
-      throw new Error("No harvest found. Run quillby_fetch_articles then quillby_save_cards first.");
+      throw new Error("No harvest found. Run fetch_articles then save_cards first.");
     }
     return HarvestBundleSchema.parse(JSON.parse(rows[0].data));
   }

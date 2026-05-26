@@ -271,7 +271,7 @@ For OAuth connectors (`google`, `reddit`, `spotify`, later `instagram/tiktok/x`)
 2. Redirect user to provider consent page with `state` and PKCE.
 3. Handle callback, validate `state`, exchange code for tokens.
 4. Encrypt and store refresh/access tokens scoped by workspace.
-5. Expose connector status via a `quillby_get_connectors` style endpoint/tool.
+5. Expose connector status via a `get_connectors` style endpoint/tool.
 
 Local testing note:
 - OAuth requires an HTTPS callback for most providers; use localhost-exempt providers where allowed, otherwise use a tunnel (for example ngrok/Cloudflare Tunnel) with a registered redirect URI.

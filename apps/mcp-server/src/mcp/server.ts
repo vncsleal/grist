@@ -223,7 +223,7 @@ async function sample(server: McpServer, prompt: string, maxTokens = 4096): Prom
 const TOOLS: Tool[] = [
   // ── Onboarding ────────────────────────────────────────────────────────────
   {
-    name: "quillby_onboard",
+    name: "onboard",
     description:
       "Interactive onboarding via MCP Elicitation. Asks 3 inline questions and saves your content creator profile. Falls back to text instructions if the client does not support Elicitation.",
     annotations: { idempotentHint: true },
@@ -233,14 +233,14 @@ const TOOLS: Tool[] = [
 
   // ── Profile ───────────────────────────────────────────────────────────────
   {
-    name: "quillby_list_workspaces",
+    name: "list_workspaces",
     description: "List Quillby workspaces. Use one workspace per Claude Project, client, publication, or campaign.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
     inputSchema: { type: "object", properties: {} },
   },
   {
-    name: "quillby_create_workspace",
+    name: "create_workspace",
     description: "Create a workspace with isolated context, memories, feeds, and outputs.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
@@ -256,7 +256,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_select_workspace",
+    name: "select_workspace",
     description: "Switch the active Quillby workspace.",
     annotations: { destructiveHint: false, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -269,7 +269,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_get_workspace",
+    name: "get_workspace",
     description: "Inspect the active workspace or a specific workspace.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -281,7 +281,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_set_clone_identity",
+    name: "set_clone_identity",
     description: "Set workspace-level identity clone references (face image URL and voice audio URL) and explicit consent flag. Clone generation will be blocked unless consent is granted.",
     annotations: { destructiveHint: false, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -297,7 +297,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_clone_voice",
+    name: "clone_voice",
     description: "Create a persistent ElevenLabs voice clone from the workspace voice reference audio URL. Uploads the audio to ElevenLabs once and stores the returned voiceId in workspace metadata for all subsequent audio generation calls. Requires clone consent to be granted and an ElevenLabs provider to be configured. Idempotent — if a cloned voice ID is already saved, returns it without re-cloning unless overwrite is true.",
     annotations: { destructiveHint: false, idempotentHint: false },
     outputSchema: { type: "object" as const },
@@ -311,7 +311,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_delete_voice_clone",
+    name: "delete_voice_clone",
     description: "Delete the persistent ElevenLabs voice clone associated with this workspace. Removes the voice from ElevenLabs and clears the stored voiceId. Consent and reference URL are preserved so you can re-clone later.",
     annotations: { destructiveHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -323,7 +323,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_set_context",
+    name: "set_context",
     description: "Save the user content creator profile after onboarding.",
     annotations: { destructiveHint: false, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -351,7 +351,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_get_context",
+    name: "get_context",
     description: "Load the saved user profile.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -365,7 +365,7 @@ const TOOLS: Tool[] = [
 
   // ── Feeds ─────────────────────────────────────────────────────────────────
   {
-    name: "quillby_discover_feeds",
+    name: "discover_feeds",
     description:
       "Discover and save content sources for the user's topics. Adds: Google News RSS (real-time news, any language), Medium tag feeds (professional articles on any industry), Feedly curated publications, and Reddit communities (reddit://r/<subreddit>) via Sampling. Works for any niche: healthcare, law, fashion, construction, farming, finance, etc.",
     annotations: { idempotentHint: true },
@@ -390,7 +390,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_add_feeds",
+    name: "add_feeds",
     description: "Add content sources manually. Accepts: standard RSS/Atom URLs, Medium tag feeds (https://medium.com/feed/tag/<topic>), Google News RSS URLs, and Reddit communities (reddit://r/<subreddit> or reddit://r/<subreddit>/top). Deduplicates automatically.",
     annotations: { idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -403,7 +403,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_list_feeds",
+    name: "list_feeds",
     description: "List all configured RSS feed URLs.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -417,8 +417,8 @@ const TOOLS: Tool[] = [
 
   // ── Fetch & Research ──────────────────────────────────────────────────────
   {
-    name: "quillby_read_article",
-    description: "Fetch full text for a single article URL using Mozilla Readability. Use after quillby_fetch_articles (slim=true).",
+    name: "read_article",
+    description: "Fetch full text for a single article URL using Mozilla Readability. Use after fetch_articles (slim=true).",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -433,9 +433,9 @@ const TOOLS: Tool[] = [
 
   // ── Daily Brief (two-pass Sampling pipeline) ──────────────────────────────
   {
-    name: "quillby_daily_brief",
+    name: "daily_brief",
     description:
-      "Generate a fresh Quillby Briefing by fetching feeds, scoring headlines semantically, deep-reading top articles, and producing ranked cards via Sampling. Call this only when the Briefing is stale, missing, or the user explicitly asks for a refresh. To open an existing saved Briefing instantly, use quillby_open_briefing instead. Requires Sampling.",
+      "Generate a fresh Quillby Briefing by fetching feeds, scoring headlines semantically, deep-reading top articles, and producing ranked cards via Sampling. Call this only when the Briefing is stale, missing, or the user explicitly asks for a refresh. To open an existing saved Briefing instantly, use open_briefing instead. Requires Sampling.",
     annotations: { readOnlyHint: false },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -451,7 +451,7 @@ const TOOLS: Tool[] = [
 
   // ── Open Briefing (instant, from saved state) ─────────────────────────────
   {
-    name: "quillby_open_briefing",
+    name: "open_briefing",
     description:
       "Open the most recent Quillby Briefing instantly from saved workspace state — no network calls, no Sampling. Always call this first when the user opens Quillby or asks to see their brief. Falls back with a clear message if no Briefing has been generated yet.",
     annotations: { readOnlyHint: true, idempotentHint: true },
@@ -466,7 +466,7 @@ const TOOLS: Tool[] = [
 
   // ── Cards ─────────────────────────────────────────────────────────────────
   {
-    name: "quillby_save_cards",
+    name: "save_cards",
     description: "Save analyzed structure cards. Quillby persists them.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
@@ -502,7 +502,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_list_cards",
+    name: "list_cards",
     description: "List saved story candidates from the latest harvest. Best used behind the scenes when Claude is opening or updating a Story artifact.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -516,7 +516,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_get_card",
+    name: "get_card",
     description: "Get full details for one saved story candidate by ID. Best used behind the scenes when Claude is opening or updating a Story artifact.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -532,8 +532,8 @@ const TOOLS: Tool[] = [
 
   // ── Drafts ────────────────────────────────────────────────────────────────
   {
-    name: "quillby_save_draft",
-    description: "Persist a finished draft post to workspace storage. Call after quillby_generate_post or whenever the user approves a draft to keep.",
+    name: "save_draft",
+    description: "Persist a finished draft post to workspace storage. Call after generate_post or whenever the user approves a draft to keep.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -549,7 +549,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_list_drafts",
+    name: "list_drafts",
     description: "List saved draft posts for the current workspace, most recent first.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -563,7 +563,7 @@ const TOOLS: Tool[] = [
 
   // ── Card curation ─────────────────────────────────────────────────────────
   {
-    name: "quillby_curate_card",
+    name: "curate_card",
     description:
       "Mark a story card as shortlisted, skipped, or clear its status. Use this to build the drafting queue from the Briefing. Shortlisted = queued for drafting; skipped = not useful this cycle; clear = remove any status.",
     annotations: { destructiveHint: false, idempotentHint: true },
@@ -585,7 +585,7 @@ const TOOLS: Tool[] = [
 
   // ── Generate (Sampling-powered) ───────────────────────────────────────────
   {
-    name: "quillby_generate_post",
+    name: "generate_post",
     description:
       "Generate a finished post via MCP Sampling and save it as a draft. Loads the card, user profile, platform guide, and voice examples — writes the post, saves it. One call: write + save. If no cardId is given, auto-selects the top shortlisted or highest-scored card. If no platform is given, defaults to the user's first saved platform. Requires Sampling.",
     annotations: { destructiveHint: false },
@@ -603,7 +603,7 @@ const TOOLS: Tool[] = [
 
   // ── Memory ────────────────────────────────────────────────────────────────
   {
-    name: "quillby_remember",
+    name: "remember",
     description:
       "Add structured memory to the current workspace. Supports voice examples, editorial memory buckets, and one-time visual/voice/face setup for generation. Only store identity profiles (voice/face) when the subject has explicitly consented.",
     annotations: { destructiveHint: false },
@@ -627,7 +627,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_get_memory",
+    name: "get_memory",
     description: "Read typed memory from the current workspace. Claude should use this behind the scenes when opening or updating the Voice System artifact.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -645,7 +645,7 @@ const TOOLS: Tool[] = [
 
   // ── v2: Multimodal generation ────────────────────────────────────────────
   {
-    name: "quillby_generate_image",
+    name: "generate_image",
     description:
       "Generate an image asset for a card or post. Reads visual_style and optional face_profile from workspace memory automatically. Resolution order depends on deployment mode: local prefers MCP Sampling and can fall back to user-configured providers; self-hosted uses admin-configured providers; cloud uses fully managed providers. Returns a job ID immediately; image is available once the job reaches 'done' status.",
     annotations: { destructiveHint: false },
@@ -662,7 +662,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_generate_audio",
+    name: "generate_audio",
     description:
       "Generate an audio clip (podcast intro, voice-over, read-aloud post) in the user's voice profile. Reads voice_profile from workspace memory automatically. If voice clone reference is configured, clone consent must be granted before generation. Local mode requires a connected provider or host support; self-hosted uses admin-configured providers; cloud uses managed providers. Returns a job ID; audio is available once status is 'done'.",
     annotations: { destructiveHint: false },
@@ -679,9 +679,9 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_generate_video",
+    name: "generate_video",
     description:
-      "Generate a short-form video (Reels/Shorts/TikTok). Always async — returns a job ID immediately; video takes 30s–5min. Poll with quillby_get_job. Video uses managed providers in cloud or configured direct providers in local/self-hosted deployments. Visual style and optional face profile from memory are applied automatically; if a face clone reference is configured, clone consent must be granted.",
+      "Generate a short-form video (Reels/Shorts/TikTok). Always async — returns a job ID immediately; video takes 30s–5min. Poll with get_job. Video uses managed providers in cloud or configured direct providers in local/self-hosted deployments. Visual style and optional face profile from memory are applied automatically; if a face clone reference is configured, clone consent must be granted.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -700,7 +700,7 @@ const TOOLS: Tool[] = [
 
   // ── v2: Job management ───────────────────────────────────────────────────
   {
-    name: "quillby_get_job",
+    name: "get_job",
     description: "Check the status of a generation job (image, audio, or video). Returns status: queued | running | done | failed, and outputRef once done.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -714,7 +714,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_list_jobs",
+    name: "list_jobs",
     description: "List generation jobs for the current workspace, newest first. Filter by modality to see only images, audio, or videos.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -727,7 +727,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_get_providers",
+    name: "get_providers",
     description: "Inspect multimodal setup for the current deployment. Returns which setup model applies per modality and whether image, audio, and video are currently available.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -737,7 +737,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_set_provider",
+    name: "set_provider",
     description: "Configure a direct provider for local or self-hosted deployments. Local stores secrets in the OS keychain when available; self-hosted stores them encrypted on the server. Cloud mode does not allow manual provider setup.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
@@ -754,7 +754,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_clear_provider",
+    name: "clear_provider",
     description: "Remove a saved direct provider configuration for one modality in local or self-hosted deployments.",
     annotations: { destructiveHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -769,7 +769,7 @@ const TOOLS: Tool[] = [
 
   // ── Content Planning ───────────────────────────────────────────────────────
   {
-    name: "quillby_plan_create",
+    name: "plan_create",
     description: "Create a content plan with optional date range. Returns the created plan with auto-generated ID.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
@@ -787,7 +787,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_plan_list",
+    name: "plan_list",
     description: "List content plans with optional status filter.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -800,7 +800,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_plan_today",
+    name: "plan_today",
     description: "View the today queue: tasks that are todo/doing with due dates up to today.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -812,7 +812,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_task_create",
+    name: "task_create",
     description: "Add a new content task to a plan. Task starts in 'todo' status.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
@@ -833,7 +833,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_task_move",
+    name: "task_move",
     description: "Transition a task to a new status: todo → doing → review → done. Can also cancel.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
@@ -848,7 +848,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_task_delete",
+    name: "task_delete",
     description: "Delete a task from its plan.",
     annotations: { destructiveHint: true },
     outputSchema: { type: "object" as const },
@@ -862,7 +862,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_calendar",
+    name: "calendar",
     description: "View the content calendar for a date range. Returns tasks grouped by date.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -879,7 +879,7 @@ const TOOLS: Tool[] = [
 
   // ── Billing & Plan Management (cloud mode only) ────────────────────────────
   {
-    name: "quillby_get_plan",
+    name: "get_plan",
     description:
       "Check your current subscription plan and usage limits. Only available in cloud mode. Returns plan name, enforcement status, and per-modality credit limits.",
     annotations: { readOnlyHint: true, idempotentHint: true },
@@ -887,7 +887,7 @@ const TOOLS: Tool[] = [
     inputSchema: { type: "object", properties: {} },
   },
   {
-    name: "quillby_get_pricing",
+    name: "get_pricing",
     description:
       "View available Quillby subscription plans and pricing. Only available in cloud mode. Returns plan tiers with features, monthly credits, and limits.",
     annotations: { readOnlyHint: true, idempotentHint: true },
@@ -895,7 +895,7 @@ const TOOLS: Tool[] = [
     inputSchema: { type: "object", properties: {} },
   },
   {
-    name: "quillby_billing_action",
+    name: "billing_action",
     description:
       "Redirect to Stripe billing flow: upgrade to Pro, downgrade to Free, or manage your subscription via the customer portal. Only available in cloud mode. Returns a redirect URL.",
     annotations: { readOnlyHint: false },
@@ -915,7 +915,7 @@ const TOOLS: Tool[] = [
 
   // ── Session Lifecycle ──────────────────────────────────────────────────────
   {
-    name: "quillby_session_start",
+    name: "session_start",
     description: "Start a new content session with a declared scope and optional auto-scoping template. Returns the created session with a unique ID.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
@@ -936,7 +936,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_session_status",
+    name: "session_status",
     description: "Check the current session state with degradation warnings (stale activity, token budget). Returns the most recent active session if no sessionId is provided.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
@@ -949,7 +949,7 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "quillby_session_close",
+    name: "session_close",
     description: "Close the active session with an optional summary. Triggers degradation checks and context finalization.",
     annotations: { destructiveHint: false },
     outputSchema: { type: "object" as const },
@@ -1016,27 +1016,27 @@ const RESOURCES: Resource[] = [
 
 const PROMPTS: Prompt[] = [
   {
-    name: "quillby_onboarding",
+    name: "onboarding",
     description: "Guide the user through initial Quillby setup to collect their content creator profile.",
   },
   {
-    name: "quillby_session_start",
+    name: "session_start",
     description: "Open Quillby the Claude-native way: onboarding if needed, otherwise create or update the Briefing artifact.",
   },
   {
-    name: "quillby_briefing",
+    name: "briefing",
     description: "How Claude should create and update the Quillby Briefing artifact.",
   },
   {
-    name: "quillby_story",
+    name: "story",
     description: "How Claude should open and update a Quillby Story artifact from a ranked item.",
   },
   {
-    name: "quillby_voice_system",
+    name: "voice_system",
     description: "How Claude should open and update the Quillby Voice System artifact from workspace memory.",
   },
   {
-    name: "quillby_projects_playbook",
+    name: "projects_playbook",
     description: "How to align Quillby workspaces, Claude Projects, and native Artifacts.",
   },
 ];
@@ -1059,7 +1059,7 @@ async function handleToolCall(
     };
 
     switch (name) {
-      case "quillby_list_workspaces": {
+      case "list_workspaces": {
         const currentWorkspaceId = await storage.getCurrentWorkspaceId();
         const workspaces = (await storage.listWorkspaces()).map((workspace) => ({
           ...workspace,
@@ -1071,7 +1071,7 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_create_workspace": {
+      case "create_workspace": {
         const { name: workspaceName, workspaceId, description, makeCurrent } = args as {
           name: string;
           workspaceId?: string;
@@ -1090,7 +1090,7 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_select_workspace": {
+      case "select_workspace": {
         const { workspaceId } = args as { workspaceId: string };
         const workspace = await storage.setCurrentWorkspace(workspaceId);
         return {
@@ -1099,7 +1099,7 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_get_workspace": {
+      case "get_workspace": {
         const activeStorage = await resolveStorage();
         const workspace = await activeStorage.getCurrentWorkspace();
         const [ctx, mem, sources] = await Promise.all([
@@ -1128,7 +1128,7 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_set_clone_identity": {
+      case "set_clone_identity": {
         const activeStorage = await resolveStorage();
         const parsedIc = SetCloneIdentityArgsSchema.parse(args);
         const {
@@ -1180,22 +1180,22 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_clone_voice": {
+      case "clone_voice": {
         const activeStorage = await resolveStorage();
         const parsedCv = CloneVoiceArgsSchema.parse(args);
         const { name: voiceName, overwrite } = parsedCv;
         const workspace = await activeStorage.getCurrentWorkspace();
 
         if (!workspace.cloneConsentGranted) {
-          throw new Error("Clone consent must be granted before creating a voice clone. Call quillby_set_clone_identity first.");
+          throw new Error("Clone consent must be granted before creating a voice clone. Call set_clone_identity first.");
         }
         if (!workspace.voiceReferenceAudioUrl) {
-          throw new Error("No voiceReferenceAudioUrl set. Call quillby_set_clone_identity with a voice sample URL first.");
+          throw new Error("No voiceReferenceAudioUrl set. Call set_clone_identity with a voice sample URL first.");
         }
 
         const elevenLabsApiKey = resolveElevenLabsApiKey(deploymentMode);
         if (!elevenLabsApiKey) {
-          throw new Error("ElevenLabs is not configured. Set QUILLBY_ELEVENLABS_API_KEY or configure the audio provider via quillby_set_provider.");
+          throw new Error("ElevenLabs is not configured. Set QUILLBY_ELEVENLABS_API_KEY or configure the audio provider via set_provider.");
         }
 
         // Idempotent: return existing clone ID unless overwrite is requested.
@@ -1248,7 +1248,7 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_delete_voice_clone": {
+      case "delete_voice_clone": {
         const activeStorage = await resolveStorage();
         const workspace = await activeStorage.getCurrentWorkspace();
 
@@ -1272,7 +1272,7 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_onboard": {
+      case "onboard": {
         const caps = server.server.getClientCapabilities();
         if (!caps?.elicitation?.form) {
           // Client doesn't support form elicitation — return the static onboarding prompt
@@ -1366,14 +1366,14 @@ async function handleToolCall(
         await storage.saveContext(onboardCtx);
 
         const onboardWs = await storage.getCurrentWorkspace();
-        const summary = `Workspace: ${onboardWs.name}\n\nRole: ${onboardCtx.role} in ${onboardCtx.industry}\nTopics: ${onboardCtx.topics.join(", ")}\nPlatforms: ${onboardCtx.platforms.join(", ")}\nVoice: ${onboardCtx.voice}\n\nNext: call quillby_discover_feeds to set up your RSS sources.`;
+        const summary = `Workspace: ${onboardWs.name}\n\nRole: ${onboardCtx.role} in ${onboardCtx.industry}\nTopics: ${onboardCtx.topics.join(", ")}\nPlatforms: ${onboardCtx.platforms.join(", ")}\nVoice: ${onboardCtx.voice}\n\nNext: call discover_feeds to set up your RSS sources.`;
         return {
           content: [{ type: "text" as const, text: summary }],
           structuredContent: { saved: true, profile: onboardCtx as Record<string, unknown> },
         };
       }
 
-      case "quillby_set_context": {
+      case "set_context": {
         const activeStorage = await resolveStorage();
         const context = UserContextSchema.parse((args as { context: unknown }).context);
         await activeStorage.saveContext(context);
@@ -1384,7 +1384,7 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_get_context": {
+      case "get_context": {
         const activeStorage = await resolveStorage();
         if (!await activeStorage.contextExists()) {
           return { content: [{ type: "text" as const, text: "No context saved for this workspace yet. Start by setting up Quillby for it." }], structuredContent: { error: "no_context" } };
@@ -1397,7 +1397,7 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_add_feeds": {
+      case "add_feeds": {
         const { urls } = args as { urls: string[] };
         const result = await storage.appendSources(urls);
         const totalAfterAdd = (await storage.loadSources()).length;
@@ -1407,7 +1407,7 @@ async function handleToolCall(
         };
       }
 
-      case "quillby_discover_feeds": {
+      case "discover_feeds": {
         const ctxExists = await storage.contextExists();
         const ctx = ctxExists ? await storage.loadContext() : null;
         const { topics: topicOverride, locale = "en-US", country = "US" } = args as { topics?: string[]; locale?: string; country?: string };
@@ -1465,17 +1465,17 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
         };
       }
 
-      case "quillby_list_feeds": {
+      case "list_feeds": {
         const activeStorage = await resolveStorage();
         const sources = await activeStorage.loadSources();
         const listFeedsResult = { count: sources.length, feeds: sources };
         return {
-          content: [{ type: "text" as const, text: sources.length ? JSON.stringify(listFeedsResult, null, 2) : "No feeds configured. Use quillby_add_feeds." }],
+          content: [{ type: "text" as const, text: sources.length ? JSON.stringify(listFeedsResult, null, 2) : "No feeds configured. Use add_feeds." }],
           structuredContent: listFeedsResult,
         };
       }
 
-      case "quillby_read_article": {
+      case "read_article": {
         const { url, title = "" } = args as { url: string; title?: string };
         const content = await enrichArticle(url, title);
         if (!content) {
@@ -1484,7 +1484,7 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
         return { content: [{ type: "text" as const, text: content }], structuredContent: { content } };
       }
 
-      case "quillby_open_briefing": {
+      case "open_briefing": {
         const activeStorage = await resolveStorage();
         const [workspace, hasBriefing] = await Promise.all([
           activeStorage.getCurrentWorkspace(),
@@ -1492,7 +1492,7 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
         ]);
         if (!hasBriefing) {
           return {
-            content: [{ type: "text" as const, text: `No Briefing saved yet for workspace "${workspace.name}". Run quillby_daily_brief to generate one.` }],
+            content: [{ type: "text" as const, text: `No Briefing saved yet for workspace "${workspace.name}". Run daily_brief to generate one.` }],
             structuredContent: { error: "no_briefing", workspace: workspace.name, workspaceId: workspace.id },
           };
         }
@@ -1540,7 +1540,7 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
         };
       }
 
-      case "quillby_save_cards": {
+      case "save_cards": {
         const activeStorage = await resolveStorage();
         const { cards: rawCards } = args as { cards: unknown[] };
         const cards = rawCards.map((c) => CardInputSchema.parse(c));
@@ -1551,7 +1551,7 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
         return { content: [{ type: "text" as const, text: `Saved ${cards.length} card(s) to ${outputDir}.` }], structuredContent: { saved: cards.length, outputDir } };
       }
 
-      case "quillby_list_cards": {
+      case "list_cards": {
         const activeStorage = await resolveStorage();
         if (!await activeStorage.latestHarvestExists()) {
           return { content: [{ type: "text" as const, text: "No harvest found. Fetch articles and save cards first." }], structuredContent: { error: "no_harvest" } };
@@ -1570,7 +1570,7 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
         };
       }
 
-      case "quillby_daily_brief": {
+      case "daily_brief": {
         const { topN: rawTopN } = args as { topN?: number };
         const topN = rawTopN ?? 10;
         if (!await storage.contextExists()) {
@@ -1579,7 +1579,7 @@ Return ONLY a JSON array of strings. 10 items max. No explanation.`;
         const ctx = (await storage.loadContext())!;
         const sources = await storage.loadSources();
         if (sources.length === 0) {
-          return { content: [{ type: "text" as const, text: "No RSS sources configured. Use quillby_discover_feeds first." }], structuredContent: { error: "no_sources" } };
+          return { content: [{ type: "text" as const, text: "No RSS sources configured. Use discover_feeds first." }], structuredContent: { error: "no_sources" } };
         }
         const samplingAvailable = !!(server.server.getClientCapabilities()?.sampling);
 
@@ -1683,7 +1683,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
 
         if (!samplingAvailable) {
           return {
-            content: [{ type: "text" as const, text: `Quillby fetched ${slimArticles.length} headlines, selected the top ${enriched.length}, and deep-read each one. Generate the content cards now, then call quillby_save_cards to persist the Briefing.\n\n${cardPrompt}` }],
+            content: [{ type: "text" as const, text: `Quillby fetched ${slimArticles.length} headlines, selected the top ${enriched.length}, and deep-read each one. Generate the content cards now, then call save_cards to persist the Briefing.\n\n${cardPrompt}` }],
             structuredContent: { deferred: true, headlinesSeen: slimArticles.length, deepRead: enriched.length },
           };
         }
@@ -1692,7 +1692,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
           // Sampling reported as available but returned nothing (e.g. VS Code Copilot).
           // Fall through to deferred mode: return the prompt for the AI client to fulfill.
           return {
-            content: [{ type: "text" as const, text: `Quillby fetched ${slimArticles.length} headlines, selected the top ${enriched.length}, and deep-read each one. Generate the content cards now, then call quillby_save_cards to persist the Briefing.\n\n${cardPrompt}` }],
+            content: [{ type: "text" as const, text: `Quillby fetched ${slimArticles.length} headlines, selected the top ${enriched.length}, and deep-read each one. Generate the content cards now, then call save_cards to persist the Briefing.\n\n${cardPrompt}` }],
             structuredContent: { deferred: true, headlinesSeen: slimArticles.length, deepRead: enriched.length },
           };
         }
@@ -1732,7 +1732,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         };
       }
 
-      case "quillby_get_card": {
+      case "get_card": {
         const activeStorage = await resolveStorage();
         if (!await activeStorage.latestHarvestExists()) {
           return { content: [{ type: "text" as const, text: "No harvest found." }], structuredContent: { error: "no_harvest" } };
@@ -1746,7 +1746,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         return { content: [{ type: "text" as const, text: JSON.stringify(card, null, 2) }], structuredContent: card as Record<string, unknown> };
       }
 
-      case "quillby_save_draft": {
+      case "save_draft": {
         const activeStorage = await resolveStorage();
         const { content, platform, cardId, addToVoiceExamples } = args as { content: string; platform: string; cardId?: number; addToVoiceExamples?: boolean };
         const filePath = await activeStorage.saveDraft(content, platform, cardId);
@@ -1757,7 +1757,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         return { content: [{ type: "text" as const, text: savedMsg }], structuredContent: { saved: true, platform, filePath, voiceExampleAdded: addToVoiceExamples ?? false } };
       }
 
-      case "quillby_list_drafts": {
+      case "list_drafts": {
         const activeStorage = await resolveStorage();
         const drafts = await activeStorage.listDrafts();
         const listDraftsResult = { count: drafts.length, drafts };
@@ -1767,7 +1767,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         };
       }
 
-      case "quillby_curate_card": {
+      case "curate_card": {
         const activeStorage = await resolveStorage();
         const { cardId: curateId, action } = args as { cardId: number; action: "shortlist" | "skip" | "clear" };
         if (!await activeStorage.latestHarvestExists()) {
@@ -1797,7 +1797,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         };
       }
 
-      case "quillby_generate_post": {
+      case "generate_post": {
         const { cardId: rawGenCardId, platform: rawGenPlatform, angle } = args as { cardId?: number; platform?: string; angle?: string };
         if (!await storage.latestHarvestExists()) {
           return { content: [{ type: "text" as const, text: "No Briefing is available for this workspace yet. Refresh Quillby first." }], structuredContent: { error: "no_harvest" } };
@@ -1872,7 +1872,7 @@ ${guide}
         log(`Generating ${genPlatform} post for card #${genCardId}...`);
         if (!genSamplingAvailable) {
           return {
-            content: [{ type: "text" as const, text: `${generatePrompt}\n\n---\nWrite the post above, then call quillby_save_draft with content="<your post>", platform="${genPlatform}", cardId=${genCardId}.` }],
+            content: [{ type: "text" as const, text: `${generatePrompt}\n\n---\nWrite the post above, then call save_draft with content="<your post>", platform="${genPlatform}", cardId=${genCardId}.` }],
             structuredContent: { deferred: true, platform: genPlatform, cardId: genCardId },
           };
         }
@@ -1880,7 +1880,7 @@ ${guide}
         if (!draft) {
           // Sampling reported available but returned nothing — fall through to deferred mode.
           return {
-            content: [{ type: "text" as const, text: `${generatePrompt}\n\n---\nWrite the post above, then call quillby_save_draft with content="<your post>", platform="${genPlatform}", cardId=${genCardId}.` }],
+            content: [{ type: "text" as const, text: `${generatePrompt}\n\n---\nWrite the post above, then call save_draft with content="<your post>", platform="${genPlatform}", cardId=${genCardId}.` }],
             structuredContent: { deferred: true, platform: genPlatform, cardId: genCardId },
           };
         }
@@ -1892,7 +1892,7 @@ ${guide}
         };
       }
 
-      case "quillby_remember": {
+      case "remember": {
         const activeStorage = await resolveStorage();
         const { entries, memoryType = "voice_examples" } = args as {
           entries: string[];
@@ -1911,7 +1911,7 @@ ${guide}
         };
       }
 
-      case "quillby_get_memory": {
+      case "get_memory": {
         const activeStorage = await resolveStorage();
         const { memoryType } = args as { memoryType?: MemoryTypeInput };
         const [typedMemoryGet, getMemWs] = await Promise.all([activeStorage.loadTypedMemory(), activeStorage.getCurrentWorkspace()]);
@@ -1930,11 +1930,11 @@ ${guide}
 
       // ── v2: Multimodal generation ────────────────────────────────────────
 
-      case "quillby_generate_image":
-      case "quillby_generate_audio":
-      case "quillby_generate_video": {
+      case "generate_image":
+      case "generate_audio":
+      case "generate_video": {
         refreshProviderRouter();
-        const modality = name === "quillby_generate_image" ? "image" : name === "quillby_generate_audio" ? "audio" : "video" as GenerationModality;
+        const modality = name === "generate_image" ? "image" : name === "generate_audio" ? "audio" : "video" as GenerationModality;
         const genSchema = modality === "image" ? GenerateImageArgsSchema : modality === "audio" ? GenerateAudioArgsSchema : GenerateVideoArgsSchema;
         const parsedGen = genSchema.parse(args);
         const {
@@ -1960,19 +1960,19 @@ ${guide}
 
         if (modality === "audio" && cloneVoice) {
           if (!genWs.cloneConsentGranted) {
-            throw new Error("Voice clone generation requires consent. Call quillby_set_clone_identity with cloneConsentGranted=true first.");
+            throw new Error("Voice clone generation requires consent. Call set_clone_identity with cloneConsentGranted=true first.");
           }
           if (!genWs.voiceReferenceAudioUrl) {
-            throw new Error("Voice clone generation requires voiceReferenceAudioUrl. Set it via quillby_set_clone_identity first.");
+            throw new Error("Voice clone generation requires voiceReferenceAudioUrl. Set it via set_clone_identity first.");
           }
         }
 
         if (modality === "video" && cloneAvatar) {
           if (!genWs.cloneConsentGranted) {
-            throw new Error("Avatar clone generation requires consent. Call quillby_set_clone_identity with cloneConsentGranted=true first.");
+            throw new Error("Avatar clone generation requires consent. Call set_clone_identity with cloneConsentGranted=true first.");
           }
           if (!genWs.faceReferenceImageUrl) {
-            throw new Error("Avatar clone generation requires faceReferenceImageUrl. Set it via quillby_set_clone_identity first.");
+            throw new Error("Avatar clone generation requires faceReferenceImageUrl. Set it via set_clone_identity first.");
           }
           if (!drivingAudioUrl) {
             throw new Error("Avatar clone generation requires drivingAudioUrl.");
@@ -2049,12 +2049,12 @@ ${guide}
         });
 
         return {
-          content: [{ type: "text" as const, text: `${modality} generation queued (job: ${jobId}, tier: ${tierLabel}${cloneVoice ? ", cloneVoice" : ""}${cloneAvatar ? ", cloneAvatar" : ""}). Use quillby_get_job to check status.` }],
+          content: [{ type: "text" as const, text: `${modality} generation queued (job: ${jobId}, tier: ${tierLabel}${cloneVoice ? ", cloneVoice" : ""}${cloneAvatar ? ", cloneAvatar" : ""}). Use get_job to check status.` }],
           structuredContent: { jobId, status: "queued", modality, tier: tierLabel, workspaceId: genWs.id, cloneVoice, cloneAvatar },
         };
       }
 
-      case "quillby_get_job": {
+      case "get_job": {
         const parsedGj = GetJobArgsSchema.parse(args);
         const { jobId, workspaceId: gjWsId } = parsedGj;
         const gjStorage: WorkspaceStorage & JobStorage = gjWsId ? await (await resolveStorage()).withWorkspace(gjWsId) as WorkspaceStorage & JobStorage : await resolveStorage();
@@ -2072,7 +2072,7 @@ ${guide}
         };
       }
 
-      case "quillby_list_jobs": {
+      case "list_jobs": {
         const parsedLj = ListJobsArgsSchema.parse(args);
         const { modality: ljModality, workspaceId: ljWsId } = parsedLj;
         const ljStorage: WorkspaceStorage & JobStorage = ljWsId ? await (await resolveStorage()).withWorkspace(ljWsId) as WorkspaceStorage & JobStorage : await resolveStorage();
@@ -2083,7 +2083,7 @@ ${guide}
         };
       }
 
-      case "quillby_get_providers": {
+      case "get_providers": {
         refreshProviderRouter();
         const report = getProviderPolicyReport(deploymentMode, providerRouter);
         return {
@@ -2092,7 +2092,7 @@ ${guide}
         };
       }
 
-      case "quillby_set_provider": {
+      case "set_provider": {
         const parsedSp = SetProviderArgsSchema.parse(args);
         const { modality, provider, apiKey, voiceId, groupId } = parsedSp;
         const saved = saveProviderConfig({ modality, provider, apiKey, voiceId, groupId }, deploymentMode);
@@ -2103,7 +2103,7 @@ ${guide}
         };
       }
 
-      case "quillby_clear_provider": {
+      case "clear_provider": {
         const parsedCp = ClearProviderArgsSchema.parse(args);
         const { modality } = parsedCp;
         clearProviderConfig(modality);
@@ -2115,37 +2115,37 @@ ${guide}
       }
 
       // ── Content Planning ────────────────────────────────────────────────
-      case "quillby_plan_create": {
+      case "plan_create": {
         const planStorage = await resolveStorage() as unknown as PlanStorage;
         return handlePlanCreate(planStorage, args);
       }
-      case "quillby_plan_list": {
+      case "plan_list": {
         const planStorage = await resolveStorage() as unknown as PlanStorage;
         return handlePlanList(planStorage, args);
       }
-      case "quillby_plan_today": {
+      case "plan_today": {
         const planStorage = await resolveStorage() as unknown as PlanStorage;
         return handlePlanToday(planStorage, args);
       }
-      case "quillby_task_create": {
+      case "task_create": {
         const planStorage = await resolveStorage() as unknown as PlanStorage;
         return handleTaskCreate(planStorage, args);
       }
-      case "quillby_task_move": {
+      case "task_move": {
         const planStorage = await resolveStorage() as unknown as PlanStorage;
         return handleTaskMove(planStorage, args);
       }
-      case "quillby_task_delete": {
+      case "task_delete": {
         const planStorage = await resolveStorage() as unknown as PlanStorage;
         return handleTaskDelete(planStorage, args);
       }
-      case "quillby_calendar": {
+      case "calendar": {
         const planStorage = await resolveStorage() as unknown as PlanStorage;
         return handleCalendar(planStorage, args);
       }
 
       // ── Billing & Plan Management ───────────────────────────────────────
-      case "quillby_get_plan": {
+      case "get_plan": {
         if (!isCloudMode()) {
           return {
             content: [{ type: "text" as const, text: "Plan management is only available in cloud mode." }],
@@ -2160,7 +2160,7 @@ ${guide}
         };
       }
 
-      case "quillby_get_pricing": {
+      case "get_pricing": {
         if (!isCloudMode()) {
           return {
             content: [{ type: "text" as const, text: "Pricing is only available in cloud mode." }],
@@ -2187,7 +2187,7 @@ ${guide}
         };
       }
 
-      case "quillby_billing_action": {
+      case "billing_action": {
         if (!isCloudMode()) {
           return {
             content: [{ type: "text" as const, text: "Billing is only available in cloud mode." }],
@@ -2211,15 +2211,15 @@ ${guide}
       }
 
       // ── Session Lifecycle ───────────────────────────────────────────────
-      case "quillby_session_start": {
+      case "session_start": {
         const store = await resolveStorage() as unknown as SessionStore & PlanStorage;
         return handleSessionStart(store, store, args);
       }
-      case "quillby_session_status": {
+      case "session_status": {
         const store = await resolveStorage() as unknown as SessionStore & PlanStorage;
         return handleSessionStatus(store, store, args);
       }
-      case "quillby_session_close": {
+      case "session_close": {
         const store = await resolveStorage() as unknown as SessionStore & PlanStorage;
         return handleSessionClose(store, store, args);
       }
@@ -2288,7 +2288,7 @@ async function readResource(uri: string, storage: WorkspaceStorage & JobStorage)
 async function getPrompt(name: string, storage: WorkspaceStorage, args?: Record<string, string>) {
   void args;
   switch (name) {
-    case "quillby_onboarding": {
+    case "onboarding": {
       const exists = await storage.contextExists();
       const existing = exists ? await storage.loadContext() : null;
       const typedMemory = await storage.loadTypedMemory();
@@ -2310,7 +2310,7 @@ async function getPrompt(name: string, storage: WorkspaceStorage, args?: Record<
             content: {
               type: "text" as const,
               text: exists
-                ? "I can see your profile. Tell me what to change and I will call quillby_set_context."
+                ? "I can see your profile. Tell me what to change and I will call set_context."
                 : ONBOARDING_PROMPT,
             },
           },
@@ -2318,7 +2318,7 @@ async function getPrompt(name: string, storage: WorkspaceStorage, args?: Record<
       };
     }
 
-    case "quillby_session_start": {
+    case "session_start": {
       const workspace = await storage.getCurrentWorkspace();
       const hasContext = await storage.contextExists();
       const hasFeeds = (await storage.loadSources()).length > 0;
@@ -2335,14 +2335,14 @@ Behavior contract:
 - Keep tool names invisible unless the user is explicitly debugging.
 - Prefer native Claude Artifacts over long chat replies.
 - Reuse or update an existing Quillby artifact in the current conversation when it already matches the active workspace.
-- For requests like "Open Quillby", "Open my daily brief", or "Show me my briefing", prefer quillby_open_briefing over quillby_daily_brief.
+- For requests like "Open Quillby", "Open my daily brief", or "Show me my briefing", prefer open_briefing over daily_brief.
 - Do not improvise a manual tool-by-tool fallback in chat.
 - Do not narrate tool execution with phrases like "Let me...", "I'll fetch...", or "I'll work around this manually."
 
 Session flow:
 1. Inspect the active workspace state.
 2. If no profile exists yet, guide setup conversationally, save it, and make sure sources are configured.
-3. ${hasDrafts ? "Saved drafts exist. Before opening the Briefing, ask the user one short question: \"Anything you posted recently that landed well?\" If yes, ask them to paste it or describe it, then save it using quillby_remember with memoryType=\"successful_posts\", and a second time with memoryType=\"voice_examples\". Then proceed to the Briefing." : "If a profile and saved brief already exist, call quillby_open_briefing immediately so the user gets a stable Briefing UI without waiting."}
+3. ${hasDrafts ? "Saved drafts exist. Before opening the Briefing, ask the user one short question: \"Anything you posted recently that landed well?\" If yes, ask them to paste it or describe it, then save it using remember with memoryType=\"successful_posts\", and a second time with memoryType=\"voice_examples\". Then proceed to the Briefing." : "If a profile and saved brief already exist, call open_briefing immediately so the user gets a stable Briefing UI without waiting."}
 4. Refresh the Briefing only when it is stale, missing, or the user explicitly asks for a fresh run.
 5. If there is no saved Briefing and Sampling is unavailable, explain that Quillby cannot generate a fresh Briefing in this client and stop. Do not simulate the pipeline manually.
 6. Let the user move naturally from Briefing to Story, Draft, or Voice System through plain-language requests.
@@ -2367,7 +2367,7 @@ User-facing expectations:
       };
     }
 
-    case "quillby_briefing": {
+    case "briefing": {
       const workspace = await storage.getCurrentWorkspace();
       const briefingText = `## Quillby Briefing Artifact
 
@@ -2388,7 +2388,7 @@ What the Briefing should show:
 
 How to drive it:
 - Use Quillby's saved workspace state and latest harvest data.
-- For "open" intents, use quillby_open_briefing first so the UI appears immediately from cached local state.
+- For "open" intents, use open_briefing first so the UI appears immediately from cached local state.
 - Present top opportunities as editorial decisions, not raw database rows.
 - When the user asks to go deeper, transition into a Story artifact or produce a Draft directly.
 - If Briefing generation is not possible in the current host, explain the capability gap plainly and stop instead of listing workaround steps or simulating the pipeline manually.
@@ -2408,7 +2408,7 @@ Tone rules:
       };
     }
 
-    case "quillby_story": {
+    case "story": {
       const storyText = `## Quillby Story Artifact
 
 Open a Story artifact when the user chooses one opportunity from the Briefing or asks for detail on a specific idea.
@@ -2439,7 +2439,7 @@ How to move forward:
       };
     }
 
-    case "quillby_voice_system": {
+    case "voice_system": {
       const voiceSystemText = `## Quillby Voice System Artifact
 
 Open the Voice System artifact when the user asks how Quillby writes, what it has learned, or wants to adjust voice memory.
@@ -2472,7 +2472,7 @@ How to use it:
       };
     }
 
-    case "quillby_projects_playbook": {
+    case "projects_playbook": {
       const playbook = `## Quillby + Claude Projects + Artifacts
 
 1. Create one Quillby workspace per Claude Project, client, brand, or campaign.
