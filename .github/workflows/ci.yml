@@ -22,11 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-      - name: Install pnpm
-        run: |
-          npm install -g pnpm@10.7.1
-          echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
+      - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
@@ -42,11 +38,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-      - name: Install pnpm
-        run: |
-          npm install -g pnpm@10.7.1
-          echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
+      - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @vncsleal/quillby build
       - run: pnpm --filter @vncsleal/quillby test:integration
