@@ -1,5 +1,14 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ProviderRouter } from "@quillby/providers";
+import type { DeploymentMode } from "@quillby/config";
+
+export interface ToolContext {
+  server: McpServer;
+  storage: ToolStorage;
+  deploymentMode: DeploymentMode;
+  providerRouter: ProviderRouter;
+  sample: (prompt: string, maxTokens?: number) => Promise<string | null>;
+}
 
 export interface ToolStorage {
   getCurrentWorkspaceId(): Promise<string>;
@@ -13,20 +22,14 @@ export interface ToolStorage {
   saveContext(ctx: Record<string, unknown>): Promise<void>;
   loadTypedMemory(): Promise<Record<string, unknown> | null>;
   loadSources(): Promise<unknown[]>;
+  appendSources(urls: string[]): Promise<{ added: number; skipped: number }>;
   updateWorkspaceMetadata(meta: Record<string, unknown>): Promise<{ id: string; [key: string]: unknown }>;
-}
-
-import type { DeploymentMode } from "@quillby/config";
-
-export interface ToolContext {
-  server: McpServer;
-  storage: ToolStorage;
-  deploymentMode: DeploymentMode;
-  providerRouter: ProviderRouter;
+  latestHarvestExists(): Promise<boolean>;
+  loadLatestHarvest(): Promise<Record<string, unknown> | null>;
 }
 
 export type ToolResult = {
-  content: { type: "text"; text: string; annotations?: Record<string, unknown>; _meta?: Record<string, unknown> }[];
+  content: { type: "text"; text: string }[];
   structuredContent?: Record<string, unknown>;
   isError?: boolean;
 };
