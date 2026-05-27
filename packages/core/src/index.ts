@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export * from "./agents.js";
+
 // ─── User context (built during onboarding) ───────────────────────────────────
 
 export const UserContextSchema = z.object({
