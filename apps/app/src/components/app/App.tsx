@@ -1,6 +1,7 @@
-import React, { Component, lazy, Suspense } from "react";
+import React, { lazy, Suspense } from "react";
 import { HashRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { Button, Alert } from "@heroui/react";
+import { ToastProvider } from "@heroui/react";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { useSession } from "./auth";
 import { getConnection } from "./api";
 import { WorkspaceProvider } from "./WorkspaceContext";
@@ -34,50 +35,6 @@ const ForgotPassword = lazyNamed(() => import("./pages/ForgotPassword"), "Forgot
 const ResetPassword = lazyNamed(() => import("./pages/ResetPassword"), "ResetPassword");
 const VerifyEmail = lazyNamed(() => import("./pages/VerifyEmail"), "VerifyEmail");
 
-class ErrorBoundary extends Component<
-  { children: React.ReactNode },
-  { error: Error | null }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { error: null };
-  }
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-  handleRetry = () => {
-    this.setState({ error: null });
-  };
-  render() {
-    if (this.state.error) {
-      const isChunkError = this.state.error.message?.includes("dynamically imported");
-      return (
-        <div className="min-h-screen flex items-center justify-center p-8 bg-background">
-          <div className="flex flex-col items-center gap-4 max-w-lg w-full">
-            <Alert status="danger" className="w-full">
-              <Alert.Indicator />
-              <Alert.Content>
-                <Alert.Title>
-                  {isChunkError ? "Failed to load page" : "App Error"}
-                </Alert.Title>
-                <Alert.Description>
-                  {isChunkError
-                    ? "A network error occurred while loading this page."
-                    : this.state.error.message}
-                </Alert.Description>
-              </Alert.Content>
-            </Alert>
-            <Button variant="ghost" onPress={this.handleRetry}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "").trim().toLowerCase();
 
 function CloudRequireAuth({ children }: { children: React.ReactNode }) {
@@ -106,15 +63,17 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function LazyPage({ component: Component }: { component: React.LazyExoticComponent<React.ComponentType> }) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <Component />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<PageSkeleton />}>
+        <Component />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
 export function App() {
   return (
-    <ErrorBoundary>
+    <ToastProvider>
       <HashRouter>
         <WorkspaceProvider>
         <Routes>
@@ -209,6 +168,6 @@ export function App() {
         </Routes>
         </WorkspaceProvider>
       </HashRouter>
-    </ErrorBoundary>
+      </ToastProvider>
   );
 }

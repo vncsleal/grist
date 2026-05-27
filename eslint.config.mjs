@@ -56,4 +56,31 @@ export default tseslint.config(
       globals: sharedGlobals,
     },
   },
+  // ── Architecture boundary: core packages must not import framework packages ──
+  {
+    files: ["packages/*/src/**/*.{js,ts,jsx,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@modelcontextprotocol/sdk",
+              message: "Core packages must not import MCP SDK types. Map at the boundary in apps/mcp-server.",
+            },
+            {
+              name: "@modelcontextprotocol/sdk/server/index.js",
+              message: "Core packages must not import MCP SDK types. Map at the boundary in apps/mcp-server.",
+            },
+          ],
+          patterns: [
+            {
+              group: ["@heroui/*"],
+              message: "Core packages must not import HeroUI components. React UI belongs in apps/app.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
