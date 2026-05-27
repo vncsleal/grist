@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { Button, Separator } from "@heroui/react";
 import { getMemory, deleteMemoryEntry, type MemoryBuckets } from "../api";
-import { Layout, Spinner } from "../Layout";
+import { Layout } from "../Layout";
+import { Spinner } from "@heroui/react";
 import { useWorkspace } from "../WorkspaceContext";
 
 const BUCKET_LABELS: Record<keyof MemoryBuckets, string> = {
@@ -35,28 +37,16 @@ function MemoryDeleteAction({
   disabled?: boolean;
 }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
+    <Button
+      variant="ghost"
+      size="sm"
+      className="underline underline-offset-3 decoration-danger/35 text-muted/70 h-auto min-w-0 p-0"
+      isDisabled={disabled}
+      onPress={onClick}
       aria-label="forget this"
-      style={{
-        font: "inherit",
-        fontSize: "0.75rem",
-        fontFamily: "var(--font-mono, monospace)",
-        color: "var(--muted)",
-        background: "none",
-        border: "none",
-        padding: 0,
-        cursor: disabled ? "default" : "pointer",
-        textDecorationLine: "underline",
-        textDecorationColor: "color-mix(in oklch, var(--danger) 35%, transparent)",
-        textUnderlineOffset: "3px",
-        opacity: disabled ? 0.4 : 0.7,
-        flexShrink: 0,
-      }}
     >
       forget
-    </button>
+    </Button>
   );
 }
 
@@ -127,38 +117,22 @@ export function Memory() {
 
       {/* Header */}
       <div className="mb-10">
-        <div
-          className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase"
-          style={{ color: "var(--accent)" }}
-        >
-          <span
-            className="inline-block mr-2 w-4 h-px opacity-60"
-            style={{ background: "var(--accent)", verticalAlign: "middle" }}
-          />
+        <div className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+          <span className="inline-block w-4 h-px bg-accent/60 mr-2 align-middle" />
           Context
         </div>
-        <h1
-          className="text-3xl font-bold leading-tight"
-          style={{
-            fontFamily: "var(--font-display, serif)",
-            letterSpacing: "-0.025em",
-            color: "var(--foreground)",
-          }}
-        >
+        <h1 className="text-3xl font-bold leading-tight font-display tracking-tighter text-foreground">
           {headlineText()}
         </h1>
         {!loading && totalEntries > 0 && (
-          <p
-            className="mt-2 font-mono text-[0.72rem]"
-            style={{ color: "var(--muted)" }}
-          >
+          <p className="mt-2 font-mono text-[0.72rem] text-muted">
             {activeBuckets.map((k) => BUCKET_LABELS[k]).join(" · ")}
           </p>
         )}
       </div>
 
       {error && (
-        <p className="mb-8 text-sm" style={{ color: "var(--danger)" }}>
+        <p className="mb-8 text-sm text-danger">
           {error}
         </p>
       )}
@@ -166,10 +140,7 @@ export function Memory() {
       {loading && !memory ? (
         <div className="flex justify-center py-16"><Spinner /></div>
       ) : totalEntries === 0 ? (
-        <p
-          className="text-base leading-relaxed"
-          style={{ fontFamily: "var(--font-display, serif)", color: "var(--muted)" }}
-        >
+        <p className="text-base leading-relaxed font-display text-muted">
           Ask me to remember things about your voice, audience, or style and they'll appear here.
         </p>
       ) : (
@@ -179,18 +150,10 @@ export function Memory() {
 
             return (
               <div key={bucket}>
-                {bucketIdx > 0 && (
-                  <div
-                    className="my-8 h-px"
-                    style={{ background: "linear-gradient(to right, var(--border), transparent)" }}
-                  />
-                )}
+                {bucketIdx > 0 && <Separator className="my-4" />}
 
                 {/* Bucket heading */}
-                <div
-                  className="mb-4 font-mono text-[0.68rem] tracking-[0.12em] uppercase"
-                  style={{ color: "var(--accent)", opacity: 0.8 }}
-                >
+                <div className="mb-4 font-mono text-[0.68rem] tracking-[0.12em] uppercase text-accent/80">
                   {BUCKET_LABELS[bucket]}
                 </div>
 
@@ -202,14 +165,7 @@ export function Memory() {
 
                     return (
                       <div key={i} className="flex items-start gap-4">
-                        <p
-                          className="flex-1 leading-relaxed"
-                          style={{
-                            fontFamily: "var(--font-display, serif)",
-                            fontSize: "0.9375rem",
-                            color: "var(--foreground)",
-                          }}
-                        >
+                        <p className="flex-1 leading-relaxed font-display text-[0.9375rem] text-foreground">
                           {entry}
                         </p>
                         {isDeleting ? (

@@ -4,7 +4,6 @@ import {
   Button,
   Spinner,
   Alert,
-  Card,
   Dropdown,
   Avatar,
   Tabs,
@@ -31,16 +30,16 @@ export function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-(--background) text-(--foreground)">
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 h-16 border-b border-(--border) bg-(--background)/90 backdrop-blur-xl">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 h-16 border-b border-border bg-background/90 backdrop-blur-xl">
         <div className="flex items-center gap-8">
           <a href="/" className="flex items-center gap-2.5 no-underline">
             <img
               src="/quillby-logo.png"
               alt="Quillby"
-              style={{ width: 30, height: 30, objectFit: "contain" }}
+              className="w-[30px] h-[30px] object-contain"
             />
-            <span style={{ fontFamily: "var(--font-display, serif)", fontSize: "1.2rem", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--foreground)" }}>
+            <span className="text-[1.2rem] font-bold tracking-tight text-foreground font-display">
               Quillby
             </span>
           </a>
@@ -69,7 +68,7 @@ export function Layout({ children }: LayoutProps) {
           <WorkspaceSwitcher />
           {conn ? (
             <>
-              <span className="text-xs font-mono hidden sm:block text-(--muted-foreground)">
+              <span className="text-xs font-mono hidden sm:block text-muted">
                 {conn.serverUrl.replace(/^https?:\/\//, "")}
               </span>
               <Button variant="ghost" size="sm" onPress={disconnectSelfHosted}>
@@ -103,8 +102,8 @@ function WorkspaceSwitcher() {
     setSelecting(true);
     try {
       await switchWorkspace(key);
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Workspace switch failed:", err);
     } finally {
       setSelecting(false);
     }
@@ -112,7 +111,7 @@ function WorkspaceSwitcher() {
 
   return (
     <Dropdown>
-      <Dropdown.Trigger className="flex items-center gap-1.5 rounded-full pl-3 pr-2 py-1 text-xs font-mono border border-border bg-surface text-(--foreground) cursor-default outline-none focus-visible:ring-2 ring-(--accent) hover:bg-surface-secondary transition-colors">
+      <Dropdown.Trigger className="flex items-center gap-1.5 rounded-full pl-3 pr-2 py-1 text-xs font-mono border border-border bg-surface text-foreground cursor-default outline-none focus-visible:ring-2 ring-accent hover:bg-surface-secondary transition-colors">
         <span className="max-w-32 truncate">{active?.name ?? "Workspace"}</span>
         {selecting ? (
           <Spinner className="w-3 h-3" />
@@ -128,7 +127,7 @@ function WorkspaceSwitcher() {
             <Dropdown.Item
               key={ws.id}
               id={ws.id}
-              className={ws.isActive ? "text-(--accent) font-medium" : ""}
+              className={ws.isActive ? "text-accent font-medium" : ""}
             >
               {ws.name}
             </Dropdown.Item>
@@ -158,7 +157,7 @@ function CloudUserPill() {
 
   return (
     <Dropdown>
-      <Dropdown.Trigger className="flex items-center gap-2 rounded-full pl-2 pr-3 py-1 text-sm font-medium border border-(--border) bg-(--surface) text-(--foreground) cursor-default outline-none focus-visible:ring-2 ring-(--accent) hover:bg-(--surface-hover)">
+      <Dropdown.Trigger className="flex items-center gap-2 rounded-full pl-2 pr-3 py-1 text-sm font-medium border border-border bg-surface text-foreground cursor-default outline-none focus-visible:ring-2 ring-accent hover:bg-surface-secondary">
         <Avatar size="sm" className="w-5 h-5 shrink-0">
           <Avatar.Fallback className="text-xs font-bold">
             {initials}
@@ -169,7 +168,7 @@ function CloudUserPill() {
         </span>
       </Dropdown.Trigger>
       <Dropdown.Popover>
-        <div className="px-3 py-2 text-xs text-(--muted-foreground) border-b border-(--border) mb-1">
+        <div className="px-3 py-2 text-xs text-muted border-b border-border mb-1">
           {user.email}
         </div>
         <Dropdown.Menu
@@ -192,10 +191,7 @@ function CloudUserPill() {
 
 export function PageTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h1
-      className="text-3xl font-bold text-(--foreground)"
-      style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.025em", lineHeight: 1.1 }}
-    >
+    <h1 className="text-3xl font-bold text-foreground font-display tracking-tight leading-[1.1]">
       {children}
     </h1>
   );
@@ -203,14 +199,14 @@ export function PageTitle({ children }: { children: React.ReactNode }) {
 
 export function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-(--accent)">
-      <span className="inline-block w-4 h-px bg-(--accent) opacity-60 shrink-0" />
+    <div className="flex items-center gap-2 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+      <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
       {children}
     </div>
   );
 }
 
-export { Card, Button, Spinner, Alert };
+
 
 export function ErrorBanner({ message }: { message: string }) {
   return (
@@ -227,14 +223,11 @@ export function EmptyState({ title, body }: { title: string; body?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
       <span className="text-3xl select-none opacity-40">✦</span>
-      <p
-        className="text-lg font-bold text-(--foreground)"
-        style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.015em" }}
-      >
+      <p className="text-lg font-bold text-foreground font-display tracking-tight">
         {title}
       </p>
       {body && (
-        <p className="text-sm leading-relaxed text-(--muted-foreground) max-w-xs">{body}</p>
+        <p className="text-sm leading-relaxed text-muted max-w-xs">{body}</p>
       )}
     </div>
   );

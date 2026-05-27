@@ -48,7 +48,7 @@ class ErrorBoundary extends Component<
     if (this.state.error) {
       const isChunkError = this.state.error.message?.includes("dynamically imported");
       return (
-        <div className="min-h-screen flex items-center justify-center p-8 bg-(--background)">
+        <div className="min-h-screen flex items-center justify-center p-8 bg-background">
           <div className="flex flex-col items-center gap-4 max-w-lg w-full">
             <Alert status="danger" className="w-full">
               <Alert.Indicator />

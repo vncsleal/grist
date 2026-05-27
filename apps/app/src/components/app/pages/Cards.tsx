@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { Separator, Button } from "@heroui/react";
 import { listCards, curateCard, type Card } from "../api";
-import { Layout, Spinner } from "../Layout";
+import { Layout } from "../Layout";
+import { Spinner } from "@heroui/react";
 import { useWorkspace } from "../WorkspaceContext";
 
 type CurationStatus = "all" | "pending" | "shortlisted" | "skipped";
@@ -67,40 +69,35 @@ export function Cards() {
   return (
     <Layout>
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div style={{ position: "absolute", top: "-10%", right: "0", width: "50vw", height: "50vw", borderRadius: "50%", background: "radial-gradient(circle, color-mix(in oklch, var(--accent) 8%, transparent) 0%, transparent 70%)", filter: "blur(50px)" }} />
+        <div className="absolute -top-[10%] right-0 w-[50vw] h-[50vw] rounded-full bg-[radial-gradient(circle,color-mix(in_oklch,var(--accent)_8%,transparent),transparent_70%)] blur-[50px]" />
       </div>
 
       {/* Header */}
       <div className="mb-12">
-        <p className="font-mono text-[0.62rem] tracking-[0.22em] uppercase mb-5" style={{ color: "var(--accent)" }}>
+        <p className="font-mono text-[0.62rem] tracking-[0.22em] uppercase mb-5 text-accent">
           Reading queue
         </p>
-        <h1
-          className="text-4xl sm:text-5xl font-bold leading-[1.1] mb-6"
-          style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.03em", color: "var(--foreground)" }}
-        >
+        <h1 className="font-display text-4xl sm:text-5xl font-bold leading-[1.1] mb-6 tracking-[-0.03em] text-foreground">
           {headlineText()}
         </h1>
 
         {/* Inline filter + workspace */}
-        <p className="text-sm font-mono" style={{ color: "var(--muted)" }}>
+        <p className="text-sm font-mono text-muted">
           Show{" "}
           {FILTERS.map(({ label, value }, i, arr) => (
             <React.Fragment key={value}>
-              <button
-                type="button"
-                onClick={() => setFilterStatus(value)}
-                style={{
-                  background: "none", border: "none", cursor: "pointer", font: "inherit", padding: 0,
-                  color: filterStatus === value ? "var(--foreground)" : "var(--muted)",
-                  fontWeight: filterStatus === value ? 600 : 400,
-                  textDecoration: "underline",
-                  textDecorationColor: filterStatus === value ? "color-mix(in oklch, var(--accent) 70%, transparent)" : "color-mix(in oklch, var(--accent) 30%, transparent)",
-                  textUnderlineOffset: "3px",
-                }}
+              <Button
+                variant="ghost"
+                size="sm"
+                onPress={() => setFilterStatus(value)}
+                className={`font-mono underline underline-offset-3 h-auto min-w-0 p-0 ${
+                  filterStatus === value
+                    ? "text-foreground font-semibold decoration-accent/70"
+                    : "text-muted font-normal decoration-accent/30"
+                }`}
               >
                 {label}
-              </button>
+              </Button>
               {i < arr.length - 1 && <span> · </span>}
             </React.Fragment>
           ))}
@@ -108,7 +105,7 @@ export function Cards() {
       </div>
 
       {error && (
-        <p className="text-sm font-mono mb-8" style={{ color: "var(--danger)" }}>{error}</p>
+        <p className="text-sm font-mono mb-8 text-danger">{error}</p>
       )}
 
       {loading && cards.length === 0 ? (
@@ -119,52 +116,61 @@ export function Cards() {
             const status = card.curationStatus ?? "pending";
             const isExpanded = expandedId === card.id;
             const isActioning = actioning === card.id;
-            const statusColor =
-              status === "shortlisted" ? "var(--success)"
-              : status === "skipped" ? "var(--danger)"
-              : "var(--muted)";
 
             return (
               <div key={card.id}>
                 {i > 0 && (
-                  <div style={{ height: "1px", background: "linear-gradient(to right, var(--border), transparent 80%)", margin: "1.75rem 0" }} />
+                  <Separator className="my-7" />
                 )}
                 <div>
-                  <button
-                    type="button"
-                    onClick={() => setExpandedId(isExpanded ? null : card.id)}
-                    className="text-left w-full hover:opacity-70 transition-opacity"
-                    style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  <Button
+                    variant="ghost"
+                    onPress={() => setExpandedId(isExpanded ? null : card.id)}
+                    className="text-left w-full hover:opacity-70 transition-opacity p-0 h-auto min-w-0"
                   >
-                    <h2
-                      className="text-lg sm:text-xl font-semibold leading-snug"
-                      style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.015em", color: "var(--foreground)" }}
-                    >
+                    <h2 className="font-display text-lg sm:text-xl font-semibold leading-snug tracking-[-0.015em] text-foreground">
                       {card.title}
                     </h2>
-                  </button>
+                  </Button>
 
-                  <p
-                    className="mt-3 text-base leading-relaxed"
-                    style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.01em", color: "var(--muted)" }}
-                  >
+                  <p className="mt-3 font-display text-base leading-relaxed tracking-[-0.01em] text-muted">
                     {(card.source || typeof card.score === "number") && (
                       <>
-                        {card.source && <>This is from <span style={{ color: "var(--foreground)", fontWeight: 600 }}>{card.source}</span></>}
-                        {card.source && typeof card.score === "number" && <>, its score is <span style={{ color: "var(--foreground)", fontWeight: 600 }}>{card.score.toFixed(1)}</span></>}
-                        {!card.source && typeof card.score === "number" && <>Its score is <span style={{ color: "var(--foreground)", fontWeight: 600 }}>{card.score.toFixed(1)}</span></>}
+                        {card.source && <>This is from <span className="text-foreground font-semibold">{card.source}</span></>}
+                        {card.source && typeof card.score === "number" && <>, its score is <span className="text-foreground font-semibold">{card.score.toFixed(1)}</span></>}
+                        {!card.source && typeof card.score === "number" && <>Its score is <span className="text-foreground font-semibold">{card.score.toFixed(1)}</span></>}
                         {". "}
                       </>
                     )}
                     {"This card is "}
-                    <span style={{ color: statusColor, fontWeight: 600 }}>{status}</span>
+                    <span className={`font-semibold ${
+                      status === "shortlisted" ? "text-success"
+                      : status === "skipped" ? "text-danger"
+                      : "text-muted"
+                    }`}>{status}</span>
                     {" — you can "}
                     {status !== "shortlisted" && (
-                      <CurateLink onClick={() => void curate(card, "shortlisted")} disabled={isActioning}>shortlist it</CurateLink>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onPress={() => void curate(card, "shortlisted")}
+                        isDisabled={isActioning}
+                        className="underline underline-offset-[4px] decoration-accent/40 h-auto min-w-0 p-0 text-muted font-[inherit]"
+                      >
+                        shortlist it
+                      </Button>
                     )}
                     {status !== "shortlisted" && status !== "skipped" && " or "}
                     {status !== "skipped" && (
-                      <CurateLink onClick={() => void curate(card, "skipped")} disabled={isActioning}>skip it</CurateLink>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onPress={() => void curate(card, "skipped")}
+                        isDisabled={isActioning}
+                        className="underline underline-offset-[4px] decoration-accent/40 h-auto min-w-0 p-0 text-muted font-[inherit]"
+                      >
+                        skip it
+                      </Button>
                     )}
                     {"."}
                   </p>
@@ -172,10 +178,7 @@ export function Cards() {
                   {isExpanded && (card.summary || card.url) && (
                     <div className="mt-4">
                       {card.summary && (
-                        <p
-                          className="text-base leading-relaxed"
-                          style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.01em", color: "var(--muted)" }}
-                        >
+                        <p className="font-display text-base leading-relaxed tracking-[-0.01em] text-muted">
                           {card.summary}
                         </p>
                       )}
@@ -184,8 +187,7 @@ export function Cards() {
                           href={card.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs font-mono mt-3 block hover:opacity-60 transition-opacity"
-                          style={{ color: "var(--accent)" }}
+                          className="font-mono text-xs mt-3 block hover:opacity-60 transition-opacity text-accent"
                         >
                           {card.url}
                         </a>
@@ -199,26 +201,5 @@ export function Cards() {
         </div>
       )}
     </Layout>
-  );
-}
-
-function CurateLink({ onClick, disabled, children }: { onClick: () => void; disabled: boolean; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="hover:opacity-50 transition-opacity"
-      style={{
-        background: "none", border: "none", cursor: "pointer", font: "inherit",
-        color: "var(--muted)", padding: 0,
-        opacity: disabled ? 0.4 : undefined,
-        textDecoration: "underline",
-        textDecorationColor: "color-mix(in oklch, var(--accent) 40%, transparent)",
-        textUnderlineOffset: "4px",
-      }}
-    >
-      {children}
-    </button>
   );
 }

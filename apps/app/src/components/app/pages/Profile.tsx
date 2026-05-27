@@ -1,50 +1,26 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Button, Separator, Input, TextArea } from "@heroui/react";
 import { getProfile, updateProfile, type UserContextData } from "../api";
-import { Layout, Spinner } from "../Layout";
+import { Layout } from "../Layout";
+import { Spinner } from "@heroui/react";
 
 const PLATFORM_OPTIONS = ["linkedin", "x", "threads", "instagram", "newsletter", "blog", "medium"];
-
-// Shared style for transparent inline inputs that look like prose
-const inlineInputStyle: React.CSSProperties = {
-  font: "inherit",
-  background: "none",
-  border: "none",
-  borderBottom: "1px dashed var(--border)",
-  outline: "none",
-  padding: "0 2px",
-  color: "var(--foreground)",
-  minWidth: "4ch",
-};
-
-const inlineInputFocusStyle: React.CSSProperties = {
-  ...inlineInputStyle,
-  borderBottomColor: "var(--accent)",
-  borderBottomStyle: "solid",
-};
 
 function InlineInput({
   value,
   onChange,
   placeholder,
-  width,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
-  width?: string;
 }) {
-  const [focused, setFocused] = useState(false);
   return (
-    <input
+    <Input
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      style={{
-        ...(focused ? inlineInputFocusStyle : inlineInputStyle),
-        width: width ?? `${Math.max(value.length + 2, (placeholder?.length ?? 6) + 2)}ch`,
-      }}
+      className="inline-flex w-auto min-w-[4ch]"
     />
   );
 }
@@ -59,7 +35,6 @@ function InlineTextarea({
   placeholder?: string;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
-  const [focused, setFocused] = useState(false);
 
   // Auto-resize
   useEffect(() => {
@@ -70,27 +45,11 @@ function InlineTextarea({
   }, [value]);
 
   return (
-    <textarea
+    <TextArea
       ref={ref}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      rows={1}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      style={{
-        font: "inherit",
-        background: "none",
-        border: "none",
-        borderBottom: focused ? "1px solid var(--accent)" : "1px dashed var(--border)",
-        outline: "none",
-        padding: "2px",
-        color: "var(--foreground)",
-        resize: "none",
-        width: "100%",
-        overflow: "hidden",
-        lineHeight: "inherit",
-      }}
     />
   );
 }
@@ -103,25 +62,17 @@ function InlineTag({
   onRemove: () => void;
 }) {
   return (
-    <span style={{ whiteSpace: "nowrap" }}>
-      <span style={{ color: "var(--foreground)" }}>{value}</span>
-      <button
-        onClick={onRemove}
-        title={`Remove ${value}`}
-        style={{
-          font: "inherit",
-          fontSize: "0.75em",
-          background: "none",
-          border: "none",
-          padding: "0 0 0 3px",
-          cursor: "pointer",
-          color: "var(--muted)",
-          opacity: 0.6,
-          lineHeight: 1,
-        }}
+    <span className="whitespace-nowrap">
+      <span className="text-foreground">{value}</span>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-auto min-w-0 p-0 text-muted opacity-60 leading-none ml-0.5 text-xs"
+        onPress={onRemove}
+        aria-label={`Remove ${value}`}
       >
         ×
-      </button>
+      </Button>
     </span>
   );
 }
@@ -149,13 +100,13 @@ function InlineTagList({
     <>
       {values.map((v, i) => (
         <React.Fragment key={v}>
-          {i > 0 && <span style={{ color: "var(--muted)", margin: "0 2px" }}>, </span>}
+          {i > 0 && <span className="text-muted mx-0.5">, </span>}
           <InlineTag value={v} onRemove={() => onChange(values.filter((_, idx) => idx !== i))} />
         </React.Fragment>
       ))}
-      {values.length > 0 && <span style={{ color: "var(--muted)", margin: "0 2px" }}>, </span>}
+      {values.length > 0 && <span className="text-muted mx-0.5">, </span>}
       {adding ? (
-        <input
+        <Input
           autoFocus
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -166,32 +117,17 @@ function InlineTagList({
           }}
           onBlur={commitDraft}
           placeholder={placeholder ?? "add…"}
-          style={{
-            ...inlineInputStyle,
-            width: `${Math.max(draft.length + 2, 6)}ch`,
-          }}
+          className="inline-flex w-auto min-w-[4ch]"
         />
       ) : (
-        <button
-          onClick={() => setAdding(true)}
-          style={{
-            font: "inherit",
-            fontSize: "0.875em",
-            fontFamily: "var(--font-mono, monospace)",
-            background: "none",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-            color: "var(--muted)",
-            textDecorationLine: "underline",
-            textDecorationStyle: "dashed",
-            textDecorationColor: "color-mix(in oklch, var(--accent) 40%, transparent)",
-            textUnderlineOffset: "3px",
-            opacity: 0.7,
-          }}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="underline decoration-dashed underline-offset-3 decoration-accent/40 text-muted opacity-70 h-auto min-w-0 p-0 font-mono text-sm"
+          onPress={() => setAdding(true)}
         >
           + add
-        </button>
+        </Button>
       )}
     </>
   );
@@ -239,13 +175,6 @@ export function Profile() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  const proseStyle: React.CSSProperties = {
-    fontFamily: "var(--font-display, serif)",
-    fontSize: "1rem",
-    lineHeight: "1.75",
-    color: "var(--muted)",
-  };
-
   return (
     <Layout>
       {/* Ambient glow */}
@@ -259,30 +188,17 @@ export function Profile() {
 
       {/* Header */}
       <div className="mb-10">
-        <div
-          className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase"
-          style={{ color: "var(--accent)" }}
-        >
-          <span
-            className="inline-block mr-2 w-4 h-px opacity-60"
-            style={{ background: "var(--accent)", verticalAlign: "middle" }}
-          />
+        <div className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+          <span className="inline-block w-4 h-px bg-accent/60 mr-2 align-middle" />
           Settings
         </div>
-        <h1
-          className="text-3xl font-bold leading-tight"
-          style={{
-            fontFamily: "var(--font-display, serif)",
-            letterSpacing: "-0.025em",
-            color: "var(--foreground)",
-          }}
-        >
+        <h1 className="text-3xl font-bold leading-tight font-display tracking-tighter text-foreground">
           {form.name ? `Hello, I'm ${form.name}.` : "Tell me who you are."}
         </h1>
       </div>
 
       {error && (
-        <p className="mb-8 text-sm" style={{ color: "var(--danger)" }}>{error}</p>
+        <p className="mb-8 text-sm text-danger">{error}</p>
       )}
 
       {loading ? (
@@ -292,7 +208,7 @@ export function Profile() {
 
           {/* Identity */}
           <section>
-            <p style={proseStyle}>
+            <p className="font-display text-base leading-[1.75] text-muted">
               My name is{" "}
               <InlineInput value={form.name ?? ""} onChange={(v) => setField("name", v)} placeholder="your name" />.{" "}
               I work as a{" "}
@@ -303,11 +219,11 @@ export function Profile() {
             </p>
           </section>
 
-          <div className="h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />
+          <Separator className="my-4" />
 
           {/* Voice */}
           <section>
-            <p style={proseStyle}>
+            <p className="font-display text-base leading-[1.75] text-muted">
               My voice is{" "}
               <InlineTextarea
                 value={form.voice ?? ""}
@@ -317,11 +233,11 @@ export function Profile() {
             </p>
           </section>
 
-          <div className="h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />
+          <Separator className="my-4" />
 
           {/* Audience */}
           <section>
-            <p style={proseStyle}>
+            <p className="font-display text-base leading-[1.75] text-muted">
               My audience is{" "}
               <InlineTextarea
                 value={form.audienceDescription ?? ""}
@@ -331,11 +247,11 @@ export function Profile() {
             </p>
           </section>
 
-          <div className="h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />
+          <Separator className="my-4" />
 
           {/* Topics & goals */}
           <section>
-            <p style={proseStyle}>
+            <p className="font-display text-base leading-[1.75] text-muted">
               Everything I create is about{" "}
               <InlineTagList
                 values={form.topics ?? []}
@@ -344,7 +260,7 @@ export function Profile() {
               />
               .
             </p>
-            <p style={{ ...proseStyle, marginTop: "0.75rem" }}>
+            <p className="font-display text-base leading-[1.75] text-muted mt-3">
               My goals are{" "}
               <InlineTagList
                 values={form.contentGoals ?? []}
@@ -353,7 +269,7 @@ export function Profile() {
               />
               .
             </p>
-            <p style={{ ...proseStyle, marginTop: "0.75rem" }}>
+            <p className="font-display text-base leading-[1.75] text-muted mt-3">
               I avoid{" "}
               <InlineTagList
                 values={form.excludeTopics ?? []}
@@ -364,46 +280,31 @@ export function Profile() {
             </p>
           </section>
 
-          <div className="h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />
+          <Separator className="my-4" />
 
           {/* Platforms */}
           <section>
-            <p style={proseStyle}>
+            <p className="font-display text-base leading-[1.75] text-muted">
               I publish on{" "}
               <span className="inline-flex flex-wrap gap-x-3 gap-y-1 align-baseline">
                 {PLATFORM_OPTIONS.map((p) => {
                   const active = (form.platforms ?? []).includes(p);
                   return (
-                    <button
+                    <Button
                       key={p}
-                      type="button"
-                      title={active ? `Remove ${p}` : `Add ${p}`}
-                      onClick={() => {
+                      variant={active ? "primary" : "ghost"}
+                      size="sm"
+                      aria-label={active ? `Remove ${p}` : `Add ${p}`}
+                      onPress={() => {
                         const next = active
                           ? (form.platforms ?? []).filter((x) => x !== p)
                           : [...(form.platforms ?? []), p];
                         setField("platforms", next);
                       }}
-                      style={{
-                        font: "inherit",
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        cursor: "pointer",
-                        color: active ? "var(--foreground)" : "var(--muted)",
-                        fontWeight: active ? 600 : 400,
-                        textDecorationLine: active ? "underline" : "none",
-                        textDecorationStyle: "solid",
-                        textDecorationColor: "color-mix(in oklch, var(--accent) 55%, transparent)",
-                        textUnderlineOffset: "3px",
-                        opacity: active ? 1 : 0.35,
-                      }}
                     >
-                      {active ? null : (
-                        <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: "0.8em", marginRight: "1px", opacity: 0.7 }}>+</span>
-                      )}
+                      {!active && <span className="font-mono text-[0.8em] mr-0.5 opacity-70">+</span>}
                       {p}
-                    </button>
+                    </Button>
                   );
                 })}
               </span>
@@ -411,34 +312,23 @@ export function Profile() {
             </p>
           </section>
 
-          <div className="h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />
+          <Separator className="my-4" />
 
           {/* Save */}
-          <p
-            className="font-mono text-[0.8rem]"
-            style={{ color: "var(--muted)" }}
-          >
+          <p className="font-mono text-[0.8rem] text-muted">
             {saving ? (
-              <span style={{ opacity: 0.6 }}>saving…</span>
+              <span className="opacity-60">saving…</span>
             ) : saved ? (
-              <span style={{ color: "var(--success)" }}>saved.</span>
+              <span className="text-success">saved.</span>
             ) : (
-              <button
-                onClick={() => void handleSave()}
-                style={{
-                  font: "inherit",
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                  color: "var(--muted)",
-                  textDecorationLine: "underline",
-                  textDecorationColor: "color-mix(in oklch, var(--accent) 40%, transparent)",
-                  textUnderlineOffset: "3px",
-                }}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="underline underline-offset-3 decoration-accent/40 text-muted h-auto min-w-0 p-0"
+                onPress={() => void handleSave()}
               >
                 save changes
-              </button>
+              </Button>
             )}
           </p>
         </div>

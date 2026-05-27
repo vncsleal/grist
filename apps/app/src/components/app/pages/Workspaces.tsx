@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { listWorkspaces, selectWorkspace, type Workspace } from "../api";
-import { Layout, Card, Button, Spinner, EmptyState, ErrorBanner, Alert } from "../Layout";
-import { Chip } from "@heroui/react";
+import { Layout, EmptyState, ErrorBanner } from "../Layout";
+import { Card, Button, Spinner, Alert, Chip } from "@heroui/react";
 
 export function Workspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -57,14 +57,11 @@ export function Workspaces() {
     <Layout activeWorkspace={activeWs?.name}>
       <div className="flex items-start justify-between mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-2.5 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-(--accent)">
-            <span className="inline-block w-4 h-px bg-(--accent) opacity-60 shrink-0" />
+          <div className="flex items-center gap-2 mb-2.5 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+            <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
             Management
           </div>
-          <h1
-            className="text-3xl font-bold text-(--foreground)"
-            style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.025em" }}
-          >
+          <h1 className="text-3xl font-bold text-foreground font-display tracking-tight">
             Workspaces
           </h1>
         </div>
@@ -81,13 +78,13 @@ export function Workspaces() {
             <Alert.Description>
               You&apos;re in. Create your first workspace by opening Claude with the Quillby connector
               attached and asking:{" "}
-              <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-(--surface)">
+              <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-surface-secondary">
                 Create a workspace called My Brand
               </code>
               <br />
               <br />
               Then come back here to browse and manage your workspaces — or head to{" "}
-              <Link to="/connectors" className="text-(--accent) no-underline hover:underline">
+              <Link to="/connectors" className="text-accent no-underline hover:underline">
                 Connectors
               </Link>{" "}
               to generate your first API key.
@@ -113,28 +110,19 @@ export function Workspaces() {
               <Card key={ws.id} className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div
-                    className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm font-mono select-none"
-                    style={{
-                      background: isActive
-                        ? "color-mix(in oklch, var(--accent) 18%, transparent)"
-                        : "color-mix(in oklch, var(--foreground) 6%, transparent)",
-                      color: isActive ? "var(--accent)" : "var(--muted-foreground)",
-                      border: isActive
-                        ? "1px solid color-mix(in oklch, var(--accent) 30%, transparent)"
-                        : "1px solid var(--border)",
-                      boxShadow: isActive ? "0 0 12px color-mix(in oklch, var(--accent) 20%, transparent)" : "none",
-                    }}
+                    className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm font-mono select-none ${
+                      isActive
+                        ? "bg-accent/18 text-accent border border-accent/30"
+                        : "bg-foreground/6 text-muted border border-border"
+                    }`}
                   >
                     {ws.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p
-                      className="font-semibold truncate text-(--foreground)"
-                      style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.01em" }}
-                    >
+                    <p className="font-semibold truncate text-foreground font-display tracking-tight">
                       {ws.name}
                     </p>
-                    <p className="text-xs font-mono truncate mt-0.5 text-(--muted-foreground) opacity-50">{ws.id}</p>
+                    <p className="text-xs font-mono truncate mt-0.5 text-muted opacity-50">{ws.id}</p>
                   </div>
                 </div>
 

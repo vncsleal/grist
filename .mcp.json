@@ -4,6 +4,11 @@
       "type": "stdio",
       "command": "${workspaceFolder}/bin/quillby-mcp",
       "args": []
+    },
+    "heroui-react": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@heroui/react-mcp@latest"]
     }
   }
 }

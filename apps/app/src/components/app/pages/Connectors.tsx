@@ -7,8 +7,8 @@ import {
   revokeConnectorApiKey,
   type ConnectorApiKey,
 } from "../api";
-import { Layout, Card, Button, Spinner, EmptyState, ErrorBanner, Alert } from "../Layout";
-import { TextField, Label, Input } from "@heroui/react";
+import { Layout, EmptyState, ErrorBanner } from "../Layout";
+import { Card, Button, Spinner, Alert, TextField, Label, Input } from "@heroui/react";
 
 function formatDate(iso?: string | null): string {
   if (!iso) return "No expiry";
@@ -89,14 +89,11 @@ export function Connectors() {
     <Layout>
       <div className="flex items-start justify-between mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-2.5 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-(--accent)">
-            <span className="inline-block w-4 h-px bg-(--accent) opacity-60 shrink-0" />
+          <div className="flex items-center gap-2 mb-2.5 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+            <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
             Remote access
           </div>
-          <h1
-            className="text-3xl font-bold text-(--foreground)"
-            style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.025em" }}
-          >
+          <h1 className="text-3xl font-bold text-foreground font-display tracking-tight">
             Connectors
           </h1>
         </div>
@@ -111,17 +108,14 @@ export function Connectors() {
         {/* Create key card */}
         <Card className="flex flex-col gap-5">
           <div>
-            <div className="flex items-center gap-2 mb-2 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-(--accent)">
-              <span className="inline-block w-4 h-px bg-(--accent) opacity-60 shrink-0" />
+            <div className="flex items-center gap-2 mb-2 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+              <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
               Remote MCP access
             </div>
-            <h2
-              className="text-xl font-bold text-(--foreground) mb-2"
-              style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.02em" }}
-            >
+            <h2 className="text-xl font-bold text-foreground mb-2 font-display tracking-tight">
               Generate connector keys for Claude and other clients
             </h2>
-            <p className="mt-2 text-sm leading-7 text-(--muted-foreground)">
+            <p className="mt-2 text-sm leading-7 text-muted">
               Browser sessions are used for this dashboard. Remote MCP clients still authenticate with Bearer API keys against your Quillby HTTP endpoint.
             </p>
           </div>
@@ -162,7 +156,7 @@ export function Connectors() {
               </Alert.Content>
               <div className="mt-3 flex flex-col gap-3">
                 <code
-                  className="block overflow-x-auto rounded-xl px-4 py-3 text-xs bg-(--background) text-(--foreground) font-mono"
+                  className="block overflow-x-auto rounded-xl px-4 py-3 text-xs bg-background text-foreground font-mono"
                 >
                   {freshKey}
                 </code>
@@ -182,14 +176,11 @@ export function Connectors() {
 
         {/* Setup card */}
         <Card className="flex flex-col gap-4">
-          <div className="flex items-center gap-2 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-(--accent)">
-            <span className="inline-block w-4 h-px bg-(--accent) opacity-60 shrink-0" />
+          <div className="flex items-center gap-2 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+            <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
             Setup
           </div>
-          <h2
-            className="text-xl font-bold text-(--foreground)"
-            style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.02em" }}
-          >
+          <h2 className="text-xl font-bold text-foreground font-display tracking-tight">
             Connector details
           </h2>
 
@@ -200,8 +191,8 @@ export function Connectors() {
           </div>
 
           <Card variant="secondary" className="p-4">
-            <div className="text-sm font-semibold text-(--foreground) mb-3">Claude.ai custom connector</div>
-            <ol className="grid gap-2 text-sm text-(--muted-foreground)">
+            <div className="text-sm font-semibold text-foreground mb-3">Claude.ai custom connector</div>
+            <ol className="grid gap-2 text-sm text-muted">
               <li>1. Open Claude settings and add a custom connector.</li>
               <li>2. Use the connector URL shown here.</li>
               <li>3. Choose Bearer token authentication.</li>
@@ -210,8 +201,8 @@ export function Connectors() {
           </Card>
 
           <Card variant="secondary" className="p-4">
-            <div className="text-sm font-semibold text-(--foreground) mb-2">Other MCP clients</div>
-            <p className="text-sm leading-7 text-(--muted-foreground)">
+            <div className="text-sm font-semibold text-foreground mb-2">Other MCP clients</div>
+            <p className="text-sm leading-7 text-muted">
               Use the same URL and token in ChatGPT connectors or any MCP client that supports remote HTTP transport with Bearer authentication.
             </p>
           </Card>
@@ -220,8 +211,8 @@ export function Connectors() {
 
       {/* Keys list */}
       <div className="mt-10">
-        <div className="flex items-center gap-2 mb-5 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-(--accent)">
-          <span className="inline-block w-4 h-px bg-(--accent) opacity-60 shrink-0" />
+        <div className="flex items-center gap-2 mb-5 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+          <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
           Active keys
         </div>
 
@@ -237,8 +228,8 @@ export function Connectors() {
             {keys.map((key) => (
               <Card key={key.id} className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
-                  <div className="font-semibold text-(--foreground)">{key.name}</div>
-                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-(--muted-foreground)">
+                  <div className="font-semibold text-foreground">{key.name}</div>
+                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted">
                     <span className="font-mono">{[key.prefix, key.start].filter(Boolean).join("_") || key.id}</span>
                     {typeof key.rateLimitMax === "number" && (
                       <span>{key.rateLimitMax} req/min</span>
