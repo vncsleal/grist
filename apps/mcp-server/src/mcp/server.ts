@@ -115,6 +115,11 @@ import {
   AGENT_TOOL_NAMES,
   handleAgentTool,
 } from "./agents/index.js";
+import {
+  campaignToolDefinitions,
+  handleCampaignTool,
+  CAMPAIGN_TOOL_NAMES,
+} from "./tools/campaigns.js";
 import type { PlanStorage, SessionStore } from "@quillby/workspace";
 import {
   buildDirectAdaptersFromConfig,
@@ -328,6 +333,7 @@ const TOOLS: Tool[] = [
 
   ...profileToolDefinitions,
   ...feedToolDefinitions,
+  ...campaignToolDefinitions,
 
   // ── Daily Brief (two-pass Sampling pipeline) ──────────────────────────────
   {
@@ -966,6 +972,10 @@ async function handleToolCall(
 
     if (AGENT_TOOL_NAMES.has(name)) {
       return handleAgentTool(name, args, { server, storage, deploymentMode, providerRouter, sample: (prompt, maxTokens) => sample(server, prompt, maxTokens) });
+    }
+
+    if (CAMPAIGN_TOOL_NAMES.has(name)) {
+      return handleCampaignTool(name, args, { server, storage, deploymentMode, providerRouter, sample: (prompt, maxTokens) => sample(server, prompt, maxTokens) });
     }
 
     switch (name) {
