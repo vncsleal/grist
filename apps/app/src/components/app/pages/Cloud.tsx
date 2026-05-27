@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { signInEmail, signUpEmail, useSession } from "../auth";
 import { Button, Spinner, Alert, Form, Input, Label, Tabs, TextField } from "@heroui/react";
 
@@ -144,6 +144,11 @@ export function Cloud() {
               <Label>Password</Label>
               <Input placeholder="••••••••" />
             </TextField>
+            {mode === "sign-in" && (
+              <Link to="/forgot-password" className="text-xs text-accent hover:underline self-end -mt-2">
+                Forgot password?
+              </Link>
+            )}
 
             {error && (
               <Alert status="danger">

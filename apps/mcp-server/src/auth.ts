@@ -9,6 +9,7 @@ const corsOrigin = process.env.QUILLBY_CORS_ORIGIN;
 const trustedOrigins = corsOrigin && corsOrigin !== "*"
   ? corsOrigin.split(",").map((o) => o.trim()).filter(Boolean)
   : [];
+const authBaseUrl = process.env.BETTER_AUTH_URL ?? undefined;
 
 export const auth = createAuth({
   database: drizzleAdapter(db, {
@@ -27,6 +28,7 @@ export const auth = createAuth({
   },
   rateLimitMax: parseRateLimit(process.env.QUILLBY_RATE_LIMIT),
   trustedOrigins,
+  baseUrl: authBaseUrl,
 });
 
 if (process.env.QUILLBY_SMTP_HOST) {

@@ -73,10 +73,11 @@ export interface AuthConfig {
   emailAndPassword?: AuthEmailService;
   rateLimitMax?: number;
   trustedOrigins?: string[];
+  baseUrl?: string;
 }
 
 export function createAuth(config: AuthConfig): ReturnType<typeof betterAuth> {
-  const { database, emailAndPassword, rateLimitMax = 60, trustedOrigins = [] } = config;
+  const { database, emailAndPassword, rateLimitMax = 60, trustedOrigins = [], baseUrl } = config;
 
   const apiKeyPlugin = apiKey({
     enableSessionForAPIKeys: false,
@@ -89,6 +90,7 @@ export function createAuth(config: AuthConfig): ReturnType<typeof betterAuth> {
 
   const opts: Record<string, unknown> = {
     database,
+    baseURL: baseUrl,
     plugins: [apiKeyPlugin],
   };
 
@@ -98,6 +100,11 @@ export function createAuth(config: AuthConfig): ReturnType<typeof betterAuth> {
       sendEmailVerification: true,
       sendVerificationEmail: emailAndPassword.sendVerificationEmail,
       sendResetPassword: emailAndPassword.sendResetPassword,
+    };
+    opts.emailVerification = {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      redirectTo: baseUrl,
     };
   }
 

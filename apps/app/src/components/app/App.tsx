@@ -30,6 +30,9 @@ const Profile = lazyNamed(() => import("./pages/Profile"), "Profile");
 const Memory = lazyNamed(() => import("./pages/Memory"), "Memory");
 const Feeds = lazyNamed(() => import("./pages/Feeds"), "Feeds");
 const Connectors = lazyNamed(() => import("./pages/Connectors"), "Connectors");
+const ForgotPassword = lazyNamed(() => import("./pages/ForgotPassword"), "ForgotPassword");
+const ResetPassword = lazyNamed(() => import("./pages/ResetPassword"), "ResetPassword");
+const VerifyEmail = lazyNamed(() => import("./pages/VerifyEmail"), "VerifyEmail");
 
 class ErrorBoundary extends Component<
   { children: React.ReactNode },
@@ -199,6 +202,9 @@ export function App() {
               </RequireAuth>
             }
           />
+          {DEPLOY_MODE !== "self-hosted" && <Route path="/forgot-password" element={<LazyPage component={ForgotPassword} />} />}
+          {DEPLOY_MODE !== "self-hosted" && <Route path="/reset-password" element={<LazyPage component={ResetPassword} />} />}
+          {DEPLOY_MODE !== "self-hosted" && <Route path="/verify-email" element={<LazyPage component={VerifyEmail} />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </WorkspaceProvider>

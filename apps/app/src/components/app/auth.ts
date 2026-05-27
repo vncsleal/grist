@@ -120,6 +120,27 @@ export async function revokeOtherSessions(): Promise<void> {
   });
 }
 
+export async function forgetPassword(email: string): Promise<void> {
+  await authFetch("/api/auth/forget-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(newPassword: string, token: string): Promise<void> {
+  await authFetch("/api/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ newPassword, token }),
+  });
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  await authFetch("/api/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
 export function useSession() {
   const [data, setData] = useState<AppSession | null>(null);
   const [isPending, setIsPending] = useState(true);
