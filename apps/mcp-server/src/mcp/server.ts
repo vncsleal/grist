@@ -111,6 +111,10 @@ import {
   handleFeedTool,
   FEED_TOOL_NAMES,
 } from "./tools/feeds.js";
+import {
+  AGENT_TOOL_NAMES,
+  handleAgentTool,
+} from "./agents/index.js";
 import type { PlanStorage, SessionStore } from "@quillby/workspace";
 import {
   buildDirectAdaptersFromConfig,
@@ -264,6 +268,52 @@ const TOOLS: Tool[] = [
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
     inputSchema: { type: "object", properties: {} },
+  },
+
+  // ── Agent Delegation ───────────────────────────────────────────────────────
+  {
+    name: "agent_delegate",
+    description:
+      "Delegate a task to a sub-agent (@researcher, @writer, @strategist, @analyst). The agent processes the task using its scoped tool access and returns results. Requires: agent (role or label), task (description string).",
+    annotations: { idempotentHint: false },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        agent: { type: "string", description: "Agent role or label: @researcher, @writer, @strategist, @analyst" },
+        task: { type: "string", description: "Description of the task to delegate" },
+        workspaceId: { type: "string", description: "Optional workspace override" },
+        context: { type: "string", description: "Optional additional context for the agent prompt" },
+        maxTokens: { type: "number", description: "Optional max tokens for Sampling call" },
+      },
+      required: ["agent", "task"],
+    },
+  },
+  {
+    name: "agent_handoff",
+    description:
+      "Transfer context and state between sub-agents. Records the handoff chain for traceability. Useful for multi-step workflows (e.g., @researcher → @writer).",
+    annotations: { idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        from: { type: "string", description: "Source agent role" },
+        to: { type: "string", description: "Target agent role" },
+        reason: { type: "string", description: "Why the handoff is needed" },
+        workspaceId: { type: "string", description: "Optional workspace override" },
+        context: { type: "object", description: "Optional context snapshot to transfer" },
+      },
+      required: ["from", "to", "reason"],
+    },
+  },
+  {
+    name: "agent_status",
+    description:
+      "Check the current agent system state: active locks, available agents, stale lock cleanup.",
+    annotations: { readOnlyHint: true, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: { type: "object", properties: { workspaceId: { type: "string", description: "Optional workspace override" } } },
   },
 
   // ── Onboarding ────────────────────────────────────────────────────────────
@@ -912,6 +962,10 @@ async function handleToolCall(
 
     if (FEED_TOOL_NAMES.has(name)) {
       return handleFeedTool(name, args, { server, storage, deploymentMode, providerRouter, sample: (prompt, maxTokens) => sample(server, prompt, maxTokens) });
+    }
+
+    if (AGENT_TOOL_NAMES.has(name)) {
+      return handleAgentTool(name, args, { server, storage, deploymentMode, providerRouter, sample: (prompt, maxTokens) => sample(server, prompt, maxTokens) });
     }
 
     switch (name) {
