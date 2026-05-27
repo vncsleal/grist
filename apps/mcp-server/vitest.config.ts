@@ -7,7 +7,6 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     // Integration tests spawn child processes — needs more time
     testTimeout: 30_000,
-    dangerouslyIgnoreUnhandledErrors: true,
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],

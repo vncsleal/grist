@@ -1,4 +1,5 @@
 import type http from "node:http";
+import type { ZodSchema } from "zod";
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
   if (raw === undefined || raw === null) return fallback;
@@ -130,6 +131,41 @@ export function sendJsonError(
   extra?: Record<string, unknown>,
 ): void {
   if (res.headersSent) return;
-  const body = JSON.stringify({ error: message, ...extra });
+  const body = JSON.stringify({ ok: false, error: message, ...extra });
   res.writeHead(status, { "Content-Type": "application/json" }).end(body);
+}
+
+export function sendJsonSuccess(
+  res: http.ServerResponse,
+  data: Record<string, unknown>,
+): void {
+  if (res.headersSent) return;
+  res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ ok: true, ...data }));
+}
+
+export function sendJsonSuccessCreated(
+  res: http.ServerResponse,
+  data: Record<string, unknown>,
+): void {
+  if (res.headersSent) return;
+  res.writeHead(201, { "Content-Type": "application/json" }).end(JSON.stringify({ ok: true, ...data }));
+}
+
+export function validateBody<T>(schema: ZodSchema<T>, body: unknown): { ok: true; data: T } | { ok: false; error: string } {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const firstIssue = result.error.issues[0];
+    return { ok: false, error: firstIssue ? `${firstIssue.path.join(".")}: ${firstIssue.message}` : "Invalid request body" };
+  }
+  return { ok: true, data: result.data };
+}
+
+export function validateQuery<T>(schema: ZodSchema<T>, url: URL): { ok: true; data: T } | { ok: false; error: string } {
+  const params = Object.fromEntries(url.searchParams.entries());
+  const result = schema.safeParse(params);
+  if (!result.success) {
+    const firstIssue = result.error.issues[0];
+    return { ok: false, error: firstIssue ? `${firstIssue.path.join(".")}: ${firstIssue.message}` : "Invalid query parameters" };
+  }
+  return { ok: true, data: result.data };
 }
