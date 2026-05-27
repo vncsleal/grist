@@ -97,6 +97,9 @@ const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-XSS-Protection": "0",
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "credentialless",
+  "Cross-Origin-Resource-Policy": "same-origin",
 };
 
 export function applySecurityHeaders(res: http.ServerResponse, baseUrl?: string): void {
@@ -107,6 +110,17 @@ export function applySecurityHeaders(res: http.ServerResponse, baseUrl?: string)
   if (baseUrl?.startsWith("https://")) {
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
+
+  // Content-Security-Policy — restrictive by default, relaxed for SPA resources
+  const origin = baseUrl ? new URL(baseUrl).origin : "'self'";
+  // When behind a reverse proxy the SPA origin may differ from the API origin;
+  // the CSP below allows both 'self' and the configured base URL origin.
+  res.setHeader(
+    "Content-Security-Policy",
+    `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ${origin}; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'`,
+  );
+
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()");
 }
 
 export function sendJsonError(

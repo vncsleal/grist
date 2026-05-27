@@ -31,6 +31,22 @@ if (
   console.log(PKG.version);
   process.exit(0);
 }
+
+// ── Global error handlers ──────────────────────────────────────────────
+process.on("uncaughtException", (err) => {
+  slog("fatal", "uncaught_exception", { error: err.message, stack: err.stack ?? undefined });
+  // Give 5s for stderr/log drain, then force exit
+  setTimeout(() => process.exit(1), 5_000).unref();
+});
+
+process.on("unhandledRejection", (reason) => {
+  slog("error", "unhandled_rejection", {
+    error: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack ?? undefined : undefined,
+  });
+});
+// ───────────────────────────────────────────────────────────────────────
+
 import { UserContextSchema, CardInputSchema } from "../types.js";
 import {
   contextToPromptText,
@@ -40,7 +56,7 @@ import { fetchArticles, preScoreArticles } from "../agents/harvest.js";
 import { PLATFORM_GUIDES } from "../agents/compose.js";
 import { enrichArticle } from "../extractors/content.js";
 import { getHostedUserStorage, storage, type WorkspaceStorage, type JobStorage } from "../storage.js";
-import { db, apikey as apikeyTable } from "../db.js";
+import { client, db, apikey as apikeyTable } from "../db.js";
 import {
   applyStripeWebhookEvent,
   getBillingActionUrl,
@@ -50,7 +66,7 @@ import {
   isPlanEnforcementEnabled,
   verifyStripeWebhookSignature,
 } from "../billing.js";
-import { getDeploymentMode } from "../config.js";
+import { CONFIG, getDeploymentMode } from "../config.js";
 import {
   ProviderRouter,
   McpSamplingAdapter,
@@ -171,16 +187,69 @@ const SERVER_INFO = { name: "quillby-mcp", version: PKG.version } as const;
 
 const authApi = new AuthApi(auth);
 
+function requireEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    logFatal(`Missing required env: ${name}`);
+    process.exit(1);
+  }
+  return value;
+}
+
 function validateEnv(): void {
   const mode = getDeploymentMode();
+
   if (mode === "self-hosted" || mode === "cloud") {
-    if (!process.env.BETTER_AUTH_SECRET?.trim()) {
-      logFatal("BETTER_AUTH_SECRET is required in HTTP mode");
+    requireEnv("BETTER_AUTH_SECRET");
+
+    const dbUrl = process.env.QUILLBY_AUTH_DB_URL?.trim() ?? "file:./quillby-auth.db";
+    if (!dbUrl.startsWith("file:") && !dbUrl.startsWith("libsql://")) {
+      logFatal(`QUILLBY_AUTH_DB_URL must start with 'file:' or 'libsql://' — got: ${dbUrl}`);
       process.exit(1);
     }
+
+    if (process.env.BETTER_AUTH_URL) {
+      try {
+        new URL(process.env.BETTER_AUTH_URL);
+      } catch {
+        logFatal(`BETTER_AUTH_URL is not a valid URL: ${process.env.BETTER_AUTH_URL}`);
+        process.exit(1);
+      }
+    } else {
+      logWarn("BETTER_AUTH_URL not set — OAuth callback URL resolution may fail");
+    }
+
+    if (mode === "cloud") {
+      if (!process.env.QUILLBY_STRIPE_WEBHOOK_SECRET?.trim()) {
+        logWarn("QUILLBY_STRIPE_WEBHOOK_SECRET not set — Stripe webhooks will fail");
+      }
+      if (!process.env.QUILLBY_STRIPE_PRO_PRICE_ID?.trim()) {
+        logWarn("QUILLBY_STRIPE_PRO_PRICE_ID not set — Pro plan upgrades will fail");
+      }
+    }
+
+    if (mode === "self-hosted") {
+      if (!process.env.QUILLBY_PROVIDER_ENCRYPTION_KEY?.trim()) {
+        logWarn("QUILLBY_PROVIDER_ENCRYPTION_KEY not set — provider config via Settings UI will fail");
+      }
+    }
   }
-  if (mode === "self-hosted" && !process.env.QUILLBY_PROVIDER_ENCRYPTION_KEY?.trim()) {
-    logWarn("QUILLBY_PROVIDER_ENCRYPTION_KEY not set — provider config via Settings UI will fail");
+
+  if (process.env.QUILLBY_SMTP_HOST) {
+    if (!process.env.QUILLBY_SMTP_PORT) {
+      logWarn("QUILLBY_SMTP_HOST is set but QUILLBY_SMTP_PORT is missing — defaulting to 587");
+    }
+    if (process.env.QUILLBY_SMTP_USER && !process.env.QUILLBY_SMTP_PASS) {
+      logWarn("QUILLBY_SMTP_USER is set but QUILLBY_SMTP_PASS is missing — SMTP auth will fail");
+    }
+  }
+}
+
+async function validateDbConnection(): Promise<void> {
+  try {
+    await client.execute("SELECT 1");
+  } catch (err) {
+    logWarn("startup_db_unreachable", { error: err instanceof Error ? err.message : String(err) });
   }
 }
 
@@ -1094,30 +1163,6 @@ async function handleToolCall(
         };
       }
 
-      case "set_context": {
-        const activeStorage = await resolveStorage();
-        const context = UserContextSchema.parse((args as { context: unknown }).context);
-        await activeStorage.saveContext(context);
-        const setCtxWs = await activeStorage.getCurrentWorkspace();
-        return {
-          content: [{ type: "text" as const, text: `Context saved for workspace "${setCtxWs.name}". Role: ${context.role}. Topics: ${context.topics.join(", ")}. Platforms: ${context.platforms.join(", ")}.` }],
-          structuredContent: { saved: true, workspaceId: setCtxWs.id, role: context.role, topics: context.topics, platforms: context.platforms },
-        };
-      }
-
-      case "get_context": {
-        const activeStorage = await resolveStorage();
-        if (!await activeStorage.contextExists()) {
-          return { content: [{ type: "text" as const, text: "No context saved for this workspace yet. Start by setting up Quillby for it." }], structuredContent: { error: "no_context" } };
-        }
-        const ctxData = (await activeStorage.loadContext())!;
-        const getCtxWs = await activeStorage.getCurrentWorkspace();
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify({ workspace: getCtxWs, context: ctxData }, null, 2) }],
-          structuredContent: { workspace: getCtxWs, context: ctxData },
-        };
-      }
-
       case "open_briefing": {
         const activeStorage = await resolveStorage();
         const [workspace, hasBriefing] = await Promise.all([
@@ -1626,8 +1671,6 @@ ${guide}
             isError: true,
           };
         }
-        activeJobCounts[modalKey] = currentCount + 1;
-
         // Plan credit enforcement
         if (isPlanEnforcementEnabled()) {
           const plan = await genStorage.getPlan();
@@ -1675,6 +1718,7 @@ ${guide}
         }
 
         // Enqueue the job — the background worker will process it
+        activeJobCounts[modalKey] = (activeJobCounts[modalKey] ?? 0) + 1;
         void runGenerationJob(genStorage, jobId, modality, prompt, memory, genWs, {
           aspectRatio,
           cloneVoice,
@@ -2338,6 +2382,8 @@ validateEnv();
 const HTTP_BODY_LIMIT = 1 * 1024 * 1024; // 1 MiB
 
 if (TRANSPORT_MODE === "http") {
+  void validateDbConnection();
+
   // Stateful HTTP mode: each client session gets its own transport instance.
   // A single shared Server handles all sessions via per-request transports.
   const PORT = parseInt(process.env.PORT ?? "3000", 10);
@@ -2375,7 +2421,7 @@ if (TRANSPORT_MODE === "http") {
   }>();
 
   // Periodic MCP session cleanup — remove sessions older than TTL
-  setInterval(() => {
+  const sessionCleanupTimer = setInterval(() => {
     const now = Date.now();
     for (const [sid, session] of sessions) {
       if (now - session.createdAt > MCP_SESSION_TTL_MS) {
@@ -2384,7 +2430,8 @@ if (TRANSPORT_MODE === "http") {
         sessions.delete(sid);
       }
     }
-  }, Math.min(MCP_SESSION_TTL_MS, 60_000)).unref();
+  }, Math.min(MCP_SESSION_TTL_MS, 60_000));
+  sessionCleanupTimer.unref();
 
   const toHeaders = (headers: http.IncomingHttpHeaders) => {
     const result = new Headers();
@@ -2522,7 +2569,7 @@ if (TRANSPORT_MODE === "http") {
     const requestOrigin = req.headers.origin;
     const corsOrigin = allowedOrigin === "*" && requestOrigin ? requestOrigin : allowedOrigin;
     res.setHeader("Access-Control-Allow-Origin", corsOrigin);
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id, Last-Event-ID");
     res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
     res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -2850,14 +2897,36 @@ if (TRANSPORT_MODE === "http") {
             finish(302);
             return;
           }
-          if (!fs.existsSync(job.outputRef)) {
-            res.writeHead(404).end(JSON.stringify({ error: "Asset file is missing" }));
-            finish(404);
+          // Path traversal protection — ensure outputRef resolves within data directory
+          const resolvedPath = path.resolve(job.outputRef);
+          const dataDir = path.resolve(CONFIG.DATA_DIR);
+          if (!resolvedPath.startsWith(dataDir)) {
+            res.writeHead(403).end(JSON.stringify({ error: "Forbidden" }));
+            finish(403);
+            return;
+          }
+          let realPath: string;
+          try {
+            realPath = fs.realpathSync(resolvedPath);
+          } catch (err: unknown) {
+            const isForbidden = err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "EACCES";
+            if (isForbidden) {
+              res.writeHead(403).end(JSON.stringify({ error: "Forbidden" }));
+              finish(403);
+            } else {
+              res.writeHead(404).end(JSON.stringify({ error: "Asset file is missing" }));
+              finish(404);
+            }
+            return;
+          }
+          if (!realPath.startsWith(dataDir)) {
+            res.writeHead(403).end(JSON.stringify({ error: "Forbidden" }));
+            finish(403);
             return;
           }
           const mimeType = guessMimeType(job.modality, job.outputRef, job.meta);
           res.writeHead(200, { "Content-Type": mimeType });
-          fs.createReadStream(job.outputRef).pipe(res);
+          fs.createReadStream(realPath).pipe(res);
           finish(200);
           return;
         }
@@ -3303,8 +3372,15 @@ if (TRANSPORT_MODE === "http") {
   // ------------------------------------------------------------------
   // Graceful shutdown
   // ------------------------------------------------------------------
-  const shutdown = (signal: string) => {
+  const shutdown = async (signal: string) => {
     slog("info", "shutdown", { signal });
+    try {
+      sessionCleanupTimer?.unref();
+      await client.close();
+      slog("info", "db_closed");
+    } catch (err) {
+      slog("warn", "db_close_error", { error: String(err) });
+    }
     httpServer.close(() => {
       slog("info", "shutdown_complete");
       process.exit(0);
@@ -3315,8 +3391,8 @@ if (TRANSPORT_MODE === "http") {
       process.exit(1);
     }, 10_000).unref();
   };
-  process.once("SIGTERM", () => shutdown("SIGTERM"));
-  process.once("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  process.on("SIGINT", () => void shutdown("SIGINT"));
 
   httpServer.listen(PORT, HOST, () => {
     slog("info", "listening", { host: HOST, port: PORT, url: `http://${HOST}:${PORT}/mcp` });
@@ -3329,6 +3405,7 @@ if (TRANSPORT_MODE === "http") {
   // when no key is provided (standalone / self-hosted use).
   // storage-fs dist typings can lag workspace interface fields; runtime object implements the required contract.
   let stdioStorage = storage as unknown as WorkspaceStorage & JobStorage & PlanStorage & SessionStore;
+  if (isCloudMode()) await validateDbConnection();
   const rawApiKey = process.env.QUILLBY_API_KEY?.trim();
   if (rawApiKey && isCloudMode()) {
     const verification = await authApi.verifyApiKey(rawApiKey);
@@ -3358,6 +3435,22 @@ if (TRANSPORT_MODE === "http") {
   } catch (e) {
     logWarn("McpSamplingAdapter init failed (generation falls through to Tier 2)", { error: String(e) });
   }
+
+  const stdioShutdown = async (signal: string) => {
+    slog("info", "stdio_shutdown", { signal });
+    try {
+      await server.close();
+    } catch (err) {
+      slog("warn", "stdio_server_close_error", { error: String(err) });
+    }
+    try {
+      await client.close();
+    } catch (err) {
+      slog("warn", "stdio_db_close_error", { error: String(err) });
+    }
+  };
+  process.on("SIGTERM", () => void stdioShutdown("SIGTERM"));
+  process.on("SIGINT", () => void stdioShutdown("SIGINT"));
 }
 
 // Recover orphaned jobs on startup.
