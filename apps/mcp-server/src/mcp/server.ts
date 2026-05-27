@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as http from "node:http";
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { toNodeHandler } from "better-auth/node";
 import { slog, logInfo, logWarn, logError, logFatal } from "../logger.js";
 import { auth } from "../auth.js";
@@ -17,6 +18,19 @@ import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PKG = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../package.json"), "utf-8")) as { version: string };
+
+if (
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]) &&
+  (process.argv.includes("--version") || process.argv.includes("-v"))
+) {
+  console.log(PKG.version);
+  process.exit(0);
+}
 import { UserContextSchema, CardInputSchema } from "../types.js";
 import {
   contextToPromptText,
@@ -144,7 +158,7 @@ for (const warning of verifyProviderEnv()) {
     logWarn("env", { warning });
 }
 
-const SERVER_INFO = { name: "quillby-mcp", version: "2.0.0" } as const;
+const SERVER_INFO = { name: "quillby-mcp", version: PKG.version } as const;
 
 const authApi = new AuthApi(auth);
 
@@ -242,6 +256,16 @@ async function sample(server: McpServer, prompt: string, maxTokens = 4096): Prom
 }
 
 const TOOLS: Tool[] = [
+  // ── Server Info ────────────────────────────────────────────────────────────
+  {
+    name: "quillby_server_info",
+    description:
+      "Returns Quillby MCP server metadata: name, version, deployment mode, and uptime. Useful for client auto-detection and debugging.",
+    annotations: { readOnlyHint: true, idempotentHint: true },
+    outputSchema: { type: "object" as const },
+    inputSchema: { type: "object", properties: {} },
+  },
+
   // ── Onboarding ────────────────────────────────────────────────────────────
   {
     name: "onboard",
@@ -891,6 +915,20 @@ async function handleToolCall(
     }
 
     switch (name) {
+      case "quillby_server_info": {
+        return {
+          content: [{ type: "text" as const, text: `Quillby MCP Server ${PKG.version} — mode: ${deploymentMode}, uptime: ${Math.floor(process.uptime())}s` }],
+          structuredContent: {
+            name: "quillby-mcp",
+            version: PKG.version,
+            deploymentMode,
+            uptime: Math.floor(process.uptime()),
+            node: process.version,
+            platform: process.platform,
+          },
+        };
+      }
+
       case "onboard": {
         const caps = server.server.getClientCapabilities();
         if (!caps?.elicitation?.form) {
@@ -2468,7 +2506,7 @@ if (TRANSPORT_MODE === "http") {
       // Health check — unauthenticated, fast
       // ------------------------------------------------------------------
       if (url.pathname === "/health" && req.method === "GET") {
-        const body = JSON.stringify({ status: "ok", version: "2.0.0", uptime: Math.floor(process.uptime()), sessions: sessions.size });
+        const body = JSON.stringify({ status: "ok", version: PKG.version, uptime: Math.floor(process.uptime()), sessions: sessions.size });
         res.writeHead(200, { "Content-Type": "application/json" }).end(body);
         finish(200);
         return;
@@ -2482,7 +2520,7 @@ if (TRANSPORT_MODE === "http") {
           name: "Quillby",
           description: "Guided Research & Insight Synthesis Tool — RSS content intelligence MCP server. Fetches, scores, and structures articles into content cards for social media posts.",
           url: `${BASE_URL}/mcp`,
-          version: "2.0.0",
+          version: PKG.version,
           capabilities: {
             streaming: true,
             pushNotifications: false,

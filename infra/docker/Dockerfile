@@ -8,6 +8,8 @@ FROM base AS deps
 COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps/mcp-server/package.json ./apps/mcp-server/package.json
 COPY apps/app/package.json ./apps/app/package.json
+COPY packages/auth/package.json ./packages/auth/package.json
+COPY packages/auth/tsconfig.json ./packages/auth/tsconfig.json
 COPY packages/billing/package.json ./packages/billing/package.json
 COPY packages/billing/tsconfig.json ./packages/billing/tsconfig.json
 COPY packages/config/package.json ./packages/config/package.json
