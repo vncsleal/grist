@@ -19,6 +19,8 @@ export const CAMPAIGN_TOOL_NAMES = new Set<string>([
   "campaign_start",
   "campaign_status",
   "campaign_pause",
+  "campaign_stage_complete",
+  "campaign_stage_fail",
   "campaign_stage_retry",
   "campaign_blueprint_create",
   "campaign_blueprint_list",
@@ -47,6 +49,20 @@ const CampaignPauseArgsSchema = z.object({
   workspaceId: z.string().optional(),
 });
 
+const CampaignStageCompleteArgsSchema = z.object({
+  campaignId: z.string().min(1),
+  stageName: z.string().min(1),
+  workspaceId: z.string().optional(),
+  result: z.record(z.string(), z.unknown()).optional(),
+});
+
+const CampaignStageFailArgsSchema = z.object({
+  campaignId: z.string().min(1),
+  stageName: z.string().min(1),
+  error: z.string().optional(),
+  workspaceId: z.string().optional(),
+});
+
 const CampaignStageRetryArgsSchema = z.object({
   campaignId: z.string().min(1),
   stageName: z.string().min(1),
@@ -61,10 +77,23 @@ const CampaignBlueprintCreateArgsSchema = z.object({
   workspaceId: z.string().optional(),
 });
 
+const CampaignBlueprintListArgsSchema = z.object({
+  workspaceId: z.string().optional(),
+});
+
 const CampaignListArgsSchema = z.object({
   status: CampaignStatusSchema.optional(),
   workspaceId: z.string().optional(),
 });
+
+async function resolveStore(ctx: ToolContext, workspaceId?: string): Promise<CampaignStore> {
+  const storage = workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
+  const store = storage as unknown as CampaignStore;
+  if (typeof store.createCampaign !== "function") {
+    throw new Error("Campaign operations not supported by this storage backend");
+  }
+  return store;
+}
 
 export const campaignToolDefinitions: Tool[] = [
   {
@@ -85,7 +114,7 @@ export const campaignToolDefinitions: Tool[] = [
   },
   {
     name: "campaign_start",
-    description: "Start executing a campaign. Kicks off all stages whose dependencies are met.",
+    description: "Start a campaign. Sets all stages to pending and activates the campaign. Stages must be executed manually — check campaign_status for ready stages, run the appropriate tool for each, then call campaign_stage_complete when done.",
     annotations: { idempotentHint: false },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -99,7 +128,7 @@ export const campaignToolDefinitions: Tool[] = [
   },
   {
     name: "campaign_status",
-    description: "Get the full state of a campaign: status, stage progress, execution logs.",
+    description: "Get the full state of a campaign: status, stage progress, execution logs, and which stages are ready to run.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -126,8 +155,40 @@ export const campaignToolDefinitions: Tool[] = [
     },
   },
   {
+    name: "campaign_stage_complete",
+    description: "Mark a campaign stage as completed. Use after successfully running the stage's tool. Campaign status auto-updates when all stages are done.",
+    annotations: { idempotentHint: false },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        campaignId: { type: "string", description: "Campaign ID" },
+        stageName: { type: "string", description: "Stage name to mark complete" },
+        workspaceId: { type: "string", description: "Optional workspace override" },
+        result: { type: "object", description: "Optional result data from the tool call" },
+      },
+      required: ["campaignId", "stageName"],
+    },
+  },
+  {
+    name: "campaign_stage_fail",
+    description: "Mark a campaign stage as failed. Provide an error description. Use campaign_stage_retry to retry if retries remain.",
+    annotations: { idempotentHint: false },
+    outputSchema: { type: "object" as const },
+    inputSchema: {
+      type: "object",
+      properties: {
+        campaignId: { type: "string", description: "Campaign ID" },
+        stageName: { type: "string", description: "Stage name to mark failed" },
+        error: { type: "string", description: "Description of the error" },
+        workspaceId: { type: "string", description: "Optional workspace override" },
+      },
+      required: ["campaignId", "stageName"],
+    },
+  },
+  {
     name: "campaign_stage_retry",
-    description: "Retry a failed stage in a campaign. Only works if retries remain.",
+    description: "Reset a failed stage to pending for retry. Increments the retry attempt counter.",
     annotations: { idempotentHint: false },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -159,7 +220,7 @@ export const campaignToolDefinitions: Tool[] = [
   },
   {
     name: "campaign_blueprint_list",
-    description: "List all saved campaign blueprints.",
+    description: "List all saved campaign blueprints for the current (or specified) workspace.",
     annotations: { readOnlyHint: true, idempotentHint: true },
     outputSchema: { type: "object" as const },
     inputSchema: {
@@ -184,8 +245,35 @@ export const campaignToolDefinitions: Tool[] = [
   },
 ];
 
-function storeFromCtx(ctx: ToolContext): CampaignStore {
-  return ctx.storage as unknown as CampaignStore;
+export async function handleCampaignTool(
+  name: string,
+  args: Record<string, unknown>,
+  ctx: ToolContext,
+): Promise<ToolResult> {
+  switch (name) {
+    case "campaign_create":
+      return handleCreate(args, ctx);
+    case "campaign_start":
+      return handleStart(args, ctx);
+    case "campaign_status":
+      return handleStatus(args, ctx);
+    case "campaign_pause":
+      return handlePause(args, ctx);
+    case "campaign_stage_complete":
+      return handleStageComplete(args, ctx);
+    case "campaign_stage_fail":
+      return handleStageFail(args, ctx);
+    case "campaign_stage_retry":
+      return handleStageRetry(args, ctx);
+    case "campaign_blueprint_create":
+      return handleBlueprintCreate(args, ctx);
+    case "campaign_blueprint_list":
+      return handleBlueprintList(args, ctx);
+    case "campaign_list":
+      return handleList(args, ctx);
+    default:
+      return { content: [{ type: "text", text: `Unknown campaign tool: ${name}` }], isError: true };
+  }
 }
 
 async function handleCreate(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
@@ -194,10 +282,10 @@ async function handleCreate(args: Record<string, unknown>, ctx: ToolContext): Pr
     return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
   }
 
-  const { name, blueprintId, blueprint, workspaceId: inputWs } = parsed.data;
-  const workspaceId = inputWs || (await ctx.storage.getCurrentWorkspaceId());
-  const store = storeFromCtx(ctx);
+  const { name, blueprintId, blueprint, workspaceId: inputWorkspaceId } = parsed.data;
+  const store = await resolveStore(ctx, inputWorkspaceId);
   const now = new Date().toISOString();
+  const wsId = inputWorkspaceId || (await ctx.storage.getCurrentWorkspaceId());
 
   let stages = blueprint;
   if (blueprintId) {
@@ -212,9 +300,16 @@ async function handleCreate(args: Record<string, unknown>, ctx: ToolContext): Pr
     return { content: [{ type: "text", text: "Provide either blueprintId or blueprint (inline stage definitions)." }], isError: true };
   }
 
+  const id = `camp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const existing = await store.loadCampaign(id);
+  if (existing) {
+    return { content: [{ type: "text", text: "ID collision — try again." }], isError: true };
+  }
+
   const campaign: CampaignType = {
-    id: `camp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    workspaceId,
+    id,
+    workspaceId: wsId,
     blueprintId: blueprintId ?? "",
     name,
     status: "planning",
@@ -228,7 +323,7 @@ async function handleCreate(args: Record<string, unknown>, ctx: ToolContext): Pr
   await store.createCampaign(campaign);
 
   return {
-    content: [{ type: "text", text: `Created campaign "${name}" (${campaign.id}) with ${stages.length} stages.` }],
+    content: [{ type: "text", text: `Created campaign "${name}" (${id}) with ${stages.length} stages.` }],
     structuredContent: { campaign },
   };
 }
@@ -239,8 +334,8 @@ async function handleStart(args: Record<string, unknown>, ctx: ToolContext): Pro
     return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
   }
 
-  const { campaignId } = parsed.data;
-  const store = storeFromCtx(ctx);
+  const { campaignId, workspaceId } = parsed.data;
+  const store = await resolveStore(ctx, workspaceId);
 
   const campaign = await store.loadCampaign(campaignId);
   if (!campaign) {
@@ -251,14 +346,24 @@ async function handleStart(args: Record<string, unknown>, ctx: ToolContext): Pro
     return { content: [{ type: "text", text: `Cannot start campaign in "${campaign.status}" state.` }], isError: true };
   }
 
-  const updated = transitionStage(campaign, campaign.stages[0]?.name ?? "", "pending" as const);
-  updated.status = "active";
-  updated.updatedAt = new Date().toISOString();
-  updated.startedAt = updated.startedAt ?? new Date().toISOString();
-  await store.updateCampaign(campaignId, { status: "active", startedAt: updated.startedAt, updatedAt: updated.updatedAt });
+  const now = new Date().toISOString();
+  const updated: CampaignType = {
+    ...campaign,
+    executions: initialExecutionLogs(campaign.stages),
+    status: "active",
+    startedAt: campaign.startedAt ?? now,
+    updatedAt: now,
+  };
+
+  await store.updateCampaign(campaignId, {
+    status: updated.status,
+    executions: updated.executions,
+    startedAt: updated.startedAt,
+    updatedAt: updated.updatedAt,
+  });
 
   return {
-    content: [{ type: "text", text: `Campaign "${campaign.name}" started. ${campaign.stages.length} stages.` }],
+    content: [{ type: "text", text: `Campaign "${campaign.name}" started. Stages: ${campaign.stages.length}. Use campaign_status to see ready stages, then run each stage's tool and mark complete with campaign_stage_complete.` }],
     structuredContent: { campaignId, status: "active", stageCount: campaign.stages.length },
   };
 }
@@ -269,8 +374,8 @@ async function handleStatus(args: Record<string, unknown>, ctx: ToolContext): Pr
     return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
   }
 
-  const { campaignId } = parsed.data;
-  const store = storeFromCtx(ctx);
+  const { campaignId, workspaceId } = parsed.data;
+  const store = await resolveStore(ctx, workspaceId);
 
   const campaign = await store.loadCampaign(campaignId);
   if (!campaign) {
@@ -305,8 +410,8 @@ async function handlePause(args: Record<string, unknown>, ctx: ToolContext): Pro
     return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
   }
 
-  const { campaignId } = parsed.data;
-  const store = storeFromCtx(ctx);
+  const { campaignId, workspaceId } = parsed.data;
+  const store = await resolveStore(ctx, workspaceId);
 
   const campaign = await store.loadCampaign(campaignId);
   if (!campaign) {
@@ -325,14 +430,86 @@ async function handlePause(args: Record<string, unknown>, ctx: ToolContext): Pro
   };
 }
 
+async function handleStageComplete(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
+  const parsed = CampaignStageCompleteArgsSchema.safeParse(args);
+  if (!parsed.success) {
+    return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
+  }
+
+  const { campaignId, stageName, workspaceId, result } = parsed.data;
+  const store = await resolveStore(ctx, workspaceId);
+
+  const campaign = await store.loadCampaign(campaignId);
+  if (!campaign) {
+    return { content: [{ type: "text", text: `Campaign "${campaignId}" not found.` }], isError: true };
+  }
+
+  const stageExists = campaign.stages.some((s) => s.name === stageName);
+  if (!stageExists) {
+    return { content: [{ type: "text", text: `Stage "${stageName}" not found in campaign.` }], isError: true };
+  }
+
+  const updated = transitionStage(campaign, stageName, "completed", { result });
+  await store.updateCampaign(campaignId, {
+    status: updated.status,
+    executions: updated.executions,
+    completedAt: updated.completedAt,
+    updatedAt: updated.updatedAt,
+  });
+
+  const statusText = updated.status === "completed"
+    ? "All stages complete — campaign finished!"
+    : `Stage "${stageName}" completed. ${getNextStagesCount(updated)} stages ready.`;
+
+  return {
+    content: [{ type: "text", text: statusText }],
+    structuredContent: { campaignId, stageName, status: "completed", campaign: updated },
+  };
+}
+
+async function handleStageFail(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
+  const parsed = CampaignStageFailArgsSchema.safeParse(args);
+  if (!parsed.success) {
+    return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
+  }
+
+  const { campaignId, stageName, error, workspaceId } = parsed.data;
+  const store = await resolveStore(ctx, workspaceId);
+
+  const campaign = await store.loadCampaign(campaignId);
+  if (!campaign) {
+    return { content: [{ type: "text", text: `Campaign "${campaignId}" not found.` }], isError: true };
+  }
+
+  const stageExists = campaign.stages.some((s) => s.name === stageName);
+  if (!stageExists) {
+    return { content: [{ type: "text", text: `Stage "${stageName}" not found in campaign.` }], isError: true };
+  }
+
+  const updated = transitionStage(campaign, stageName, "failed", { error: error ?? "Unknown error" });
+  await store.updateCampaign(campaignId, {
+    status: updated.status,
+    executions: updated.executions,
+    error: updated.error,
+    updatedAt: updated.updatedAt,
+  });
+
+  const retryAvailable = canRetryStage(campaign, stageName);
+
+  return {
+    content: [{ type: "text", text: `Stage "${stageName}" failed.${retryAvailable ? " Use campaign_stage_retry to retry." : ""}${updated.status === "failed" ? " Campaign failed." : ""}` }],
+    structuredContent: { campaignId, stageName, status: "failed", error: error ?? "Unknown error", retryAvailable, campaign: updated },
+  };
+}
+
 async function handleStageRetry(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
   const parsed = CampaignStageRetryArgsSchema.safeParse(args);
   if (!parsed.success) {
     return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
   }
 
-  const { campaignId, stageName } = parsed.data;
-  const store = storeFromCtx(ctx);
+  const { campaignId, stageName, workspaceId } = parsed.data;
+  const store = await resolveStore(ctx, workspaceId);
 
   const campaign = await store.loadCampaign(campaignId);
   if (!campaign) {
@@ -343,20 +520,26 @@ async function handleStageRetry(args: Record<string, unknown>, ctx: ToolContext)
     return { content: [{ type: "text", text: `Stage "${stageName}" cannot be retried (not failed or retries exhausted).` }], isError: true };
   }
 
-  const updated = transitionStage(campaign, stageName, "pending", { error: undefined });
-  const execution = updated.executions.find((e) => e.stageName === stageName);
-  if (execution) execution.retryAttempt = (execution.retryAttempt ?? 0) + 1;
+  const stage = campaign.stages.find((s) => s.name === stageName)!;
+  const existingExecution = campaign.executions.find((e) => e.stageName === stageName)!;
+  const nextRetryAttempt = (existingExecution.retryAttempt ?? 0) + 1;
 
-  updated.status = "active";
+  const updated = transitionStage(campaign, stageName, "pending", { error: undefined });
+  const finalExecutions = updated.executions.map((e) =>
+    e.stageName === stageName ? { ...e, retryAttempt: nextRetryAttempt } : e,
+  );
+  const finalStatus = campaign.status === "failed" ? "active" : updated.status;
+
   await store.updateCampaign(campaignId, {
-    status: "active",
-    executions: updated.executions,
+    status: finalStatus,
+    executions: finalExecutions,
+    error: undefined,
     updatedAt: new Date().toISOString(),
   });
 
   return {
-    content: [{ type: "text", text: `Stage "${stageName}" queued for retry (attempt ${execution?.retryAttempt ?? 1}).` }],
-    structuredContent: { campaignId, stageName, retryAttempt: execution?.retryAttempt ?? 1 },
+    content: [{ type: "text", text: `Stage "${stageName}" reset for retry (attempt ${nextRetryAttempt}/${stage.retryCount + 1}).` }],
+    structuredContent: { campaignId, stageName, retryAttempt: nextRetryAttempt, maxRetries: stage.retryCount },
   };
 }
 
@@ -366,8 +549,8 @@ async function handleBlueprintCreate(args: Record<string, unknown>, ctx: ToolCon
     return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
   }
 
-  const { name, description, stages, tags } = parsed.data;
-  const store = storeFromCtx(ctx);
+  const { name, description, stages, tags, workspaceId } = parsed.data;
+  const store = await resolveStore(ctx, workspaceId);
   const now = new Date().toISOString();
 
   const blueprint: BlueprintType = {
@@ -390,7 +573,13 @@ async function handleBlueprintCreate(args: Record<string, unknown>, ctx: ToolCon
 }
 
 async function handleBlueprintList(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
-  const store = storeFromCtx(ctx);
+  const parsed = CampaignBlueprintListArgsSchema.safeParse(args);
+  if (!parsed.success) {
+    return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
+  }
+
+  const { workspaceId } = parsed.data;
+  const store = await resolveStore(ctx, workspaceId);
 
   const blueprints = await store.listBlueprints();
   const summary = blueprints.map((b) => `  ${b.id}: ${b.name} (${b.stages.length} stages)`).join("\n");
@@ -407,8 +596,8 @@ async function handleList(args: Record<string, unknown>, ctx: ToolContext): Prom
     return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
   }
 
-  const { status } = parsed.data;
-  const store = storeFromCtx(ctx);
+  const { status, workspaceId } = parsed.data;
+  const store = await resolveStore(ctx, workspaceId);
 
   const campaigns = await store.listCampaigns(status);
   const summary = campaigns.map((c) => `  ${c.id}: ${c.name} [${c.status}] (${c.stages.length} stages)`).join("\n");
@@ -419,29 +608,17 @@ async function handleList(args: Record<string, unknown>, ctx: ToolContext): Prom
   };
 }
 
-export async function handleCampaignTool(
-  name: string,
-  args: Record<string, unknown>,
-  ctx: ToolContext,
-): Promise<ToolResult> {
-  switch (name) {
-    case "campaign_create":
-      return handleCreate(args, ctx);
-    case "campaign_start":
-      return handleStart(args, ctx);
-    case "campaign_status":
-      return handleStatus(args, ctx);
-    case "campaign_pause":
-      return handlePause(args, ctx);
-    case "campaign_stage_retry":
-      return handleStageRetry(args, ctx);
-    case "campaign_blueprint_create":
-      return handleBlueprintCreate(args, ctx);
-    case "campaign_blueprint_list":
-      return handleBlueprintList(args, ctx);
-    case "campaign_list":
-      return handleList(args, ctx);
-    default:
-      return { content: [{ type: "text", text: `Unknown campaign tool: ${name}` }], isError: true };
-  }
+function getNextStagesCount(campaign: CampaignType): number {
+  const { getNextStages } = { getNextStages: (c: CampaignType) =>
+    c.stages.filter((stage) => {
+      const execution = c.executions.find((e) => e.stageName === stage.name);
+      if (execution && (execution.status === "running" || execution.status === "completed" || execution.status === "skipped")) return false;
+      if (execution && execution.status === "failed") return false;
+      return stage.dependsOn.every((dep) => {
+        const depExec = c.executions.find((e) => e.stageName === dep);
+        return depExec && (depExec.status === "completed" || depExec.status === "skipped");
+      });
+    })
+  };
+  return getNextStages(campaign).length;
 }

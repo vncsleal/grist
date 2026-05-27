@@ -40,10 +40,10 @@ export const ExecutionLogSchema = z.object({
 export type ExecutionLog = z.infer<typeof ExecutionLogSchema>;
 
 export const CampaignSchema = z.object({
-  id: z.string(),
+  id: z.string().min(1),
   workspaceId: z.string(),
-  blueprintId: z.string(),
-  name: z.string(),
+  blueprintId: z.string().optional().default(""),
+  name: z.string().min(1),
   status: CampaignStatusSchema,
   stages: z.array(StageConfigSchema),
   executions: z.array(ExecutionLogSchema).default([]),
