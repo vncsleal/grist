@@ -1,9 +1,20 @@
-import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import type { ProviderAdapter, GenerationRequest, GenerationResult } from "./router.js";
 import type { GenerationModality } from "@quillby/core";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { randomUUID } from "node:crypto";
+
+/**
+ * Minimal interface for MCP sampling capability.
+ * Avoids importing the full MCP SDK Server type.
+ */
+interface SamplingHost {
+  createMessage(params: {
+    messages: { role: string; content: { type: string; text: string } }[];
+    systemPrompt?: string;
+    maxTokens?: number;
+  }): Promise<{ content?: unknown }>;
+}
 
 const SUPPORTED: GenerationModality[] = ["image", "audio"];
 
@@ -23,7 +34,7 @@ export class McpSamplingAdapter implements ProviderAdapter {
   readonly supportedModalities: GenerationModality[] = SUPPORTED;
 
   constructor(
-    private readonly server: Server,
+    private readonly server: SamplingHost,
     private readonly outputDir: string
   ) {}
 
