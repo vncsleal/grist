@@ -1,21 +1,34 @@
-import React, { Component } from "react";
+import React, { Component, lazy, Suspense } from "react";
 import { HashRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { Spinner, Alert } from "@heroui/react";
+import { Button, Alert } from "@heroui/react";
 import { useSession } from "./auth";
 import { getConnection } from "./api";
 import { WorkspaceProvider } from "./WorkspaceContext";
-import { Home } from "./pages/Home";
-import { Cloud } from "./pages/Cloud";
-import { Dashboard } from "./pages/Dashboard";
-import { Connect } from "./pages/Connect";
-import { Cards } from "./pages/Cards";
-import { Drafts } from "./pages/Drafts";
-import { Jobs } from "./pages/Jobs";
-import { Assets } from "./pages/Assets";
-import { Settings } from "./pages/Settings";
-import { Profile } from "./pages/Profile";
-import { Memory } from "./pages/Memory";
-import { Feeds } from "./pages/Feeds";
+import { PageSkeleton } from "./primitives";
+
+function lazyNamed<T extends string>(
+  importFn: () => Promise<Record<T, React.ComponentType>>,
+  name: T,
+) {
+  return lazy(() => importFn().then((m) => {
+    const comp = m[name];
+    if (!comp) throw new Error(`Page component "${name}" not found in lazy import`);
+    return { default: comp };
+  }));
+}
+
+const Home = lazyNamed(() => import("./pages/Home"), "Home");
+const Cloud = lazyNamed(() => import("./pages/Cloud"), "Cloud");
+const Dashboard = lazyNamed(() => import("./pages/Dashboard"), "Dashboard");
+const Connect = lazyNamed(() => import("./pages/Connect"), "Connect");
+const Cards = lazyNamed(() => import("./pages/Cards"), "Cards");
+const Drafts = lazyNamed(() => import("./pages/Drafts"), "Drafts");
+const Jobs = lazyNamed(() => import("./pages/Jobs"), "Jobs");
+const Assets = lazyNamed(() => import("./pages/Assets"), "Assets");
+const Settings = lazyNamed(() => import("./pages/Settings"), "Settings");
+const Profile = lazyNamed(() => import("./pages/Profile"), "Profile");
+const Memory = lazyNamed(() => import("./pages/Memory"), "Memory");
+const Feeds = lazyNamed(() => import("./pages/Feeds"), "Feeds");
 
 class ErrorBoundary extends Component<
   { children: React.ReactNode },
@@ -28,19 +41,32 @@ class ErrorBoundary extends Component<
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
+  handleRetry = () => {
+    this.setState({ error: null });
+  };
   render() {
     if (this.state.error) {
+      const isChunkError = this.state.error.message?.includes("dynamically imported");
       return (
         <div className="min-h-screen flex items-center justify-center p-8 bg-(--background)">
-          <Alert status="danger" className="max-w-lg w-full">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>App Error</Alert.Title>
-              <Alert.Description>
-                <pre className="text-xs whitespace-pre-wrap mt-1">{this.state.error.message}</pre>
-              </Alert.Description>
-            </Alert.Content>
-          </Alert>
+          <div className="flex flex-col items-center gap-4 max-w-lg w-full">
+            <Alert status="danger" className="w-full">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>
+                  {isChunkError ? "Failed to load page" : "App Error"}
+                </Alert.Title>
+                <Alert.Description>
+                  {isChunkError
+                    ? "A network error occurred while loading this page."
+                    : this.state.error.message}
+                </Alert.Description>
+              </Alert.Content>
+            </Alert>
+            <Button variant="ghost" onPress={this.handleRetry}>
+              Try Again
+            </Button>
+          </div>
         </div>
       );
     }
@@ -54,17 +80,8 @@ function CloudRequireAuth({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const session = useSession();
 
-  if (session.isPending) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-(--background)">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  if (!session.data) {
-    return <Navigate to="/" state={{ from: location }} replace />;
-  }
+  if (session.isPending) return <PageSkeleton />;
+  if (!session.data) return <Navigate to="/" state={{ from: location }} replace />;
   return <>{children}</>;
 }
 
@@ -83,29 +100,37 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <CloudRequireAuth>{children}</CloudRequireAuth>;
 }
 
+function LazyPage({ component: Component }: { component: React.LazyExoticComponent<React.ComponentType> }) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <Component />
+    </Suspense>
+  );
+}
+
 export function App() {
   return (
     <ErrorBoundary>
       <HashRouter>
         <WorkspaceProvider>
         <Routes>
-          <Route path="/" element={<Home />} />
-          {DEPLOY_MODE !== "self-hosted" && <Route path="/cloud" element={<Cloud />} />}
+          <Route path="/" element={<LazyPage component={Home} />} />
+          {DEPLOY_MODE !== "self-hosted" && <Route path="/cloud" element={<LazyPage component={Cloud} />} />}
           <Route
             path="/dashboard"
             element={
               <RequireAuth>
-                <Dashboard />
+                <LazyPage component={Dashboard} />
               </RequireAuth>
             }
           />
           {DEPLOY_MODE !== "cloud" && <Route path="/connect" element={<Navigate to="/connect/self-hosted" replace />} />}
-          {DEPLOY_MODE !== "cloud" && <Route path="/connect/self-hosted" element={<Connect />} />}
+          {DEPLOY_MODE !== "cloud" && <Route path="/connect/self-hosted" element={<LazyPage component={Connect} />} />}
           <Route
             path="/cards"
             element={
               <RequireAuth>
-                <Cards />
+                <LazyPage component={Cards} />
               </RequireAuth>
             }
           />
@@ -113,7 +138,7 @@ export function App() {
             path="/drafts"
             element={
               <RequireAuth>
-                <Drafts />
+                <LazyPage component={Drafts} />
               </RequireAuth>
             }
           />
@@ -121,7 +146,7 @@ export function App() {
             path="/jobs"
             element={
               <RequireAuth>
-                <Jobs />
+                <LazyPage component={Jobs} />
               </RequireAuth>
             }
           />
@@ -129,7 +154,7 @@ export function App() {
             path="/assets"
             element={
               <RequireAuth>
-                <Assets />
+                <LazyPage component={Assets} />
               </RequireAuth>
             }
           />
@@ -137,7 +162,7 @@ export function App() {
             path="/profile"
             element={
               <RequireAuth>
-                <Profile />
+                <LazyPage component={Profile} />
               </RequireAuth>
             }
           />
@@ -145,7 +170,7 @@ export function App() {
             path="/memory"
             element={
               <RequireAuth>
-                <Memory />
+                <LazyPage component={Memory} />
               </RequireAuth>
             }
           />
@@ -153,7 +178,7 @@ export function App() {
             path="/feeds"
             element={
               <RequireAuth>
-                <Feeds />
+                <LazyPage component={Feeds} />
               </RequireAuth>
             }
           />
@@ -161,7 +186,7 @@ export function App() {
             path="/settings"
             element={
               <RequireAuth>
-                <Settings />
+                <LazyPage component={Settings} />
               </RequireAuth>
             }
           />

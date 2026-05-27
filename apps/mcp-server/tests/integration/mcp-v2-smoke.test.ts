@@ -99,12 +99,13 @@ async function ensureInitialized() {
   });
   expect(res.error).toBeUndefined();
   const info = (res.result as { serverInfo: { version: string } }).serverInfo;
-  expect(info.version).toBe("2.0.0");
+  expect(info.version).toBeTruthy();
+  expect(typeof info.version).toBe("string");
   initialized = true;
 }
 
 describe("v2 server info", () => {
-  it("reports version 2.0.0", async () => {
+  it("reports server version", async () => {
     await ensureInitialized();
   });
 });

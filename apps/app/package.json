@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "analyze": "ANALYZE=true vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "clean": "rm -rf dist"
@@ -30,6 +31,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "rollup-plugin-visualizer": "^7.0.1",
     "typescript": "^5.9.3",
     "vite": "^7.1.12"
   }

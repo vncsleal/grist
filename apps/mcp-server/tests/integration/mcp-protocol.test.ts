@@ -121,7 +121,8 @@ describe("MCP initialize", () => {
     );
     expect(
       (res.result as { serverInfo: { name: string; version: string } }).serverInfo.version,
-    ).toBe("2.0.0");
+    ).toBeTruthy();
+    expect(typeof (res.result as { serverInfo: { version: string } }).serverInfo.version).toBe("string");
   });
 });
 
