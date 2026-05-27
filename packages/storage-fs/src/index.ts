@@ -25,6 +25,7 @@ import {
   type JobStorage,
   type PlanStorage,
   type SessionStore,
+  type CampaignStore,
 } from "@quillby/workspace";
 import {
   loadLatestHarvest as structsLoadLatest,
@@ -54,9 +55,13 @@ import {
   type ContentPlanStatus,
   type ContentTask,
   type Session,
+  type Campaign,
+  type CampaignStatus,
+  type Blueprint,
 } from "@quillby/content";
 import * as planStore from "./plans.js";
 import * as sessionStore from "./sessions.js";
+import * as campaignStore from "./campaigns.js";
 
 function withScopedHome<T>(homeDir: string, fn: () => T): T {
   const previous = process.env.QUILLBY_HOME;
@@ -72,7 +77,7 @@ function withScopedHome<T>(homeDir: string, fn: () => T): T {
   }
 }
 
-export type { CreateWorkspaceInput, DraftSummary, WorkspaceStorage, JobStorage, PlanStorage, SessionStore };
+export type { CreateWorkspaceInput, DraftSummary, WorkspaceStorage, JobStorage, PlanStorage, SessionStore, CampaignStore };
 export {
   loadLatestHarvest,
   latestHarvestExists,
@@ -109,13 +114,24 @@ export {
   closeSession,
   findStaleSessions,
 } from "./sessions.js";
+export {
+  createCampaign,
+  loadCampaign,
+  listCampaigns,
+  updateCampaign,
+  deleteCampaign,
+  saveBlueprint,
+  loadBlueprint,
+  listBlueprints,
+  deleteBlueprint,
+} from "./campaigns.js";
 
 // ── Local filesystem storage (stdio mode and local CLI) ──────────────────────
 // TODO: Encrypt biometric PII (faceReferenceImageUrl, voiceReferenceAudioUrl)
 // at rest. For now, the local filesystem is inherently local-only so the risk
 // is lower than hosted DB storage (which has AES-256-GCM encryption applied).
 
-export class LocalWorkspaceStorage implements WorkspaceStorage, JobStorage, PlanStorage, SessionStore {
+export class LocalWorkspaceStorage implements WorkspaceStorage, JobStorage, PlanStorage, SessionStore, CampaignStore {
   async listWorkspaces() { return wsListWorkspaces(); }
   async workspaceExists(id: string) { return wsWorkspaceExists(id); }
   async loadWorkspace(id: string) { return wsLoadWorkspace(id); }
@@ -175,6 +191,17 @@ export class LocalWorkspaceStorage implements WorkspaceStorage, JobStorage, Plan
   async closeSession(sessionId: string) { sessionStore.closeSession(sessionId); }
   async findStaleSessions(olderThanMs: number) { return sessionStore.findStaleSessions(olderThanMs); }
 
+  // ── CampaignStore ─────────────────────────────────────────────────────
+  async createCampaign(campaign: Campaign) { campaignStore.createCampaign(campaign); }
+  async loadCampaign(campaignId: string) { return campaignStore.loadCampaign(campaignId); }
+  async listCampaigns(status?: CampaignStatus) { return campaignStore.listCampaigns(status); }
+  async updateCampaign(campaignId: string, patch: Partial<Campaign>) { campaignStore.updateCampaign(campaignId, patch); }
+  async deleteCampaign(campaignId: string) { campaignStore.deleteCampaign(campaignId); }
+  async saveBlueprint(blueprint: Blueprint) { campaignStore.saveBlueprint(blueprint); }
+  async loadBlueprint(blueprintId: string) { return campaignStore.loadBlueprint(blueprintId); }
+  async listBlueprints() { return campaignStore.listBlueprints(); }
+  async deleteBlueprint(blueprintId: string) { campaignStore.deleteBlueprint(blueprintId); }
+
   async withWorkspace(id: string): Promise<WorkspaceStorage> {
     if (!await this.workspaceExists(id)) throw new Error(`Workspace "${id}" not found.`);
     return new LocalPinnedStorage(id);
@@ -189,7 +216,7 @@ export const storage = new LocalWorkspaceStorage();
 
 // ── Pinned local storage (per-tool workspace override for local mode) ─────────
 
-class LocalPinnedStorage implements WorkspaceStorage, JobStorage, PlanStorage, SessionStore {
+class LocalPinnedStorage implements WorkspaceStorage, JobStorage, PlanStorage, SessionStore, CampaignStore {
   constructor(private readonly pinnedId: string) {}
 
   async listWorkspaces() { return wsListWorkspaces(); }
@@ -251,6 +278,17 @@ class LocalPinnedStorage implements WorkspaceStorage, JobStorage, PlanStorage, S
   async closeSession(sessionId: string) { sessionStore.closeSession(sessionId, this.pinnedId); }
   async findStaleSessions(olderThanMs: number) { return sessionStore.findStaleSessions(olderThanMs, this.pinnedId); }
 
+  // ── CampaignStore ─────────────────────────────────────────────────────
+  async createCampaign(campaign: Campaign) { campaignStore.createCampaign(campaign, this.pinnedId); }
+  async loadCampaign(campaignId: string) { return campaignStore.loadCampaign(campaignId, this.pinnedId); }
+  async listCampaigns(status?: CampaignStatus) { return campaignStore.listCampaigns(status, this.pinnedId); }
+  async updateCampaign(campaignId: string, patch: Partial<Campaign>) { campaignStore.updateCampaign(campaignId, patch, this.pinnedId); }
+  async deleteCampaign(campaignId: string) { campaignStore.deleteCampaign(campaignId, this.pinnedId); }
+  async saveBlueprint(blueprint: Blueprint) { campaignStore.saveBlueprint(blueprint, this.pinnedId); }
+  async loadBlueprint(blueprintId: string) { return campaignStore.loadBlueprint(blueprintId, this.pinnedId); }
+  async listBlueprints() { return campaignStore.listBlueprints(this.pinnedId); }
+  async deleteBlueprint(blueprintId: string) { campaignStore.deleteBlueprint(blueprintId, this.pinnedId); }
+
   async withWorkspace(id: string): Promise<WorkspaceStorage> {
     if (!await this.workspaceExists(id)) throw new Error(`Workspace "${id}" not found.`);
     return new LocalPinnedStorage(id);
@@ -264,7 +302,7 @@ class LocalPinnedStorage implements WorkspaceStorage, JobStorage, PlanStorage, S
 // ── Scoped filesystem storage (wraps each call in a QUILLBY_HOME swap) ───────
 // Kept for reference but not used in hosted mode after v0.8.
 
-export class ScopedWorkspaceStorage implements WorkspaceStorage, JobStorage, PlanStorage, SessionStore {
+export class ScopedWorkspaceStorage implements WorkspaceStorage, JobStorage, PlanStorage, SessionStore, CampaignStore {
   constructor(private readonly homeDir: string) {}
 
   async listWorkspaces() { return withScopedHome(this.homeDir, () => wsListWorkspaces()); }
@@ -333,6 +371,17 @@ export class ScopedWorkspaceStorage implements WorkspaceStorage, JobStorage, Pla
   async updateSession(sessionId: string, patch: Partial<Session>) { withScopedHome(this.homeDir, () => sessionStore.updateSession(sessionId, patch)); }
   async closeSession(sessionId: string) { withScopedHome(this.homeDir, () => sessionStore.closeSession(sessionId)); }
   async findStaleSessions(olderThanMs: number) { return withScopedHome(this.homeDir, () => sessionStore.findStaleSessions(olderThanMs)); }
+
+  // ── CampaignStore ─────────────────────────────────────────────────────
+  async createCampaign(campaign: Campaign) { withScopedHome(this.homeDir, () => campaignStore.createCampaign(campaign)); }
+  async loadCampaign(campaignId: string) { return withScopedHome(this.homeDir, () => campaignStore.loadCampaign(campaignId)); }
+  async listCampaigns(status?: CampaignStatus) { return withScopedHome(this.homeDir, () => campaignStore.listCampaigns(status)); }
+  async updateCampaign(campaignId: string, patch: Partial<Campaign>) { withScopedHome(this.homeDir, () => campaignStore.updateCampaign(campaignId, patch)); }
+  async deleteCampaign(campaignId: string) { withScopedHome(this.homeDir, () => campaignStore.deleteCampaign(campaignId)); }
+  async saveBlueprint(blueprint: Blueprint) { withScopedHome(this.homeDir, () => campaignStore.saveBlueprint(blueprint)); }
+  async loadBlueprint(blueprintId: string) { return withScopedHome(this.homeDir, () => campaignStore.loadBlueprint(blueprintId)); }
+  async listBlueprints() { return withScopedHome(this.homeDir, () => campaignStore.listBlueprints()); }
+  async deleteBlueprint(blueprintId: string) { withScopedHome(this.homeDir, () => campaignStore.deleteBlueprint(blueprintId)); }
 
   async withWorkspace(id: string): Promise<WorkspaceStorage> {
     const exists = await withScopedHome(this.homeDir, () => wsWorkspaceExists(id));

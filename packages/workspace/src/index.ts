@@ -52,6 +52,18 @@ export interface SessionStore {
   findStaleSessions(olderThanMs: number): Promise<import("@quillby/content").Session[]>;
 }
 
+export interface CampaignStore {
+  createCampaign(campaign: import("@quillby/content").Campaign): Promise<void>;
+  loadCampaign(campaignId: string): Promise<import("@quillby/content").Campaign | null>;
+  listCampaigns(status?: import("@quillby/content").CampaignStatus): Promise<import("@quillby/content").Campaign[]>;
+  updateCampaign(campaignId: string, patch: Partial<import("@quillby/content").Campaign>): Promise<void>;
+  deleteCampaign(campaignId: string): Promise<void>;
+  saveBlueprint(blueprint: import("@quillby/content").Blueprint): Promise<void>;
+  loadBlueprint(blueprintId: string): Promise<import("@quillby/content").Blueprint | null>;
+  listBlueprints(): Promise<import("@quillby/content").Blueprint[]>;
+  deleteBlueprint(blueprintId: string): Promise<void>;
+}
+
 export interface JobStorage {
   saveJob(job: import("@quillby/core").GenerationJob): Promise<void>;
   loadJob(jobId: string): Promise<import("@quillby/core").GenerationJob | null>;
@@ -126,6 +138,7 @@ export function getWorkspacePaths(workspaceId: string) {
     typedMemory: path.join(root, "memory", "typed-memory.json"),
     plansDir: path.join(root, "plans"),
     sessionsDir: path.join(root, "memory", "sessions"),
+    campaignsDir: path.join(root, "campaigns"),
   };
 }
 
@@ -138,6 +151,7 @@ function ensureWorkspaceDirs(workspaceId: string) {
   ensureDir(paths.memoryDir);
   ensureDir(paths.plansDir);
   ensureDir(paths.sessionsDir);
+  ensureDir(paths.campaignsDir);
 }
 
 function writeWorkspaceMeta(meta: WorkspaceMetadata) {

@@ -19,6 +19,33 @@ export type {
 } from "./plan/types.js";
 
 export {
+  CampaignStatusSchema,
+  StageStatusSchema,
+  StageConfigSchema,
+  BlueprintSchema,
+  ExecutionLogSchema,
+  CampaignSchema,
+} from "./campaign/types.js";
+
+export type {
+  CampaignStatus,
+  StageStatus,
+  StageConfig,
+  Blueprint,
+  ExecutionLog,
+  Campaign,
+} from "./campaign/types.js";
+
+export {
+  transitionStage,
+  areDependenciesMet,
+  getNextStages,
+  checkAllCompleted,
+  canRetryStage,
+  initialExecutionLogs,
+} from "./campaign/pipeline.js";
+
+export {
   SessionScopeTypeSchema,
   SessionScopeSchema,
   SessionStateSchema,
