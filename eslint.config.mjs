@@ -17,6 +17,7 @@ export default tseslint.config(
       "**/.turbo/**",
       "**/coverage/**",
       "**/node_modules/**",
+      "**/.heroui-docs/**",
       "**/*.d.ts",
     ],
   },

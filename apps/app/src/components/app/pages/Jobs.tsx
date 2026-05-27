@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button, Separator } from "@heroui/react";
 import { listJobs, type GenerationJobInfo } from "../api";
-import { Layout, Spinner } from "../Layout";
+import { Layout } from "../Layout";
+import { Spinner } from "@heroui/react";
 import { useWorkspace } from "../WorkspaceContext";
 
 const FILTERS = ["all", "image", "audio", "video"] as const;
@@ -15,10 +17,10 @@ function formatDate(iso?: string): string {
 }
 
 function statusColor(status: GenerationJobInfo["status"]): string {
-  if (status === "done") return "var(--success)";
-  if (status === "failed") return "var(--danger)";
-  if (status === "running") return "var(--accent)";
-  return "var(--muted)";
+  if (status === "done") return "text-success";
+  if (status === "failed") return "text-danger";
+  if (status === "running") return "text-accent";
+  return "text-muted";
 }
 
 export function Jobs() {
@@ -64,62 +66,56 @@ export function Jobs() {
 
   return (
     <Layout>
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10" style={{ background: `radial-gradient(ellipse 60% 40% at 20% 10%, color-mix(in oklch, var(--accent) 6%, transparent), transparent)` }} />
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-accent/[0.06] to-transparent" />
 
       <div className="mb-10">
-        <div className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase" style={{ color: "var(--accent)" }}>
-          <span className="inline-block mr-2 w-4 h-px opacity-60" style={{ background: "var(--accent)", verticalAlign: "middle" }} />
+        <div className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+          <span className="inline-block w-4 h-px bg-accent/60 mr-2 align-middle" />
           Generation
         </div>
-        <h1 className="text-3xl font-bold leading-tight" style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.025em", color: "var(--foreground)" }}>
+        <h1 className="text-3xl font-bold leading-tight font-display tracking-tight text-foreground">
           {title}
         </h1>
         <div className="mt-4 flex flex-wrap gap-2">
           {FILTERS.map((item) => (
-            <button
+            <Button
               key={item}
-              onClick={() => setFilter(item)}
-              style={{
-                font: "inherit",
-                background: item === filter ? "color-mix(in oklch, var(--accent) 12%, var(--surface))" : "var(--surface)",
-                color: item === filter ? "var(--foreground)" : "var(--muted)",
-                border: "1px solid var(--border)",
-                borderRadius: 999,
-                padding: "0.3rem 0.7rem",
-                cursor: "pointer",
-              }}
+              variant={item === filter ? "primary" : "ghost"}
+              size="sm"
+              className="rounded-full"
+              onPress={() => setFilter(item)}
             >
               {item}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
-      {error && <p className="mb-8 text-sm" style={{ color: "var(--danger)" }}>{error}</p>}
+      {error && <p className="mb-8 text-sm text-danger">{error}</p>}
 
       {loading && jobs.length === 0 ? (
         <div className="flex justify-center py-16"><Spinner /></div>
       ) : jobs.length === 0 ? (
-        <p className="text-base leading-relaxed" style={{ fontFamily: "var(--font-display, serif)", color: "var(--muted)" }}>
+        <p className="text-base leading-relaxed font-display text-muted">
           Generated images, audio clips, and videos will appear here once you start a job.
         </p>
       ) : (
         <div>
           {jobs.map((job, idx) => (
             <div key={job.id}>
-              {idx > 0 && <div className="my-6 h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />}
-              <p style={{ fontFamily: "var(--font-display, serif)", fontSize: "1rem", color: "var(--foreground)" }}>
-                <span style={{ textTransform: "capitalize", fontWeight: 600 }}>{job.modality}</span>
+              {idx > 0 && <Separator className="my-6" />}
+              <p className="font-display text-base text-foreground">
+                <span className="capitalize font-semibold">{job.modality}</span>
                 {" "}
-                <span className="font-mono text-xs" style={{ color: statusColor(job.status) }}>{job.status}</span>
+                <span className={`font-mono text-xs ${statusColor(job.status)}`}>{job.status}</span>
               </p>
-              <p className="mt-1 leading-relaxed" style={{ color: "var(--muted)" }}>{job.prompt}</p>
-              <p className="mt-2 font-mono text-[0.75rem]" style={{ color: "var(--muted)" }}>
+              <p className="mt-1 leading-relaxed text-muted">{job.prompt}</p>
+              <p className="mt-2 font-mono text-[0.75rem] text-muted">
                 {formatDate(job.createdAt)}
                 {job.provider ? ` · ${job.provider}` : ""}
                 {job.outputRef ? " · output ready" : ""}
               </p>
-              {job.error && <p className="mt-2 text-sm" style={{ color: "var(--danger)" }}>{job.error}</p>}
+              {job.error && <p className="mt-2 text-sm text-danger">{job.error}</p>}
             </div>
           ))}
         </div>

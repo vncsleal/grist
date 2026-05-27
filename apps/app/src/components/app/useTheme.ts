@@ -11,10 +11,12 @@ function applyTheme(theme: "light" | "dark") {
 
 /** Returns the resolved preference saved in localStorage, falling back to OS preference. */
 export function getStoredTheme(): "light" | "dark" {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "light" || stored === "dark") return stored;
-  } catch { /* ignore */ }
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === "light" || stored === "dark") return stored;
+    } catch (err) {
+      console.debug("localStorage read failed", err);
+    }
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -28,7 +30,7 @@ export function useTheme(): [theme: "light" | "dark", setTheme: (t: "light" | "d
 
   useEffect(() => {
     applyTheme(theme);
-    try { localStorage.setItem(STORAGE_KEY, theme); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, theme); } catch (err) { console.debug("localStorage write failed", err); }
   }, [theme]);
 
   return [theme, setThemeState];

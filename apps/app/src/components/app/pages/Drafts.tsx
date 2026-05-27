@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { Separator, Button } from "@heroui/react";
 import { listDrafts, type Draft } from "../api";
-import { Layout, Spinner } from "../Layout";
+import { Layout } from "../Layout";
+import { Spinner } from "@heroui/react";
 import { useWorkspace } from "../WorkspaceContext";
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -19,37 +21,6 @@ function formatDate(iso?: string): string {
   } catch {
     return iso;
   }
-}
-
-function DraftAction({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        font: "inherit",
-        color: "var(--muted)",
-        background: "none",
-        border: "none",
-        padding: 0,
-        cursor: disabled ? "default" : "pointer",
-        textDecorationLine: "underline",
-        textDecorationColor: "color-mix(in oklch, var(--accent) 40%, transparent)",
-        textUnderlineOffset: "3px",
-        opacity: disabled ? 0.5 : 1,
-      }}
-    >
-      {children}
-    </button>
-  );
 }
 
 export function Drafts() {
@@ -96,39 +67,22 @@ export function Drafts() {
       {/* Ambient glow */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
-        style={{
-          background: `radial-gradient(ellipse 60% 40% at 20% 10%, color-mix(in oklch, var(--accent) 6%, transparent), transparent)`,
-        }}
+        className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_60%_40%_at_20%_10%,color-mix(in_oklch,var(--accent)_6%,transparent),transparent)]"
       />
 
       {/* Header */}
       <div className="mb-10">
-        <div
-          className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase"
-          style={{ color: "var(--accent)" }}
-        >
-          <span
-            className="inline-block mr-2 w-4 h-px opacity-60"
-            style={{ background: "var(--accent)", verticalAlign: "middle" }}
-          />
+        <div className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
+          <span className="inline-block mr-2 w-4 h-px bg-accent opacity-60 align-middle" />
           Content
         </div>
-        <h1
-          className="text-3xl font-bold leading-tight"
-          style={{
-            fontFamily: "var(--font-display, serif)",
-            letterSpacing: "-0.025em",
-            color: "var(--foreground)",
-          }}
-        >
+        <h1 className="font-display text-3xl font-bold leading-tight tracking-[-0.025em] text-foreground">
           {headlineText()}
         </h1>
-
       </div>
 
       {error && (
-        <p className="mb-8 text-sm" style={{ color: "var(--danger)" }}>
+        <p className="mb-8 text-sm text-danger">
           {error}
         </p>
       )}
@@ -136,10 +90,7 @@ export function Drafts() {
       {loading && drafts.length === 0 ? (
         <div className="flex justify-center py-16"><Spinner /></div>
       ) : drafts.length === 0 ? (
-        <p
-          className="text-base leading-relaxed"
-          style={{ fontFamily: "var(--font-display, serif)", color: "var(--muted)" }}
-        >
+        <p className="font-display text-base leading-relaxed text-muted">
           Ask me to generate a post from a card and it will appear here.
         </p>
       ) : (
@@ -152,46 +103,20 @@ export function Drafts() {
             return (
               <div key={draft.id}>
                 {idx > 0 && (
-                  <div
-                    className="my-6 h-px"
-                    style={{ background: "linear-gradient(to right, var(--border), transparent)" }}
-                  />
+                  <Separator className="my-6" />
                 )}
 
-                <button
-                  onClick={() => setExpandedId(isExpanded ? null : draft.id)}
-                  style={{
-                    font: "inherit",
-                    background: "none",
-                    border: "none",
-                    padding: 0,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    display: "block",
-                    width: "100%",
-                  }}
+                <Button
+                  variant="ghost"
+                  onPress={() => setExpandedId(isExpanded ? null : draft.id)}
+                  className="text-left w-full p-0 h-auto min-w-0"
                 >
-                  <span
-                    style={{
-                      fontFamily: "var(--font-display, serif)",
-                      fontSize: "1.0625rem",
-                      fontWeight: "600",
-                      letterSpacing: "-0.01em",
-                      color: "var(--foreground)",
-                    }}
-                  >
+                  <span className="font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-foreground">
                     {draft.title ?? `Draft ${draft.id.slice(0, 8)}…`}
                   </span>
-                </button>
+                </Button>
 
-                <p
-                  className="mt-1 leading-relaxed"
-                  style={{
-                    fontFamily: "var(--font-display, serif)",
-                    fontSize: "0.9375rem",
-                    color: "var(--muted)",
-                  }}
-                >
+                <p className="mt-1 font-display text-[0.9375rem] leading-relaxed text-muted">
                   {formatLabel
                     ? <>This is a {formatLabel} draft{dateStr ? <>, written on {dateStr}</> : null}.</>
                     : <>A draft{dateStr ? <>, written on {dateStr}</> : null}.</>
@@ -200,30 +125,37 @@ export function Drafts() {
                   {isExpanded ? (
                     <>
                       You can{" "}
-                      <DraftAction onClick={() => handleCopy(draft)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onPress={() => handleCopy(draft)}
+                        isDisabled={copied === draft.id}
+                        className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display"
+                      >
                         {copied === draft.id ? "copied!" : "copy it"}
-                      </DraftAction>
+                      </Button>
                       {" "}or{" "}
-                      <DraftAction onClick={() => setExpandedId(null)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onPress={() => setExpandedId(null)}
+                        className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display"
+                      >
                         collapse it
-                      </DraftAction>.
+                      </Button>.
                     </>
                   ) : (
-                    <>You can <DraftAction onClick={() => setExpandedId(draft.id)}>open it</DraftAction>.</>
+                    <>You can <Button
+                      variant="ghost"
+                      size="sm"
+                      onPress={() => setExpandedId(draft.id)}
+                      className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display"
+                    >open it</Button>.</>
                   )}
                 </p>
 
                 {isExpanded && draft.content && (
-                  <pre
-                    className="mt-4 leading-relaxed whitespace-pre-wrap"
-                    style={{
-                      fontFamily: "var(--font-mono, monospace)",
-                      fontSize: "0.8125rem",
-                      color: "var(--muted)",
-                      borderLeft: "2px solid var(--border)",
-                      paddingLeft: "1rem",
-                    }}
-                  >
+                  <pre className="mt-4 font-mono text-[0.8125rem] leading-relaxed whitespace-pre-wrap text-muted border-l-2 border-border pl-4">
                     {draft.content}
                   </pre>
                 )}

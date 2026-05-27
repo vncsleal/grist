@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  TextField,
+  Input,
+  Label,
+  Button,
+  Separator,
+  Select,
+  ListBox,
+} from "@heroui/react";
+import {
   useSession,
   updateUser,
   changePassword,
@@ -9,7 +18,8 @@ import {
   revokeOtherSessions,
   type ActiveSession,
 } from "../auth";
-import { Layout, Spinner } from "../Layout";
+import { Layout } from "../Layout";
+import { Spinner } from "@heroui/react";
 import {
   getConnection,
   getPlan,
@@ -30,74 +40,6 @@ import { useTheme } from "../useTheme";
 
 const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "").trim().toLowerCase();
 
-// ─── Shared styles ────────────────────────────────────────────────────────────
-
-const prose: React.CSSProperties = {
-  fontFamily: "var(--font-display, serif)",
-  fontSize: "1rem",
-  lineHeight: "1.75",
-  color: "var(--muted)",
-};
-
-const mono: React.CSSProperties = {
-  fontFamily: "var(--font-mono, monospace)",
-};
-
-const inlineInput: React.CSSProperties = {
-  font: "inherit",
-  background: "none",
-  border: "none",
-  borderBottom: "1px dashed var(--border)",
-  outline: "none",
-  padding: "0 2px",
-  color: "var(--foreground)",
-  minWidth: "4ch",
-};
-
-function SettingsAction({
-  children,
-  onClick,
-  disabled,
-  danger,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  danger?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        font: "inherit",
-        background: "none",
-        border: "none",
-        padding: 0,
-        cursor: disabled ? "default" : "pointer",
-        color: danger ? "var(--danger)" : "var(--muted)",
-        textDecorationLine: "underline",
-        textDecorationColor: danger
-          ? "color-mix(in oklch, var(--danger) 35%, transparent)"
-          : "color-mix(in oklch, var(--accent) 40%, transparent)",
-        textUnderlineOffset: "3px",
-        opacity: disabled ? 0.5 : 1,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Rule() {
-  return (
-    <div
-      className="h-px"
-      style={{ background: "linear-gradient(to right, var(--border), transparent)" }}
-    />
-  );
-}
-
 // ─── Appearance ───────────────────────────────────────────────────────────────
 
 function AppearanceSection() {
@@ -106,13 +48,18 @@ function AppearanceSection() {
 
   return (
     <section>
-      <p style={prose}>
+      <p className="text-muted">
         The interface is in{" "}
-        <span style={{ color: "var(--foreground)", fontWeight: 500 }}>{isDark ? "dark" : "light"}</span>{" "}
+        <span className="text-foreground font-medium">{isDark ? "dark" : "light"}</span>{" "}
         mode.{" "}
-        <SettingsAction onClick={() => setTheme(isDark ? "light" : "dark")}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+          onPress={() => setTheme(isDark ? "light" : "dark")}
+        >
           Switch to {isDark ? "light" : "dark"}.
-        </SettingsAction>
+        </Button>
       </p>
     </section>
   );
@@ -124,7 +71,6 @@ function ProfileSection() {
   const session = useSession();
   const user = session.data?.user;
   const [name, setName] = useState(user?.name ?? "");
-  const [focused, setFocused] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,37 +97,34 @@ function ProfileSection() {
 
   return (
     <section className="flex flex-col gap-2">
-      {error && <p style={{ ...mono, fontSize: "0.8rem", color: "var(--danger)" }}>{error}</p>}
-      <p style={prose}>
-        You're signed in as{" "}
-        <span style={{ ...mono, fontSize: "0.875rem", color: "var(--foreground)" }}>{user?.email ?? "\u2014"}</span>.
+      {error && <p className="text-xs text-danger font-mono">{error}</p>}
+      <p className="text-muted">
+        You&rsquo;re signed in as{" "}
+        <span className="text-foreground font-mono text-sm">{user?.email ?? "\u2014"}</span>.
       </p>
-      <p style={prose}>
-        Your display name is{" "}
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          onKeyDown={(e) => { if (e.key === "Enter") void handleSave(); }}
-          style={{
-            ...inlineInput,
-            borderBottomColor: focused ? "var(--accent)" : undefined,
-            borderBottomStyle: focused ? "solid" : "dashed",
-            width: `${Math.max(name.length + 2, 10)}ch`,
+      <TextField name="name" value={name} onChange={setName}>
+        <Label>Display name</Label>
+        <Input
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void handleSave();
           }}
         />
-        .{" "}
-        {saving ? (
-          <span style={{ ...mono, fontSize: "0.8rem", opacity: 0.6 }}>saving\u2026</span>
-        ) : saved ? (
-          <span style={{ ...mono, fontSize: "0.8rem", color: "var(--success)" }}>saved.</span>
-        ) : (
-          <SettingsAction onClick={() => void handleSave()} disabled={!name.trim()}>
-            Save.
-          </SettingsAction>
-        )}
-      </p>
+      </TextField>
+      {saving ? (
+        <span className="text-xs font-mono opacity-60">saving&hellip;</span>
+      ) : saved ? (
+        <span className="text-xs font-mono text-success">saved.</span>
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+          isDisabled={!name.trim()}
+          onPress={() => void handleSave()}
+        >
+          Save.
+        </Button>
+      )}
     </section>
   );
 }
@@ -217,45 +160,70 @@ function SecuritySection() {
 
   return (
     <section className="flex flex-col gap-2">
-      <p style={prose}>
+      <p className="text-muted">
         {saved ? (
-          <span style={{ ...mono, fontSize: "0.8rem", color: "var(--success)" }}>Password updated.</span>
+          <span className="text-xs font-mono text-success">Password updated.</span>
         ) : open ? null : (
-          <SettingsAction onClick={() => setOpen(true)}>Change your password.</SettingsAction>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+            onPress={() => setOpen(true)}
+          >
+            Change your password.
+          </Button>
         )}
       </p>
       {open && (
         <div className="flex flex-col gap-2">
-          {error && <p style={{ ...mono, fontSize: "0.8rem", color: "var(--danger)" }}>{error}</p>}
-          {[
-            { label: "Current password", value: current, set: setCurrent, auto: "current-password" },
-            { label: "New password", value: next, set: setNext, auto: "new-password" },
-            { label: "Confirm", value: confirm, set: setConfirm, auto: "new-password" },
-          ].map(({ label, value, set, auto }) => (
-            <p key={label} style={prose}>
-              {label}:{" "}
-              <input
-                type="password"
-                value={value}
-                onChange={(e) => set(e.target.value)}
-                autoComplete={auto}
-                onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); if (e.key === "Escape") setOpen(false); }}
-                style={{ ...inlineInput, width: "18ch" }}
-              />
-            </p>
-          ))}
-          <p style={prose}>
+          {error && <p className="text-xs text-danger font-mono">{error}</p>}
+          <TextField type="password" name="current" value={current} onChange={setCurrent}>
+            <Label>Current password</Label>
+            <Input
+              type="password"
+              autoComplete="current-password"
+              onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); if (e.key === "Escape") setOpen(false); }}
+            />
+          </TextField>
+          <TextField type="password" name="new" value={next} onChange={setNext}>
+            <Label>New password</Label>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); if (e.key === "Escape") setOpen(false); }}
+            />
+          </TextField>
+          <TextField type="password" name="confirm" value={confirm} onChange={setConfirm}>
+            <Label>Confirm</Label>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); if (e.key === "Escape") setOpen(false); }}
+            />
+          </TextField>
+          <p className="text-muted">
             {saving ? (
-              <span style={{ ...mono, fontSize: "0.8rem", opacity: 0.6 }}>saving\u2026</span>
+              <span className="text-xs font-mono opacity-60">saving&hellip;</span>
             ) : (
               <>
-                <SettingsAction onClick={() => void handleSubmit()} disabled={!current || !next || !confirm}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                  isDisabled={!current || !next || !confirm}
+                  onPress={() => void handleSubmit()}
+                >
                   Update password.
-                </SettingsAction>
+                </Button>
                 {" "}
-                <SettingsAction onClick={() => { setOpen(false); setError(null); setCurrent(""); setNext(""); setConfirm(""); }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                  onPress={() => { setOpen(false); setError(null); setCurrent(""); setNext(""); setConfirm(""); }}
+                >
                   Cancel.
-                </SettingsAction>
+                </Button>
               </>
             )}
           </p>
@@ -325,29 +293,29 @@ function SessionsSection() {
 
   return (
     <section className="flex flex-col gap-3">
-      {error && <p style={{ ...mono, fontSize: "0.8rem", color: "var(--danger)" }}>{error}</p>}
+      {error && <p className="text-xs text-danger font-mono">{error}</p>}
       {loading ? (
         <div className="flex justify-center py-4"><Spinner /></div>
       ) : sessions.length === 0 ? (
-        <p style={{ ...prose, opacity: 0.6 }}>No active sessions found.</p>
+        <p className="text-muted opacity-60">No active sessions found.</p>
       ) : (
         <>
           {sessions.map((s, i) => {
             const isCurrent = s.id === currentSessionId;
             return (
               <React.Fragment key={s.id}>
-                {i > 0 && <div className="h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />}
-                <p style={prose}>
-                  <span style={{ color: "var(--foreground)" }}>
+                {i > 0 && <Separator />}
+                <p className="text-muted">
+                  <span className="text-foreground">
                     {s.userAgent ? s.userAgent.slice(0, 55) : "Unknown browser"}
                   </span>
                   {isCurrent && (
-                    <span style={{ ...mono, fontSize: "0.7rem", color: "var(--accent)", marginLeft: "0.5rem" }}>
+                    <span className="text-accent font-mono text-xs ml-2">
                       this session
                     </span>
                   )}
                   <br />
-                  <span style={{ ...mono, fontSize: "0.75rem", opacity: 0.6 }}>
+                  <span className="font-mono text-xs opacity-60">
                     {s.ipAddress ? `${s.ipAddress} \u00b7 ` : ""}
                     {formatSessionDate(s.createdAt)}
                   </span>
@@ -357,9 +325,14 @@ function SessionsSection() {
                       {revoking === s.id ? (
                         <Spinner />
                       ) : (
-                        <SettingsAction onClick={() => void handleRevoke(s.id)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                          onPress={() => void handleRevoke(s.id)}
+                        >
                           End session.
-                        </SettingsAction>
+                        </Button>
                       )}
                     </>
                   )}
@@ -368,13 +341,18 @@ function SessionsSection() {
             );
           })}
           {otherSessions.length > 1 && (
-            <p style={prose}>
+            <p className="text-muted">
               {revokingAll ? (
-                <span style={{ ...mono, fontSize: "0.8rem", opacity: 0.6 }}>signing out\u2026</span>
+                <span className="text-xs font-mono opacity-60">signing out&hellip;</span>
               ) : (
-                <SettingsAction onClick={() => void handleRevokeOthers()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                  onPress={() => void handleRevokeOthers()}
+                >
                   End all other sessions.
-                </SettingsAction>
+                </Button>
               )}
             </p>
           )}
@@ -404,18 +382,18 @@ function PlanSection() {
 
   return (
     <section>
-      {error && <p style={{ ...mono, fontSize: "0.8rem", color: "var(--danger)" }}>{error}</p>}
+      {error && <p className="text-xs text-danger font-mono">{error}</p>}
       {loading ? (
         <div className="flex justify-center py-4"><Spinner /></div>
       ) : info ? (
-        <p style={prose}>
-          You're on the{" "}
-          <span style={{ color: "var(--foreground)", fontWeight: 600 }}>
+        <p className="text-muted">
+          You&rsquo;re on the{" "}
+          <span className="text-foreground font-semibold">
             {info.plan === "pro" ? "Pro" : "Free"}
           </span>{" "}
           plan.
           {info.planEnforcementEnabled && info.limits && (
-            <span style={{ opacity: 0.7 }}>
+            <span className="opacity-70">
               {" "}
               {[
                 info.limits.maxOwnedWorkspaces != null && `${info.limits.maxOwnedWorkspaces} workspaces`,
@@ -426,17 +404,27 @@ function PlanSection() {
           {info.plan === "free" && (
             <>
               {" "}
-              <SettingsAction onClick={() => { window.open(`${apiBase}/api/billing/upgrade`, "_blank", "noopener"); }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                onPress={() => { window.open(`${apiBase}/api/billing/upgrade`, "_blank", "noopener"); }}
+              >
                 Upgrade to Pro.
-              </SettingsAction>
+              </Button>
             </>
           )}
           {info.billingPortalUrl && (
             <>
               {" "}
-              <SettingsAction onClick={() => { window.open(`${apiBase}/api/billing/portal`, "_blank", "noopener"); }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                onPress={() => { window.open(`${apiBase}/api/billing/portal`, "_blank", "noopener"); }}
+              >
                 Manage billing.
-              </SettingsAction>
+              </Button>
             </>
           )}
         </p>
@@ -444,6 +432,8 @@ function PlanSection() {
     </section>
   );
 }
+
+// ─── Provider setup info ──────────────────────────────────────────────────────
 
 function ProviderSetupSection() {
   const [info, setInfo] = useState<ProviderPolicyInfo | null>(null);
@@ -462,7 +452,7 @@ function ProviderSetupSection() {
   }
 
   if (error) {
-    return <p style={{ ...mono, fontSize: "0.8rem", color: "var(--danger)" }}>{error}</p>;
+    return <p className="text-xs text-danger font-mono">{error}</p>;
   }
 
   if (!info) return null;
@@ -476,19 +466,19 @@ function ProviderSetupSection() {
 
   return (
     <section className="flex flex-col gap-3">
-      <p style={prose}>{modeCopy}</p>
+      <p className="text-muted">{modeCopy}</p>
       <div className="flex flex-col gap-3">
         {info.capabilities.map((capability, index) => (
           <React.Fragment key={capability.modality}>
-            {index > 0 && <div className="h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />}
-            <p style={prose}>
-              <span style={{ color: "var(--foreground)", textTransform: "capitalize" }}>{capability.modality}</span>
+            {index > 0 && <Separator />}
+            <p className="text-muted">
+              <span className="text-foreground capitalize">{capability.modality}</span>
               {" "}
-              <span style={{ ...mono, fontSize: "0.75rem", opacity: 0.7 }}>
+              <span className="font-mono text-xs opacity-70">
                 {capability.available ? `${capability.tier ?? "unavailable"} active` : `preferred: ${capability.setupMode}`}
               </span>
               <br />
-              <span style={{ opacity: 0.8 }}>{capability.message}</span>
+              <span className="opacity-80">{capability.message}</span>
             </p>
           </React.Fragment>
         ))}
@@ -496,6 +486,8 @@ function ProviderSetupSection() {
     </section>
   );
 }
+
+// ─── Provider admin (self-hosted) ─────────────────────────────────────────────
 
 function ProviderAdminSection() {
   const [config, setConfig] = useState<ProviderConfigInfo | null>(null);
@@ -561,14 +553,52 @@ function ProviderAdminSection() {
 
   if (DEPLOY_MODE !== "self-hosted") return null;
 
+  function ProviderSelect({
+    value,
+    onChange,
+    providers,
+    label,
+  }: {
+    value: string;
+    onChange: (v: string) => void;
+    providers: readonly (readonly [string, string])[];
+    label: string;
+  }) {
+    return (
+      <Select
+        selectedKey={value}
+        onSelectionChange={(key) => {
+          if (typeof key === "string") onChange(key);
+        }}
+        className="w-auto min-w-44"
+      >
+        <Label>{label}</Label>
+        <Select.Trigger>
+          <Select.Value />
+          <Select.Indicator />
+        </Select.Trigger>
+        <Select.Popover>
+          <ListBox>
+            {providers.map(([val, itemLabel]) => (
+              <ListBox.Item key={val} id={val}>
+                {itemLabel}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </Select>
+    );
+  }
+
   return (
     <section className="flex flex-col gap-4">
-      {error && <p style={{ ...mono, fontSize: "0.8rem", color: "var(--danger)" }}>{error}</p>}
+      {error && <p className="text-xs text-danger font-mono">{error}</p>}
       {loading ? (
         <div className="flex justify-center py-4"><Spinner /></div>
       ) : (
         <>
-          <p style={prose}>
+          <p className="text-muted">
             Configure one Replicate API token for this self-hosted deployment. Quillby uses it as the single external multimodal hub for image, audio, and video.
           </p>
 
@@ -605,43 +635,62 @@ function ProviderAdminSection() {
             },
           ]).map((section, idx) => (
             <React.Fragment key={section.modality}>
-              {idx > 0 && <Rule />}
+              {idx > 0 && <Separator />}
               <div className="flex flex-col gap-2">
-                <p style={prose}>
-                  <span style={{ color: "var(--foreground)", fontWeight: 600 }}>{section.title}</span>
+                <p className="text-muted">
+                  <span className="text-foreground font-semibold">{section.title}</span>
                   {" "}
-                  <span style={{ ...mono, fontSize: "0.75rem", opacity: 0.7 }}>
-                    {section.current?.configured ? `${section.current.provider} · ${section.current.source}` : "not configured"}
+                  <span className="font-mono text-xs opacity-70">
+                    {section.current?.configured ? `${section.current.provider} \u00b7 ${section.current.source}` : "not configured"}
                   </span>
                 </p>
-                <p style={prose}>
-                  Provider{" "}
-                  <select value={section.provider} onChange={(e) => section.setProvider(e.target.value)} style={{ ...inlineInput, minWidth: "18ch" }}>
-                    {section.providers.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                  </select>
-                  {" "}key{" "}
-                  <input type="password" value={section.apiKey} onChange={(e) => section.setApiKey(e.target.value)} style={{ ...inlineInput, width: "18ch" }} />
-                  .{" "}
-                  {saving === section.modality ? (
-                    <span style={{ ...mono, fontSize: "0.8rem", opacity: 0.6 }}>saving…</span>
-                  ) : (
-                    <SettingsAction onClick={() => void handleSave(section.modality)} disabled={!section.apiKey.trim()}>
-                      Save.
-                    </SettingsAction>
-                  )}
-                  {" "}
-                  <SettingsAction onClick={() => void handleClear(section.modality)} disabled={!section.current?.configured || saving === `${section.modality}-clear`}>
-                    Clear.
-                  </SettingsAction>
-                </p>
+                <div className="flex flex-col gap-2">
+                  <ProviderSelect
+                    value={section.provider}
+                    onChange={section.setProvider}
+                    providers={section.providers}
+                    label="Provider"
+                  />
+                  <TextField type="password" name={`${section.modality}-key`} value={section.apiKey} onChange={section.setApiKey}>
+                    <Label>Key</Label>
+                    <Input type="password" />
+                  </TextField>
+                  <div className="flex gap-2 items-center">
+                    {saving === section.modality ? (
+                      <span className="text-xs font-mono opacity-60">saving&hellip;</span>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                        isDisabled={!section.apiKey.trim()}
+                        onPress={() => void handleSave(section.modality)}
+                      >
+                        Save.
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-danger"
+                      isDisabled={!section.current?.configured || saving === `${section.modality}-clear`}
+                      onPress={() => void handleClear(section.modality)}
+                    >
+                      Clear.
+                    </Button>
+                  </div>
+                </div>
                 {section.modality === "audio" && section.provider !== "replicate" && (
-                  <p style={prose}>
-                    Voice ID{" "}
-                    <input value={audioVoiceId} onChange={(e) => setAudioVoiceId(e.target.value)} style={{ ...inlineInput, width: "12ch" }} />
-                    {" "}Group ID{" "}
-                    <input value={audioGroupId} onChange={(e) => setAudioGroupId(e.target.value)} style={{ ...inlineInput, width: "12ch" }} />
-                    .
-                  </p>
+                  <div className="flex flex-col gap-2">
+                    <TextField name="voiceId" value={audioVoiceId} onChange={setAudioVoiceId}>
+                      <Label>Voice ID</Label>
+                      <Input />
+                    </TextField>
+                    <TextField name="groupId" value={audioGroupId} onChange={setAudioGroupId}>
+                      <Label>Group ID</Label>
+                      <Input />
+                    </TextField>
+                  </div>
                 )}
               </div>
             </React.Fragment>
@@ -670,9 +719,7 @@ function ConnectorsSection() {
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [keyName, setKeyName] = useState("quillby-connector");
-  const [keyNameFocused, setKeyNameFocused] = useState(false);
   const [rateLimitMax, setRateLimitMax] = useState("60");
-  const [rateLimitFocused, setRateLimitFocused] = useState(false);
   const [freshKey, setFreshKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
@@ -731,94 +778,69 @@ function ConnectorsSection() {
 
   return (
     <section className="flex flex-col gap-4">
-      {error && <p style={{ ...mono, fontSize: "0.8rem", color: "var(--danger)" }}>{error}</p>}
-      <p style={prose}>
+      {error && <p className="text-xs text-danger font-mono">{error}</p>}
+
+      <p className="text-muted">
         Remote MCP clients connect at{" "}
-        <button
-          onClick={() => { navigator.clipboard.writeText(connectorUrl).catch(() => {}); setUrlCopied(true); setTimeout(() => setUrlCopied(false), 1800); }}
-          title="Click to copy"
-          style={{
-            font: "inherit",
-            ...mono,
-            fontSize: "0.8rem",
-            background: "none",
-            border: "none",
-            padding: "0 1px",
-            cursor: "pointer",
-            color: "var(--foreground)",
-            textDecorationLine: "underline",
-            textDecorationColor: "color-mix(in oklch, var(--accent) 40%, transparent)",
-            textUnderlineOffset: "3px",
-          }}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="font-mono text-xs underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-foreground"
+          onPress={() => { navigator.clipboard.writeText(connectorUrl).catch(() => {}); setUrlCopied(true); setTimeout(() => setUrlCopied(false), 1800); }}
         >
           {connectorUrl}
-        </button>
-        {urlCopied && <span style={{ ...mono, fontSize: "0.75rem", color: "var(--success)", marginLeft: "0.4rem" }}>copied.</span>}
+        </Button>
+        {urlCopied && <span className="font-mono text-xs text-success ml-1">copied.</span>}
       </p>
-      <p style={prose}>
-        Generate a key labeled{" "}
-        <input
-          value={keyName}
-          onChange={(e) => setKeyName(e.target.value)}
-          onFocus={() => setKeyNameFocused(true)}
-          onBlur={() => setKeyNameFocused(false)}
-          style={{
-            ...inlineInput,
-            ...mono,
-            fontSize: "0.875rem",
-            borderBottomColor: keyNameFocused ? "var(--accent)" : undefined,
-            borderBottomStyle: keyNameFocused ? "solid" : "dashed",
-            width: `${Math.max(keyName.length + 2, 10)}ch`,
-          }}
-        />{" "}
-        with{" "}
-        <input
-          value={rateLimitMax}
-          onChange={(e) => setRateLimitMax(e.target.value)}
-          inputMode="numeric"
-          onFocus={() => setRateLimitFocused(true)}
-          onBlur={() => setRateLimitFocused(false)}
-          style={{
-            ...inlineInput,
-            ...mono,
-            fontSize: "0.875rem",
-            borderBottomColor: rateLimitFocused ? "var(--accent)" : undefined,
-            borderBottomStyle: rateLimitFocused ? "solid" : "dashed",
-            width: "5ch",
-            textAlign: "right",
-          }}
-        />{" "}
-        requests per minute.{" "}
-        {creating ? (
-          <span style={{ ...mono, fontSize: "0.8rem", opacity: 0.6 }}>generating\u2026</span>
-        ) : (
-          <SettingsAction onClick={() => void handleCreate()}>Generate.</SettingsAction>
-        )}
-      </p>
+
+      <div className="flex flex-col gap-2">
+        <TextField name="keyName" value={keyName} onChange={setKeyName}>
+          <Label>Key label</Label>
+          <Input
+            placeholder="quillby-connector"
+            onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); }}
+          />
+        </TextField>
+        <TextField name="rateLimit" value={rateLimitMax} onChange={setRateLimitMax} inputMode="numeric">
+          <Label>Rate limit (requests per minute)</Label>
+          <Input
+            placeholder="60"
+            inputMode="numeric"
+          />
+        </TextField>
+        <div className="flex items-center gap-2">
+          {creating ? (
+            <span className="text-xs font-mono opacity-60">generating&hellip;</span>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+              onPress={() => void handleCreate()}
+            >
+              Generate.
+            </Button>
+          )}
+        </div>
+      </div>
 
       {freshKey && (
         <div className="flex flex-col gap-1">
-          <p style={{ ...mono, fontSize: "0.75rem", color: "var(--muted)" }}>
-            Copy this now \u2014 it won't be shown again.
+          <p className="font-mono text-xs text-muted">
+            Copy this now &mdash; it won&rsquo;t be shown again.
           </p>
-          <code
-            style={{
-              display: "block",
-              ...mono,
-              fontSize: "0.78rem",
-              padding: "6px 10px",
-              background: "color-mix(in oklch, var(--accent) 6%, var(--surface))",
-              borderLeft: "2px solid color-mix(in oklch, var(--accent) 40%, transparent)",
-              color: "var(--foreground)",
-              wordBreak: "break-all",
-            }}
-          >
+          <div className="block font-mono text-xs px-2.5 py-1.5 bg-accent/6 border-l-2 border-accent/40 text-foreground break-all">
             {freshKey}
-          </code>
-          <p style={prose}>
-            <SettingsAction onClick={() => { navigator.clipboard.writeText(freshKey).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 1800); }}>
+          </div>
+          <p className="text-muted">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+              onPress={() => { navigator.clipboard.writeText(freshKey).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 1800); }}
+            >
               {copied ? "Copied." : "Copy key."}
-            </SettingsAction>
+            </Button>
           </p>
         </div>
       )}
@@ -826,16 +848,16 @@ function ConnectorsSection() {
       {loading && keys.length === 0 ? (
         <div className="flex justify-center py-4"><Spinner /></div>
       ) : keys.length === 0 ? (
-        <p style={{ ...prose, opacity: 0.6 }}>No active keys yet.</p>
+        <p className="text-muted opacity-60">No active keys yet.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {keys.map((key, i) => (
             <React.Fragment key={key.id}>
-              {i > 0 && <div className="h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />}
-              <p style={prose}>
-                <span style={{ color: "var(--foreground)" }}>{key.name}</span>
+              {i > 0 && <Separator />}
+              <p className="text-muted">
+                <span className="text-foreground">{key.name}</span>
                 <br />
-                <span style={{ ...mono, fontSize: "0.72rem", opacity: 0.6 }}>
+                <span className="font-mono text-xs opacity-60">
                   {[key.prefix, key.start].filter(Boolean).join("_") || key.id}
                   {typeof key.rateLimitMax === "number" ? ` \u00b7 ${key.rateLimitMax} req/min` : ""}
                   {key.expiresAt ? ` \u00b7 expires ${formatKeyDate(key.expiresAt)}` : ""}
@@ -844,9 +866,14 @@ function ConnectorsSection() {
                 {revokingId === key.id ? (
                   <Spinner />
                 ) : (
-                  <SettingsAction danger onClick={() => void handleRevoke(key.id)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-danger"
+                    onPress={() => void handleRevoke(key.id)}
+                  >
                     Revoke.
-                  </SettingsAction>
+                  </Button>
                 )}
               </p>
             </React.Fragment>
@@ -862,7 +889,6 @@ function ConnectorsSection() {
 function DangerZone() {
   const [confirming, setConfirming] = useState(false);
   const [password, setPassword] = useState("");
-  const [pwFocused, setPwFocused] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -880,49 +906,58 @@ function DangerZone() {
 
   return (
     <section className="flex flex-col gap-2">
-      {error && <p style={{ ...mono, fontSize: "0.8rem", color: "var(--danger)" }}>{error}</p>}
+      {error && <p className="text-xs text-danger font-mono">{error}</p>}
       {!confirming ? (
-        <p style={prose}>
-          <SettingsAction danger onClick={() => setConfirming(true)}>
+        <p className="text-muted">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="underline underline-offset-3 h-auto min-w-0 p-0 text-danger decoration-danger/35"
+            onPress={() => setConfirming(true)}
+          >
             Delete my account.
-          </SettingsAction>
+          </Button>
           {" "}
-          <span style={{ opacity: 0.55 }}>This permanently removes all workspaces and data.</span>
+          <span className="opacity-55">This permanently removes all workspaces and data.</span>
         </p>
       ) : (
-        <p style={prose}>
-          Confirm with your password{" "}
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            autoFocus
-            onFocus={() => setPwFocused(true)}
-            onBlur={() => setPwFocused(false)}
-            onKeyDown={(e) => { if (e.key === "Enter") void handleDelete(); if (e.key === "Escape") { setConfirming(false); setPassword(""); } }}
-            style={{
-              ...inlineInput,
-              borderBottomColor: pwFocused ? "var(--danger)" : undefined,
-              borderBottomStyle: pwFocused ? "solid" : "dashed",
-              width: "16ch",
-            }}
-          />
-          {" \u2014 "}
-          {deleting ? (
-            <span style={{ ...mono, fontSize: "0.8rem", opacity: 0.6 }}>deleting\u2026</span>
-          ) : (
-            <>
-              <SettingsAction danger onClick={() => void handleDelete()} disabled={!password}>
-                Confirm deletion.
-              </SettingsAction>
-              {" "}
-              <SettingsAction onClick={() => { setConfirming(false); setPassword(""); setError(null); }}>
-                Cancel.
-              </SettingsAction>
-            </>
-          )}
-        </p>
+        <div className="flex flex-col gap-2">
+          <TextField type="password" name="confirm-password" value={password} onChange={setPassword}>
+            <Label>Confirm with your password</Label>
+            <Input
+              type="password"
+              autoComplete="current-password"
+              autoFocus
+              onKeyDown={(e) => { if (e.key === "Enter") void handleDelete(); if (e.key === "Escape") { setConfirming(false); setPassword(""); } }}
+            />
+          </TextField>
+          <p className="text-muted">
+            {deleting ? (
+              <span className="text-xs font-mono opacity-60">deleting&hellip;</span>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="underline underline-offset-3 h-auto min-w-0 p-0 text-danger decoration-danger/35"
+                  isDisabled={!password}
+                  onPress={() => void handleDelete()}
+                >
+                  Confirm deletion.
+                </Button>
+                {" "}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                  onPress={() => { setConfirming(false); setPassword(""); setError(null); }}
+                >
+                  Cancel.
+                </Button>
+              </>
+            )}
+          </p>
+        </div>
       )}
     </section>
   );
@@ -938,59 +973,44 @@ export function Settings() {
 
   return (
     <Layout>
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
-        style={{
-          background: `radial-gradient(ellipse 60% 40% at 20% 10%, color-mix(in oklch, var(--accent) 6%, transparent), transparent)`,
-        }}
-      />
-
       <div className="mb-10">
-        <h1
-          className="text-3xl font-bold leading-tight"
-          style={{
-            fontFamily: "var(--font-display, serif)",
-            letterSpacing: "-0.025em",
-            color: "var(--foreground)",
-          }}
-        >
+        <h1 className="text-3xl font-bold font-display tracking-tight text-foreground">
           {name ? `${name}'s account.` : "Your account."}
         </h1>
       </div>
 
       <div className="flex flex-col gap-8 max-w-xl">
         <AppearanceSection />
-        <Rule />
+        <Separator />
         <ProviderSetupSection />
-        <Rule />
+        <Separator />
         <ProviderAdminSection />
-        {DEPLOY_MODE === "self-hosted" && <Rule />}
+        {DEPLOY_MODE === "self-hosted" && <Separator />}
         {isCloud ? (
           <>
             <ProfileSection />
-            <Rule />
+            <Separator />
             <PlanSection />
-            <Rule />
+            <Separator />
             <SecuritySection />
-            <Rule />
+            <Separator />
             <SessionsSection />
-            <Rule />
+            <Separator />
           </>
         ) : (
           <>
-            <p style={prose}>
+            <p className="text-muted">
               Connected to{" "}
-              <span style={{ ...mono, fontSize: "0.875rem", color: "var(--foreground)" }}>
+              <span className="text-foreground font-mono text-sm">
                 {conn?.serverUrl ?? "self-hosted server"}
               </span>
               . Use the Disconnect button in the nav to change servers.
             </p>
-            <Rule />
+            <Separator />
           </>
         )}
         <ConnectorsSection />
-        <Rule />
+        <Separator />
         {isCloud && <DangerZone />}
       </div>
     </Layout>

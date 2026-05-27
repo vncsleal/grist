@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveConnection, ping, exchangeApiKey } from "../api";
-import { Card, Button, Spinner, Alert } from "../Layout";
-import { Form, Input, Label, TextField, Description } from "@heroui/react";
+import { Card, Button, Spinner, Alert, Form, Input, Label, TextField, Description } from "@heroui/react";
 
 const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "").trim().toLowerCase();
 
@@ -35,39 +34,25 @@ export function Connect() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-6"
-      style={{
-        background: "radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.14) 0%, transparent 55%), var(--background)",
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-accent/[0.14] to-transparent bg-background">
       <div className="w-full max-w-md flex flex-col gap-8">
         {/* Brand heading */}
         <div className="flex flex-col items-center text-center gap-4">
-          <img
-            src="/quillby-logo.png"
-            alt=""
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: "50%",
-              objectFit: "cover",
-              boxShadow: "0 0 24px rgba(167,139,250,0.45), 0 0 60px rgba(124,58,237,0.12)",
-            }}
-          />
+            <img
+              src="/quillby-logo.png"
+              alt=""
+              className="w-14 h-14 rounded-full object-cover"
+              style={{ boxShadow: "0 0 24px color-mix(in oklch, var(--accent) 45%, transparent), 0 0 60px color-mix(in oklch, var(--accent) 12%, transparent)" }}
+            />
           <div>
-
-            <h1
-              className="text-4xl font-bold text-(--foreground)"
-              style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.025em", lineHeight: 1.1 }}
-            >
+            <h1 className="text-4xl font-bold text-foreground font-display tracking-tight leading-[1.1]">
               Connect your{" "}
-              <em style={{ fontStyle: "italic", fontWeight: 300, color: "var(--accent)" }}>
+              <em className="italic font-light text-accent">
                 server.
               </em>
             </h1>
           </div>
-          <p className="text-sm leading-relaxed text-(--muted-foreground) max-w-xs">
+          <p className="text-sm leading-relaxed text-muted max-w-xs">
             Connect to a self-hosted Quillby server to manage cards and drafts.
           </p>
         </div>
@@ -99,9 +84,9 @@ export function Connect() {
             >
               <Label>Self-hosted API Key</Label>
               <Input placeholder="qly_..." className="font-mono" />
-              <Description className="text-xs text-(--muted-foreground)">
+              <Description className="text-xs text-muted">
                 Generate a key with{" "}
-                <code className="font-mono text-(--accent)">
+                <code className="font-mono text-accent">
                   npm run keys create &lt;userId&gt; &lt;label&gt;
                 </code>
               </Description>
@@ -137,7 +122,7 @@ export function Connect() {
         </Card>
 
         <div className="flex flex-col items-center gap-2 pt-1">
-          <p className="text-xs text-(--muted-foreground)">
+          <p className="text-xs text-muted">
             Connection details are stored in this browser only.
           </p>
           {DEPLOY_MODE !== "self-hosted" && (

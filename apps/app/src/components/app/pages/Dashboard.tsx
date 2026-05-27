@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Separator, Button, Spinner } from "@heroui/react";
 import {
   getProfile,
   listCards,
@@ -11,53 +12,9 @@ import {
   type Draft,
   type MemoryBuckets,
 } from "../api";
-import { Layout, Spinner } from "../Layout";
+import { Layout } from "../Layout";
 import { useWorkspace } from "../WorkspaceContext";
 import { DotLink, MonoLink } from "../primitives";
-
-// ─── Styles injected once on mount ────────────────────────────────────────────
-
-const DASH_STYLES = `
-  @keyframes db-breathe {
-    0%, 100% { opacity: 0.55; transform: scale(1); }
-    50%       { opacity: 1;    transform: scale(1.35); }
-  }
-  @keyframes db-fadein {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: none; }
-  }
-  .db-section { animation: db-fadein 0.5s cubic-bezier(0.22,1,0.36,1) both; }
-  .db-dot     { animation: db-breathe 2.8s ease-in-out infinite; }
-
-  .db-story-row { display:flex; align-items:flex-start; gap:1rem; padding:0.875rem 0; cursor:pointer; }
-  .db-story-row:hover .db-story-title  { color: var(--foreground) !important; }
-  .db-story-row:hover .db-story-action { opacity: 0.75 !important; }
-
-  .db-cta-row { display:flex; align-items:center; justify-content:space-between; padding:0.9rem 0; cursor:pointer; }
-  .db-cta-row:hover .db-cta-label { color: var(--foreground) !important; }
-  .db-cta-row:hover .db-cta-arrow { opacity: 0.75 !important; }
-
-  .db-toc-link { display:block; text-decoration:none; line-height:1.4; margin-top:0.15rem; transition:color 0.15s; }
-  .db-toc-link:hover { color: var(--foreground) !important; }
-
-  .db-draft-title { cursor:pointer; transition:color 0.15s; }
-  .db-draft-title:hover { color: var(--accent) !important; }
-
-  .db-read-bar {
-    position: fixed; top: 64px; left: 0;
-    height: 2px; width: 0%;
-    background: var(--accent);
-    opacity: 0.6;
-    z-index: 9999;
-    transition: width 0.08s linear;
-  }
-
-  @media (max-width: 780px) {
-    .db-toc { display: none !important; }
-    .db-main { padding-left: 0 !important; max-width: 100% !important; }
-    .db-layout { grid-template-columns: 1fr !important; }
-  }
-`;
 
 // ─── Time helpers ──────────────────────────────────────────────────────────────
 
@@ -93,8 +50,24 @@ const ReadProgress = React.memo(function ReadProgress() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  return <div className="db-read-bar" style={{ width: `${pct}%` }} />;
+  return (
+    <div
+      className="fixed top-16 left-0 h-0.5 z-[9999] bg-accent/60 transition-[width] duration-[80ms] linear"
+      style={{ width: `${pct}%` }}
+    />
+  );
 });
+
+// ─── Section-level fade-in animation ──────────────────────────────────────────
+
+function useMountFadeIn() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return mounted;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -137,23 +110,12 @@ export function Dashboard() {
       setDrafts(d);
       setFeeds(f);
       setMemory(m);
-    } catch { /* silent */ }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("Dashboard failed to load:", err);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { void load(activeWsId); }, [activeWsId, load]);
-
-  // ── Inject styles once ──
-  const stylesInjected = useRef(false);
-  useEffect(() => {
-    if (stylesInjected.current) return;
-    stylesInjected.current = true;
-    const el = document.createElement("style");
-    el.setAttribute("data-dash", "");
-    el.textContent = DASH_STYLES;
-    document.head.appendChild(el);
-    return () => { el.remove(); stylesInjected.current = false; };
-  }, []);
 
   // ── TOC highlighting ──
   useEffect(() => {
@@ -168,6 +130,9 @@ export function Dashboard() {
     ids.forEach((id) => { const el = document.getElementById(id); if (el) obs.observe(el); });
     return () => obs.disconnect();
   }, [loading]);
+
+  // ── Mount animation ──
+  const animate = useMountFadeIn();
 
   // ── Derived data ──
   const firstName   = profile?.name?.split(" ")[0] ?? profile?.name;
@@ -197,6 +162,10 @@ export function Dashboard() {
     { id: "next",    n: "05", label: "What to do next" },
   ];
 
+  const fadeInClasses = `transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+    animate ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[10px]"
+  }`;
+
   return (
     <Layout>
       {/* reading progress bar */}
@@ -204,8 +173,20 @@ export function Dashboard() {
 
       {/* ambient glow */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div style={{ position: "absolute", top: "-15%", right: "-5%", width: "60vw", height: "60vw", borderRadius: "50%", background: "radial-gradient(circle, color-mix(in oklch, var(--accent) 7%, transparent) 0%, transparent 70%)", filter: "blur(70px)" }} />
-        <div style={{ position: "absolute", bottom: "5%",  left:  "-8%", width: "38vw", height: "38vw", borderRadius: "50%", background: "radial-gradient(circle, color-mix(in oklch, var(--accent) 4%, transparent) 0%, transparent 70%)", filter: "blur(90px)" }} />
+        <div
+          className="absolute -top-[15%] -right-[5%] w-[60vw] h-[60vw] rounded-full"
+          style={{
+            background: "radial-gradient(circle, color-mix(in oklch, var(--accent) 7%, transparent) 0%, transparent 70%)",
+            filter: "blur(70px)",
+          }}
+        />
+        <div
+          className="absolute bottom-[5%] -left-[8%] w-[38vw] h-[38vw] rounded-full"
+          style={{
+            background: "radial-gradient(circle, color-mix(in oklch, var(--accent) 4%, transparent) 0%, transparent 70%)",
+            filter: "blur(90px)",
+          }}
+        />
       </div>
 
       {loading ? (
@@ -214,101 +195,100 @@ export function Dashboard() {
         </div>
       ) : (
         /* two-column reading layout */
-        <div
-          className="db-layout"
-          style={{ display: "grid", gridTemplateColumns: "180px 1fr", maxWidth: 1040, margin: "0 auto", gap: 0 }}
-        >
+        <div className="grid grid-cols-[180px_1fr] max-md:grid-cols-1 max-w-[1040px] mx-auto gap-0">
           {/* ── TOC sidebar ── */}
-          <aside
-            className="db-toc"
-            style={{ position: "sticky", top: 64, height: "calc(100vh - 64px)", overflowY: "auto", scrollbarWidth: "none", padding: "2.5rem 1.5rem 2.5rem 0", borderRight: "1px solid var(--border)" }}
-          >
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.52rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--muted)", opacity: 0.5, marginBottom: "1.5rem" }}>
+          <aside className="sticky top-16 h-[calc(100vh-64px)] overflow-y-auto [scrollbar-width:none] py-10 pl-6 pr-0 border-r border-border max-md:hidden">
+            <div className="font-mono text-[0.52rem] tracking-[0.2em] uppercase text-muted/50 mb-6">
               In this briefing
             </div>
             {tocSections.map(({ id, n, label }) => (
-              <div key={id} style={{ marginBottom: "1.35rem" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.48rem", letterSpacing: "0.1em", color: "var(--muted)", opacity: 0.4 }}>{n}</span>
+              <div key={id} className="mb-[1.35rem]">
+                <span className="font-mono text-[0.48rem] tracking-[0.1em] text-muted/40">{n}</span>
                 <a
                   href={`#${id}`}
-                  className="db-toc-link"
-                  onClick={(e) => { e.preventDefault(); document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
-                  style={{ fontFamily: "var(--font-display, serif)", fontSize: "0.82rem", fontWeight: 400, color: activeId === id ? "var(--accent)" : "var(--muted)", textDecoration: "none" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  className={`block font-display text-[0.82rem] font-normal no-underline leading-[1.4] mt-0.5 transition-colors duration-150 hover:text-foreground ${
+                    activeId === id ? "text-accent" : "text-muted"
+                  }`}
                 >
                   {label}
                 </a>
-                <div style={{ width: 16, height: 1, background: "var(--border)", marginTop: "1rem" }} />
+                <div className="w-4 h-px bg-border mt-4" />
               </div>
             ))}
           </aside>
 
           {/* ── Main reading column ── */}
-          <main
-            className="db-main"
-            style={{ padding: "2.5rem 0 7rem 3rem", maxWidth: 680 }}
-          >
+          <main className="py-10 pb-28 pl-12 max-w-[680px] max-md:pl-0 max-md:max-w-full">
 
             {/* ── 01 · PROFILE ── */}
-            <section id="profile" className="db-section" style={{ animationDelay: "0s" }}>
-              <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--muted)", opacity: 0.5, marginBottom: "1.5rem" }}>
+            <section
+              id="profile"
+              className={fadeInClasses}
+              style={{ transitionDelay: "0s" }}
+            >
+              <p className="font-mono text-[0.58rem] tracking-[0.16em] uppercase text-muted/50 mb-6">
                 {fmtDate()} &middot; {fmtTime()}
               </p>
 
               {/* Greeting — matches reference: "Good morning,\n<name>." */}
-              <h1 style={{ fontFamily: "var(--font-display, serif)", fontSize: "clamp(2.2rem, 4vw, 3.75rem)", fontWeight: 700, letterSpacing: "-0.035em", lineHeight: 1.08, color: "var(--foreground)", marginBottom: "0.75rem" }}>
+              <h1 className="font-display text-[clamp(2.2rem,4vw,3.75rem)] font-bold tracking-[-0.035em] leading-[1.08] text-foreground mb-3">
                 {timeGreeting()},<br />
-                <em style={{ fontStyle: "italic", fontWeight: 300, color: "var(--accent)" }}>
+                <em className="italic font-light text-accent">
                   {firstName ? `${firstName}.` : "let's get started."}
                 </em>
               </h1>
 
               {/* Role / industry */}
               {(profile?.role || profile?.industry) ? (
-                <p style={{ fontFamily: "var(--font-display, serif)", fontStyle: "italic", fontWeight: 300, fontSize: "clamp(0.93rem, 1.4vw, 1.05rem)", color: "var(--muted)", lineHeight: 1.8, maxWidth: "56ch", marginBottom: "1rem" }}>
-                  {profile?.role && <><span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{profile.role}</span></>}
+                <p className="font-display italic font-light text-[clamp(0.93rem,1.4vw,1.05rem)] text-muted leading-[1.8] max-w-[56ch] mb-4">
+                  {profile?.role && <><span className="text-foreground font-semibold not-italic">{profile.role}</span></>}
                   {profile?.role && profile?.industry && " in the "}
-                  {profile?.industry && <><span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{profile.industry}</span> industry</>}
-                  {"."}{(profile?.platforms ?? []).length > 0 && <> Writing on <span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{profile!.platforms!.join(" · ")}</span>.</>}
+                  {profile?.industry && <><span className="text-foreground font-semibold not-italic">{profile.industry}</span> industry</>}
+                  {"."}{(profile?.platforms ?? []).length > 0 && <> Writing on <span className="text-foreground font-semibold not-italic">{profile!.platforms!.join(" · ")}</span>.</>}
                 </p>
               ) : (
-                <p style={{ fontFamily: "var(--font-display, serif)", fontStyle: "italic", fontWeight: 300, fontSize: "1rem", color: "var(--muted)", lineHeight: 1.8, marginBottom: "1rem" }}>
+                <p className="font-display italic font-light text-[1rem] text-muted leading-[1.8] mb-4">
                   Your profile isn&rsquo;t set up yet.{" "}
                   <DotLink onClick={() => navigate("/profile")}>Tell me about yourself →</DotLink>
                 </p>
               )}
 
               {/* Editorial brief */}
-              <p style={{ fontFamily: "var(--font-display, serif)", fontStyle: "italic", fontWeight: 300, fontSize: "1.025rem", color: "var(--muted)", lineHeight: 1.85, maxWidth: "58ch", marginBottom: "0.75rem" }}>
+              <p className="font-display italic font-light text-[1.025rem] text-muted leading-[1.85] max-w-[58ch] mb-3">
                 {feedCount > 0
-                  ? <><span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{feedCount}</span> {feedCount === 1 ? "source" : "sources"} monitored. </>
+                  ? <><span className="text-foreground font-semibold not-italic">{feedCount}</span> {feedCount === 1 ? "source" : "sources"} monitored. </>
                   : <><DotLink onClick={() => navigate("/feeds")}>Add a source</DotLink> to start surfacing ideas. </>
                 }
                 {pending.length > 0
-                  ? <><span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{pending.length}</span> {pending.length === 1 ? "item" : "items"} in queue{topCards.length > 0 && ", top stories below"}. </>
+                  ? <><span className="text-foreground font-semibold not-italic">{pending.length}</span> {pending.length === 1 ? "item" : "items"} in queue{topCards.length > 0 && ", top stories below"}. </>
                   : feedCount > 0 ? <>Queue is clear. </> : null
                 }
                 {drafts.length > 0
-                  ? <><span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{drafts.length}</span> {drafts.length === 1 ? "draft" : "drafts"} waiting.</>
+                  ? <><span className="text-foreground font-semibold not-italic">{drafts.length}</span> {drafts.length === 1 ? "draft" : "drafts"} waiting.</>
                   : <>No drafts yet.</>
                 }
               </p>
 
               {/* Voice */}
               {profile?.voice && (
-                <p style={{ fontFamily: "var(--font-display, serif)", fontStyle: "italic", fontWeight: 300, fontSize: "0.975rem", color: "var(--muted)", lineHeight: 1.8, maxWidth: "58ch", marginBottom: "0.5rem" }}>
-                  Your voice is <span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{profile.voice}</span>.
+                <p className="font-display italic font-light text-[0.975rem] text-muted leading-[1.8] max-w-[58ch] mb-2">
+                  Your voice is <span className="text-foreground font-semibold not-italic">{profile.voice}</span>.
                 </p>
               )}
 
               {/* Goals */}
               {(profile?.contentGoals ?? []).length > 0 && (
-                <p style={{ fontFamily: "var(--font-display, serif)", fontStyle: "italic", fontWeight: 300, fontSize: "0.93rem", color: "var(--muted)", lineHeight: 1.8, marginTop: "0.5rem" }}>
+                <p className="font-display italic font-light text-[0.93rem] text-muted leading-[1.8] mt-2">
                   {profile!.contentGoals!.length === 1
-                    ? <>Your goal is to <span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{profile!.contentGoals![0]}</span>.</>
+                    ? <>Your goal is to <span className="text-foreground font-semibold not-italic">{profile!.contentGoals![0]}</span>.</>
                     : <>Your goals are{" "}
                         {profile!.contentGoals!.map((g, i, arr) => (
                           <React.Fragment key={i}>
-                            <span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{g}</span>
+                            <span className="text-foreground font-semibold not-italic">{g}</span>
                             {i < arr.length - 2 && ", "}
                             {i === arr.length - 2 && " and "}
                           </React.Fragment>
@@ -320,13 +300,13 @@ export function Dashboard() {
 
               {/* Memory note */}
               {totalMem > 0 && (
-                <p style={{ fontFamily: "var(--font-display, serif)", fontStyle: "italic", fontWeight: 300, fontSize: "0.9rem", color: "var(--muted)", lineHeight: 1.75, marginTop: "0.5rem" }}>
-                  Workspace memory holds <span style={{ color: "var(--foreground)", fontWeight: 600, fontStyle: "normal" }}>{totalMem}</span> {totalMem === 1 ? "note" : "notes"} — voice, style, and audience.{" "}
+                <p className="font-display italic font-light text-[0.9rem] text-muted leading-[1.75] mt-2">
+                  Workspace memory holds <span className="text-foreground font-semibold not-italic">{totalMem}</span> {totalMem === 1 ? "note" : "notes"} — voice, style, and audience.{" "}
                   <DotLink onClick={() => navigate("/memory")}>Browse →</DotLink>
                 </p>
               )}
 
-              <p style={{ marginTop: "0.9rem" }}>
+              <p className="mt-[0.9rem]">
                 <MonoLink onClick={() => navigate("/profile")}>Edit profile →</MonoLink>
               </p>
 
@@ -334,7 +314,11 @@ export function Dashboard() {
             </section>
 
             {/* ── 02 · BRIEF ── */}
-            <section id="brief" className="db-section" style={{ paddingTop: "3rem", animationDelay: "0.08s" }}>
+            <section
+              id="brief"
+              className={`pt-12 ${fadeInClasses}`}
+              style={{ transitionDelay: "0.08s" }}
+            >
               <SectionHead
                 title={topCards.length > 0
                   ? `${topCards.length === 1 ? "One story" : `${topCards.length} stories`} from ${pending.length} items.`
@@ -347,37 +331,39 @@ export function Dashboard() {
               />
 
               {topCards.length > 0 ? (
-                <div style={{ borderTop: "1px solid var(--border)", marginBottom: "1.5rem" }}>
+                <div className="border-t border-border mb-6">
                   {topCards.map((card, i) => {
                     const scoreW = Math.round(Math.min(1, Math.max(0, card.score ?? 0.5)) * 100);
                     return (
                       <div
                         key={card.id}
-                        className="db-story-row"
+                        className="group/db-story flex items-start gap-4 py-[0.875rem] cursor-pointer border-b border-border"
                         role="button"
                         tabIndex={0}
                         onClick={() => navigate("/cards")}
                         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/cards"); }}
-                        style={{ borderBottom: "1px solid var(--border)" }}
                       >
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.56rem", color: "var(--muted)", opacity: 0.45, flexShrink: 0, width: 18, paddingTop: 2 }}>
+                        <span className="font-mono text-[0.56rem] text-muted/45 shrink-0 w-[18px] pt-0.5">
                           0{i + 1}
                         </span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div className="db-story-title" style={{ fontSize: "0.9375rem", lineHeight: 1.45, marginBottom: "0.2rem", color: "var(--muted)", transition: "color 0.15s" }}>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[0.9375rem] leading-[1.45] mb-[0.2rem] text-muted transition-colors duration-150 group-hover/db-story:text-foreground">
                             {card.title}
                           </div>
                           {(card.source || card.createdAt) && (
-                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.52rem", letterSpacing: "0.07em", color: "var(--muted)", opacity: 0.45 }}>
+                            <div className="font-mono text-[0.52rem] tracking-[0.07em] text-muted/45">
                               {[card.source, fmtShortDate(card.createdAt)].filter(Boolean).join(" · ")}
                             </div>
                           )}
                         </div>
-                        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                          <div style={{ width: 38, height: 2, background: "var(--border)", borderRadius: 1 }}>
-                            <div style={{ width: `${scoreW}%`, height: "100%", borderRadius: 1, background: "var(--accent)", opacity: 0.5 }} />
+                        <div className="shrink-0 flex items-center gap-[0.6rem]">
+                          <div className="w-[38px] h-0.5 bg-border rounded-sm">
+                            <div
+                              className="h-full rounded-sm bg-accent/50"
+                              style={{ width: `${scoreW}%` }}
+                            />
                           </div>
-                          <span className="db-story-action" style={{ fontFamily: "var(--font-mono)", fontSize: "0.53rem", color: "var(--accent)", opacity: 0, transition: "opacity 0.15s" }}>
+                          <span className="font-mono text-[0.53rem] text-accent opacity-0 transition-opacity duration-150 group-hover/db-story:opacity-75">
                             open →
                           </span>
                         </div>
@@ -386,7 +372,7 @@ export function Dashboard() {
                   })}
                 </div>
               ) : (
-                <p style={{ fontFamily: "var(--font-display, serif)", fontStyle: "italic", fontWeight: 300, fontSize: "0.925rem", color: "var(--muted)", lineHeight: 1.85, marginBottom: "1.5rem", maxWidth: "58ch" }}>
+                <p className="font-display italic font-light text-[0.925rem] text-muted leading-[1.85] mb-6 max-w-[58ch]">
                   {feedCount > 0
                     ? "Ask Claude to fetch fresh content, or wait for your sources to update."
                     : <><DotLink onClick={() => navigate("/feeds")}>Add a source →</DotLink></>
@@ -395,7 +381,7 @@ export function Dashboard() {
               )}
 
               {pending.length > topCards.length && (
-                <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.1em", color: "var(--muted)", opacity: 0.5, marginBottom: "1.5rem" }}>
+                <p className="font-mono text-[0.58rem] tracking-[0.1em] text-muted/50 mb-6">
                   <MonoLink onClick={() => navigate("/cards")}>See all {pending.length} items in queue →</MonoLink>
                 </p>
               )}
@@ -404,7 +390,11 @@ export function Dashboard() {
             </section>
 
             {/* ── 03 · DRAFTS ── */}
-            <section id="drafts" className="db-section" style={{ paddingTop: "3rem", animationDelay: "0.16s" }}>
+            <section
+              id="drafts"
+              className={`pt-12 ${fadeInClasses}`}
+              style={{ transitionDelay: "0.16s" }}
+            >
               <SectionHead
                 title={drafts.length > 0
                   ? drafts.length === 1 ? "One draft waiting." : `${drafts.length} drafts waiting.`
@@ -415,7 +405,7 @@ export function Dashboard() {
               />
 
               {drafts.length > 0 ? (
-                <div style={{ marginBottom: "1.5rem" }}>
+                <div className="mb-6">
                   {drafts.slice(0, 4).map((draft, i) => {
                     const isReady  = i === 0;
                     const dotColor = isReady ? "var(--success)" : "var(--warning)";
@@ -429,23 +419,22 @@ export function Dashboard() {
                       ?? (draft.content ? `"${draft.content.replace(/^#+\s*/, "").slice(0, 55).trim()}…"` : "Untitled draft");
 
                     return (
-                      <div key={draft.id} style={{ display: "grid", gridTemplateColumns: "8px 1fr", gap: "0 0.9rem", marginBottom: "1.75rem", alignItems: "start" }}>
+                      <div key={draft.id} className="grid grid-cols-[8px_1fr] gap-x-[0.9rem] mb-[1.75rem] items-start">
                         <span
-                          className="db-dot"
-                          style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, display: "block", marginTop: "0.42rem", boxShadow: `0 0 7px ${dotColor}` }}
+                          className="block w-2 h-2 rounded-full mt-[0.42rem] animate-pulse"
+                          style={{ background: dotColor, boxShadow: `0 0 7px ${dotColor}` }}
                         />
                         <div>
                           <div
-                            className="db-draft-title"
+                            className="font-display text-[1.025rem] font-semibold text-foreground leading-[1.3] cursor-pointer transition-colors duration-150 hover:text-accent"
                             role="button"
                             tabIndex={0}
                             onClick={() => navigate("/drafts")}
                             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/drafts"); }}
-                            style={{ fontFamily: "var(--font-display, serif)", fontSize: "1.025rem", fontWeight: 600, color: "var(--foreground)", lineHeight: 1.3 }}
                           >
                             {displayTitle}
                           </div>
-                          <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.53rem", letterSpacing: "0.07em", color: "var(--muted)", opacity: 0.45, margin: "0.3rem 0 0.45rem" }}>
+                          <div className="font-mono text-[0.53rem] tracking-[0.07em] text-muted/45 my-[0.3rem] mb-[0.45rem]">
                             {[
                               draft.format,
                               wordCount ? `~${wordCount} words` : null,
@@ -454,30 +443,31 @@ export function Dashboard() {
                             ].filter(Boolean).join(" · ")}
                           </div>
                           {preview && (
-                            <p style={{ fontSize: "0.875rem", color: "var(--muted)", lineHeight: 1.6, opacity: 0.75 }}>
+                            <p className="text-sm text-muted/75 leading-[1.6]">
                               {preview}{(preview.length >= 115 ? "…" : "")}
                             </p>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => navigate("/drafts")}
-                            style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: "0.57rem", letterSpacing: "0.08em", color: "var(--accent)", opacity: 0.65, padding: 0, marginTop: "0.5rem", transition: "opacity 0.15s" }}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="font-mono text-[0.57rem] tracking-[0.08em] text-accent/65 p-0 h-auto min-w-0 mt-2"
+                            onPress={() => navigate("/drafts")}
                           >
                             {isReady ? "Open draft →" : "Finish draft →"}
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     );
                   })}
                   {drafts.length > 4 && (
-                    <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.57rem", letterSpacing: "0.1em", color: "var(--muted)", opacity: 0.45 }}>
+                    <p className="font-mono text-[0.57rem] tracking-[0.1em] text-muted/45">
                       <MonoLink onClick={() => navigate("/drafts")}>+ {drafts.length - 4} more in queue →</MonoLink>
                     </p>
                   )}
                 </div>
               ) : (
-                <p style={{ fontFamily: "var(--font-display, serif)", fontStyle: "italic", fontWeight: 300, fontSize: "0.925rem", color: "var(--muted)", lineHeight: 1.85, marginBottom: "1.5rem", maxWidth: "58ch" }}>
-                  Nothing written yet. Ask Claude: <span style={{ color: "var(--foreground)", fontStyle: "normal" }}>"write a post about [topic]"</span> — or shortlist a card first.
+                <p className="font-display italic font-light text-[0.925rem] text-muted leading-[1.85] mb-6 max-w-[58ch]">
+                  Nothing written yet. Ask Claude: <span className="text-foreground not-italic">"write a post about [topic]"</span> — or shortlist a card first.
                 </p>
               )}
 
@@ -485,13 +475,17 @@ export function Dashboard() {
             </section>
 
             {/* ── 04 · PULSE ── */}
-            <section id="pulse" className="db-section" style={{ paddingTop: "3rem", animationDelay: "0.24s" }}>
+            <section
+              id="pulse"
+              className={`pt-12 ${fadeInClasses}`}
+              style={{ transitionDelay: "0.24s" }}
+            >
               <SectionHead
                 title="The numbers."
                 sub="Everything in your current workspace at a glance."
               />
 
-              <div style={{ display: "flex", gap: "2.5rem", flexWrap: "wrap", marginBottom: "2rem", alignItems: "flex-end" }}>
+              <div className="flex gap-10 flex-wrap mb-8 items-end">
                 <StatBlock n={pending.length}  label="In queue"    color="var(--accent)" />
                 <StatBlock n={shortlisted}     label="Shortlisted" color="var(--success)" />
                 <StatBlock n={drafts.length}   label="Drafts"      color="var(--warning)" />
@@ -503,27 +497,30 @@ export function Dashboard() {
             </section>
 
             {/* ── 05 · NEXT ── */}
-            <section id="next" className="db-section" style={{ paddingTop: "3rem", animationDelay: "0.32s" }}>
+            <section
+              id="next"
+              className={`pt-12 ${fadeInClasses}`}
+              style={{ transitionDelay: "0.32s" }}
+            >
               <SectionHead
                 title="Pick one."
                 sub="Prioritised by likely impact this session."
               />
 
-              <div style={{ borderTop: "1px solid var(--border)" }}>
+              <div className="border-t border-border">
                 {ctaList.slice(0, 5).map(({ label, to }, i) => (
                   <div
                     key={i}
-                    className="db-cta-row"
+                    className="group/db-cta flex items-center justify-between py-[0.9rem] cursor-pointer border-b border-border"
                     role="button"
                     tabIndex={0}
                     onClick={() => navigate(to)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(to); }}
-                    style={{ borderBottom: "1px solid var(--border)" }}
                   >
-                    <span className="db-cta-label" style={{ fontFamily: "var(--font-display, serif)", fontStyle: "italic", fontWeight: 300, fontSize: "0.95rem", color: "var(--muted)", transition: "color 0.15s" }}>
+                    <span className="font-display italic font-light text-[0.95rem] text-muted transition-colors duration-150 group-hover/db-cta:text-foreground">
                       {label}
                     </span>
-                    <span className="db-cta-arrow" style={{ fontFamily: "var(--font-mono)", fontSize: "0.57rem", color: "var(--accent)", opacity: 0, transition: "opacity 0.15s", flexShrink: 0, marginLeft: "1rem" }}>
+                    <span className="font-mono text-[0.57rem] text-accent opacity-0 transition-opacity duration-150 group-hover/db-cta:opacity-75 shrink-0 ml-4">
                       open →
                     </span>
                   </div>
@@ -541,21 +538,17 @@ export function Dashboard() {
 // ─── Section primitives ────────────────────────────────────────────────────────
 
 function SectionRule() {
-  return (
-    <div style={{ height: 1, background: "linear-gradient(to right, var(--border), transparent 80%)", marginTop: "3rem" }} />
-  );
+  return <Separator variant="tertiary" className="mt-12" />;
 }
 
 function SectionHead({ title, sub }: { title: string; sub?: string }) {
   return (
-    <div style={{ marginBottom: "1.75rem" }}>
-      <h2 style={{ fontFamily: "var(--font-display, serif)", fontSize: "1.6rem", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2, color: "var(--foreground)", marginBottom: sub ? "0.35rem" : 0 }}>
+    <div className="mb-[1.75rem]">
+      <h2 className="font-display text-[1.6rem] font-bold tracking-[-0.02em] leading-[1.2] text-foreground">
         {title}
       </h2>
       {sub && (
-        <p style={{ fontSize: "0.875rem", color: "var(--muted)", lineHeight: 1.6 }}>
-          {sub}
-        </p>
+        <p className="text-sm text-muted leading-[1.6]">{sub}</p>
       )}
     </div>
   );
@@ -563,16 +556,16 @@ function SectionHead({ title, sub }: { title: string; sub?: string }) {
 
 function StatBlock({ n, label, color }: { n: number; label: string; color: string }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem" }}>
-      <span style={{ fontFamily: "var(--font-display, serif)", fontSize: "2.25rem", fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1, color }}>
+    <div className="flex flex-col gap-[0.1rem]">
+      <span
+        className="font-display text-[2.25rem] font-extrabold tracking-[-0.04em] leading-none"
+        style={{ color }}
+      >
         {n}
       </span>
-      <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.53rem", letterSpacing: "0.13em", textTransform: "uppercase", color: "var(--muted)", opacity: 0.55 }}>
+      <span className="font-mono text-[0.53rem] tracking-[0.13em] uppercase text-muted/55">
         {label}
       </span>
     </div>
   );
 }
-
-
-

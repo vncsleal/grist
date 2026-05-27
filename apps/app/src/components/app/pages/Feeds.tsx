@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Separator, Button } from "@heroui/react";
 import { listFeeds, addFeed, deleteFeed } from "../api";
-import { Layout, Spinner } from "../Layout";
+import { Layout } from "../Layout";
+import { Spinner } from "@heroui/react";
 import { useWorkspace } from "../WorkspaceContext";
 
 /** Extract a human-readable topic label from a feed URL.
@@ -31,37 +33,6 @@ function getFeedLabel(url: string): string | null {
   } catch {
     return null;
   }
-}
-
-function FeedAction({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        font: "inherit",
-        color: "var(--muted)",
-        background: "none",
-        border: "none",
-        padding: 0,
-        cursor: disabled ? "default" : "pointer",
-        textDecorationLine: "underline",
-        textDecorationColor: "color-mix(in oklch, var(--accent) 40%, transparent)",
-        textUnderlineOffset: "3px",
-        opacity: disabled ? 0.5 : 1,
-      }}
-    >
-      {children}
-    </button>
-  );
 }
 
 export function Feeds() {
@@ -136,45 +107,28 @@ export function Feeds() {
     return `You're drawing from ${feeds.length} sources.`;
   }
 
-  const proseStyle: React.CSSProperties = {
-    fontFamily: "var(--font-display, serif)",
-    fontSize: "1rem",
-    lineHeight: "1.75",
-    color: "var(--muted)",
-  };
-
   return (
     <Layout>
       {/* Ambient glow */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
-        style={{
-          background: `radial-gradient(ellipse 60% 40% at 20% 10%, color-mix(in oklch, var(--accent) 6%, transparent), transparent)`,
-        }}
+        className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_60%_40%_at_20%_10%,color-mix(in_oklch,var(--accent)_6%,transparent),transparent)]"
       />
 
       {/* Header */}
       <div className="mb-10">
-        <h1
-          className="text-3xl font-bold leading-tight"
-          style={{
-            fontFamily: "var(--font-display, serif)",
-            letterSpacing: "-0.025em",
-            color: "var(--foreground)",
-          }}
-        >
+        <h1 className="font-display text-3xl font-bold leading-tight tracking-[-0.025em] text-foreground">
           {headlineText()}
         </h1>
         {feeds.length > 0 && !loading && (
-          <p className="mt-2" style={{ ...proseStyle, opacity: 0.7, fontSize: "0.9375rem" }}>
+          <p className="mt-2 font-display text-[0.9375rem] leading-relaxed text-muted/70">
             Each one shapes what gets surfaced to you.
           </p>
         )}
       </div>
 
       {error && (
-        <p className="mb-8 text-sm" style={{ color: "var(--danger)" }}>
+        <p className="mb-8 text-sm text-danger">
           {error}
         </p>
       )}
@@ -193,31 +147,20 @@ export function Feeds() {
             return (
               <React.Fragment key={url}>
                 {i > 0 && (
-                  <div
-                    className="my-4 h-px"
-                    style={{ background: "linear-gradient(to right, var(--border), transparent)" }}
-                  />
+                  <Separator className="my-4" />
                 )}
-                <p style={proseStyle}>
+                <p className="font-display text-base leading-[1.75] text-muted">
                   You follow{" "}
                   <a
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      color: "var(--foreground)",
-                      textDecorationLine: "underline",
-                      textDecorationColor: "color-mix(in oklch, var(--accent) 45%, transparent)",
-                      textUnderlineOffset: "3px",
-                    }}
+                    className="text-foreground underline underline-offset-3 decoration-accent/45"
                   >
                     {label ?? hostname}
                   </a>
                   {label && (
-                    <span
-                      className="font-mono text-[0.7rem] ml-1"
-                      style={{ color: "var(--muted)", opacity: 0.55 }}
-                    >
+                    <span className="font-mono text-[0.7rem] ml-1 text-muted/55">
                       ({hostname})
                     </span>
                   )}
@@ -225,9 +168,14 @@ export function Feeds() {
                   {isDeleting ? (
                     <Spinner />
                   ) : (
-                    <FeedAction onClick={() => void handleDelete(url)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onPress={() => void handleDelete(url)}
+                      className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display"
+                    >
                       Stop following it.
-                    </FeedAction>
+                    </Button>
                   )}
                 </p>
               </React.Fragment>
@@ -235,13 +183,10 @@ export function Feeds() {
           })}
 
           {/* Add feed */}
-          <div
-            className="mt-8 h-px"
-            style={{ background: "linear-gradient(to right, var(--border), transparent)" }}
-          />
+          <Separator className="mt-8" />
 
           {addingInline ? (
-            <p className="mt-6" style={proseStyle}>
+            <p className="mt-6 font-display text-base leading-[1.75] text-muted">
               Start following{" "}
               <input
                 ref={inputRef}
@@ -254,42 +199,39 @@ export function Feeds() {
                 placeholder="https://example.com/feed.xml"
                 data-1p-ignore
                 autoFocus
-                style={{
-                  font: "inherit",
-                  fontFamily: "var(--font-mono, monospace)",
-                  fontSize: "0.875rem",
-                  color: "var(--foreground)",
-                  background: "none",
-                  border: "none",
-                  borderBottom: "1px solid var(--border)",
-                  outline: "none",
-                  width: "26ch",
-                  padding: "0 2px",
-                }}
+                className="font-mono text-[0.875rem] text-foreground bg-transparent border-none border-b border-border outline-none w-[26ch] p-0.5"
               />
               {" — "}
-              <FeedAction onClick={() => void handleAdd()} disabled={adding || !newUrl.trim()}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onPress={() => void handleAdd()}
+                isDisabled={adding || !newUrl.trim()}
+                className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display"
+              >
                 {adding ? "adding…" : "add it"}
-              </FeedAction>
+              </Button>
               {" "}or{" "}
-              <FeedAction onClick={() => { setAddingInline(false); setNewUrl(""); setAddError(null); }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onPress={() => { setAddingInline(false); setNewUrl(""); setAddError(null); }}
+                className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display"
+              >
                 never mind
-              </FeedAction>
+              </Button>
               .
               {addError && (
-                <span
-                  className="ml-2 text-sm"
-                  style={{ fontFamily: "var(--font-mono)", color: "var(--danger)" }}
-                >
+                <span className="ml-2 font-mono text-sm text-danger">
                   {addError}
                 </span>
               )}
             </p>
           ) : (
-            <p className="mt-6" style={proseStyle}>
+            <p className="mt-6 font-display text-base leading-[1.75] text-muted">
               {feeds.length === 0
-                ? <>Nothing here yet. <FeedAction onClick={() => setAddingInline(true)}>Add your first source.</FeedAction></>
-                : <FeedAction onClick={() => setAddingInline(true)}>Add another source.</FeedAction>
+                ? <>Nothing here yet. <Button variant="ghost" size="sm" onPress={() => setAddingInline(true)} className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display">Add your first source.</Button></>
+                : <Button variant="ghost" size="sm" onPress={() => setAddingInline(true)} className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display">Add another source.</Button>
               }
             </p>
           )}

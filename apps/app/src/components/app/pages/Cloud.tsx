@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { signInEmail, signUpEmail, useSession } from "../auth";
-import { Button, Spinner, Alert } from "../Layout";
-import { Form, Input, Label, Tabs, TextField } from "@heroui/react";
+import { Button, Spinner, Alert, Form, Input, Label, Tabs, TextField } from "@heroui/react";
 
 const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "").trim().toLowerCase();
 
@@ -29,7 +28,7 @@ export function Cloud() {
     try {
       if (mode === "sign-up") {
         await signUpEmail(name, email, password);
-        try { sessionStorage.setItem("quillby_new_account", "1"); } catch { /* ignore */ }
+        try { sessionStorage.setItem("quillby_new_account", "1"); } catch (err) { console.debug("sessionStorage not available", err); }
       } else {
         await signInEmail(email, password);
       }
@@ -42,18 +41,14 @@ export function Cloud() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-(--background)">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-background">
       {/* Left panel — branding */}
-      <div
-        className="relative hidden lg:flex lg:w-1/2 flex-col p-14 overflow-hidden"
-        style={{
-          background: "radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.28) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(124,58,237,0.12) 0%, transparent 50%), var(--surface)",
-          borderRight: "1px solid var(--border)",
-        }}
-      >
+      <div className="relative hidden lg:flex lg:w-1/2 flex-col p-14 overflow-hidden bg-gradient-to-br from-accent/30 via-accent/10 to-transparent bg-surface">
+        <div className="border-r border-border absolute inset-y-0 right-0" />
+
         {/* Top wordmark */}
         <div>
-          <span style={{ fontFamily: "var(--font-display, serif)", fontSize: "1.25rem", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--foreground)" }}>
+          <span className="font-display text-xl font-bold tracking-tight text-foreground">
             Quillby
           </span>
         </div>
@@ -63,22 +58,19 @@ export function Cloud() {
           <img
             src="/quillby-logo.png"
             alt="Quillby"
-            style={{ width: 384, height: 384, objectFit: "contain" }}
+            className="w-96 h-96 object-contain"
           />
         </div>
 
         {/* Headline */}
         <div className="flex flex-col gap-6 max-w-sm">
-          <h2
-            className="text-5xl font-bold text-(--foreground) leading-[1.08]"
-            style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.03em" }}
-          >
+          <h2 className="text-5xl font-bold text-foreground leading-[1.08] font-display tracking-tighter">
             Content that{" "}
-            <em style={{ fontStyle: "italic", fontWeight: 300, color: "var(--accent)" }}>
+            <em className="italic font-light text-accent">
               moves with you.
             </em>
           </h2>
-          <p className="text-base leading-relaxed text-(--muted-foreground)">
+          <p className="text-base leading-relaxed text-muted">
             Harvest fresh signals, shape compelling narratives, and publish across every channel — all from a single AI-native workspace.
           </p>
 
@@ -89,15 +81,13 @@ export function Cloud() {
               "Real-time content harvesting from RSS, Reddit, and more",
               "Card-based drafts that stay in sync with your workflow",
             ].map((item) => (
-              <li key={item} className="flex items-start gap-3 text-sm text-(--muted-foreground)">
-                <span className="mt-1 w-4 h-4 shrink-0 rounded-full flex items-center justify-center text-[9px]" style={{ background: "color-mix(in oklch, var(--accent) 20%, transparent)", color: "var(--accent)" }}>✦</span>
+              <li key={item} className="flex items-start gap-3 text-sm text-muted">
+                <span className="mt-1 w-4 h-4 shrink-0 rounded-full flex items-center justify-center text-[9px] bg-accent/20 text-accent">✦</span>
                 {item}
               </li>
             ))}
           </ul>
         </div>
-
-
       </div>
 
       {/* Right panel — form */}
@@ -107,22 +97,19 @@ export function Cloud() {
           <img
             src="/quillby-logo.png"
             alt="Quillby"
-            style={{ width: 288, height: 288, objectFit: "contain" }}
+            className="w-72 h-72 object-contain"
           />
-          <span style={{ fontFamily: "var(--font-display, serif)", fontSize: "1.15rem", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--foreground)" }}>
+          <span className="font-display text-lg font-bold tracking-tight text-foreground">
             Quillby
           </span>
         </div>
 
         <div className="w-full max-w-sm flex flex-col gap-8">
           <div>
-            <h1
-              className="text-3xl font-bold text-(--foreground) mb-2"
-              style={{ fontFamily: "var(--font-display, serif)", letterSpacing: "-0.025em", lineHeight: 1.1 }}
-            >
+            <h1 className="text-3xl font-bold text-foreground mb-2 font-display tracking-tight leading-[1.1]">
               {mode === "sign-in" ? "Welcome back" : "Create your account"}
             </h1>
-            <p className="text-sm text-(--muted-foreground)">
+            <p className="text-sm text-muted">
               {mode === "sign-in"
                 ? "Sign in to your Quillby account."
                 : "Start your Quillby journey today."}
