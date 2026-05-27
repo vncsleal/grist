@@ -122,3 +122,68 @@ export const GetPricingArgsSchema = z.object({});
 export const BillingActionArgsSchema = z.object({
   action: z.enum(["upgrade", "downgrade", "manage"]).describe("Billing action to perform"),
 });
+
+// ── HTTP API Route Schemas (request validation) ────────────────────────────
+
+export const ConnectBodySchema = z.object({
+  apiKey: z.string().min(1),
+});
+
+export const SelectWorkspaceBodySchema = z.object({
+  workspaceId: z.string().min(1),
+});
+
+export const CurateCardBodySchema = z.object({
+  cardId: z.string().min(1),
+  status: z.enum(["shortlisted", "skipped"]),
+  workspaceId: z.string().optional(),
+});
+
+export const SaveProfileBodySchema = z.record(z.unknown());
+
+export const MemoryDeleteBodySchema = z.object({
+  memoryType: z.string().min(1),
+  index: z.number().int().min(0),
+});
+
+export const FeedUrlBodySchema = z.object({
+  url: z.string().url(),
+});
+
+export const CreateApiKeyBodySchema = z.object({
+  name: z.string().min(1).max(200),
+  rateLimitMax: z.number().int().min(1).optional(),
+});
+
+export const DeleteApiKeyBodySchema = z.object({
+  keyId: z.string().min(1),
+});
+
+export const SaveProviderConfigBodySchema = z.object({
+  modality: z.enum(["image", "audio", "video"]),
+  provider: z.string().min(1),
+  apiKey: z.string().min(1),
+  voiceId: z.string().optional(),
+  groupId: z.string().optional(),
+});
+
+export const ClearProviderConfigBodySchema = z.object({
+  modality: z.enum(["image", "audio", "video"]),
+});
+
+export const AssetFileQuerySchema = z.object({
+  jobId: z.string().min(1),
+});
+
+export const CardsQuerySchema = z.object({
+  status: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(500).optional().default(100),
+});
+
+export const JobsQuerySchema = z.object({
+  modality: z.enum(["image", "audio", "video"]).optional(),
+});
+
+export const AssetsQuerySchema = z.object({
+  modality: z.enum(["image", "audio", "video"]).optional(),
+});

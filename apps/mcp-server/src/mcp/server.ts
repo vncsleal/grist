@@ -95,6 +95,20 @@ import {
   GetPlanArgsSchema, // eslint-disable-line @typescript-eslint/no-unused-vars
   GetPricingArgsSchema, // eslint-disable-line @typescript-eslint/no-unused-vars
   BillingActionArgsSchema,
+  ConnectBodySchema,
+  SelectWorkspaceBodySchema,
+  CurateCardBodySchema,
+  SaveProfileBodySchema,
+  MemoryDeleteBodySchema,
+  FeedUrlBodySchema,
+  CreateApiKeyBodySchema,
+  DeleteApiKeyBodySchema,
+  SaveProviderConfigBodySchema,
+  ClearProviderConfigBodySchema,
+  AssetFileQuerySchema,
+  CardsQuerySchema,
+  JobsQuerySchema,
+  AssetsQuerySchema,
 } from "./schemas.js";
 import {
   checkRateLimit,
@@ -102,6 +116,9 @@ import {
   validateContentType,
   applySecurityHeaders,
   sendJsonError,
+  sendJsonSuccess,
+  validateBody,
+  validateQuery,
 } from "./middleware.js";
 import {
   handlePlanCreate,
@@ -2617,8 +2634,7 @@ if (TRANSPORT_MODE === "http") {
       // Health check — unauthenticated, fast
       // ------------------------------------------------------------------
       if (url.pathname === "/health" && req.method === "GET") {
-        const body = JSON.stringify({ status: "ok", version: PKG.version, uptime: Math.floor(process.uptime()), sessions: sessions.size });
-        res.writeHead(200, { "Content-Type": "application/json" }).end(body);
+        sendJsonSuccess(res, { status: "ok", version: PKG.version, uptime: Math.floor(process.uptime()), sessions: sessions.size });
         finish(200);
         return;
       }
@@ -2689,15 +2705,16 @@ if (TRANSPORT_MODE === "http") {
       // ------------------------------------------------------------------
       if (url.pathname === "/api/app/connect") {
         if (req.method === "POST") {
-          const body = await readJsonBody<{ apiKey?: string }>(req);
-          if (!body.apiKey || typeof body.apiKey !== "string") {
-            res.writeHead(400).end(JSON.stringify({ error: "apiKey is required" }));
+          const parsed = validateBody(ConnectBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
+          const body = parsed.data;
           const verification = await authApi.verifyApiKey(body.apiKey);
           if (!verification.valid) {
-            res.writeHead(401).end(JSON.stringify({ error: "Invalid API key" }));
+            sendJsonError(res, 401, "Invalid API key");
             finish(401);
             return;
           }
@@ -2706,7 +2723,7 @@ if (TRANSPORT_MODE === "http") {
           const token = `${randomUUID()}-${randomUUID()}`;
           appSessions.set(token, { userId, expiresAt: Date.now() + APP_SESSION_TTL_MS });
           res.setHeader("Set-Cookie", buildSessionCookie(token, APP_SESSION_TTL_MS / 1000));
-          res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ ok: true }));
+          sendJsonSuccess(res, {});
           finish(200);
           return;
         }
@@ -2727,7 +2744,7 @@ if (TRANSPORT_MODE === "http") {
       if (url.pathname.startsWith("/api/app")) {
         const authState = await resolveAppAuth(req);
         if (!authState) {
-          res.writeHead(401).end(JSON.stringify({ error: "Unauthorized" }));
+          sendJsonError(res, 401, "Unauthorized");
           finish(401);
           return;
         }
@@ -2750,13 +2767,13 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/workspaces/select" && req.method === "POST") {
-          const body = await readJsonBody<{ workspaceId?: string }>(req);
-          if (!body.workspaceId) {
-            res.writeHead(400).end(JSON.stringify({ error: "workspaceId is required" }));
+          const parsed = validateBody(SelectWorkspaceBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
-          const workspace = await storage.setCurrentWorkspace(body.workspaceId);
+          const workspace = await storage.setCurrentWorkspace(parsed.data.workspaceId);
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(workspace));
           finish(200);
           return;
@@ -2769,7 +2786,13 @@ if (TRANSPORT_MODE === "http") {
             return;
           }
 
-          const requestedStatus = url.searchParams.get("status");
+          const queryParsed = validateQuery(CardsQuerySchema, url);
+          if (!queryParsed.ok) {
+            sendJsonError(res, 400, queryParsed.error);
+            finish(400);
+            return;
+          }
+          const { status: requestedStatus } = queryParsed.data;
           const bundle = await activeStorage.loadLatestHarvest();
           const curation = bundle.curationState ?? {};
           const currentWorkspace = workspaceId ? null : await activeStorage.getCurrentWorkspace();
@@ -2793,16 +2816,17 @@ if (TRANSPORT_MODE === "http") {
           return;
         }
 
-        if (url.pathname === "/api/app/cards/curate" && req.method === "POST") {
-          const body = await readJsonBody<{ cardId?: string; status?: "shortlisted" | "skipped"; workspaceId?: string }>(req);
-          if (!body.cardId || !body.status) {
-            res.writeHead(400).end(JSON.stringify({ error: "cardId and status are required" }));
+          if (url.pathname === "/api/app/cards/curate" && req.method === "POST") {
+          const parsed = validateBody(CurateCardBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
+          const body = parsed.data;
           const targetStorage = body.workspaceId ? await storage.withWorkspace(body.workspaceId) : storage;
           if (!await targetStorage.latestHarvestExists()) {
-            res.writeHead(404).end(JSON.stringify({ error: "No harvest found for this workspace" }));
+            sendJsonError(res, 404, "No harvest found for this workspace");
             finish(404);
             return;
           }
@@ -2810,11 +2834,10 @@ if (TRANSPORT_MODE === "http") {
           const cardId = Number(body.cardId);
           const card = bundle.cards.find((entry) => entry.id === cardId);
           if (!card) {
-            res.writeHead(404).end(JSON.stringify({ error: "Card not found" }));
+            sendJsonError(res, 404, "Card not found");
             finish(404);
             return;
           }
-
           const action = mapAppStatusToCurationAction(body.status);
           const statusMap: Record<"shortlist" | "skip", "shortlisted" | "skipped"> = {
             shortlist: "shortlisted",
@@ -2846,7 +2869,13 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/jobs" && req.method === "GET") {
-          const modality = (url.searchParams.get("modality") ?? undefined) as GenerationModality | undefined;
+          const queryParsed = validateQuery(JobsQuerySchema, url);
+          if (!queryParsed.ok) {
+            sendJsonError(res, 400, queryParsed.error);
+            finish(400);
+            return;
+          }
+          const { modality } = queryParsed.data;
           const storageWithJobs = activeStorage as WorkspaceStorage & JobStorage;
           const jobs = await storageWithJobs.listJobs(modality);
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ jobs }));
@@ -2855,7 +2884,13 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/assets" && req.method === "GET") {
-          const modality = (url.searchParams.get("modality") ?? undefined) as GenerationModality | undefined;
+          const queryParsed = validateQuery(AssetsQuerySchema, url);
+          if (!queryParsed.ok) {
+            sendJsonError(res, 400, queryParsed.error);
+            finish(400);
+            return;
+          }
+          const { modality } = queryParsed.data;
           const storageWithJobs = activeStorage as WorkspaceStorage & JobStorage;
           const jobs = await storageWithJobs.listJobs(modality);
           const assets = jobs
@@ -2879,16 +2914,17 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/assets/file" && req.method === "GET") {
-          const jobId = url.searchParams.get("jobId");
-          if (!jobId) {
-            res.writeHead(400).end(JSON.stringify({ error: "jobId is required" }));
+          const queryParsed = validateQuery(AssetFileQuerySchema, url);
+          if (!queryParsed.ok) {
+            sendJsonError(res, 400, queryParsed.error);
             finish(400);
             return;
           }
+          const { jobId } = queryParsed.data;
           const storageWithJobs = activeStorage as WorkspaceStorage & JobStorage;
           const job = await storageWithJobs.loadJob(jobId);
           if (!job?.outputRef) {
-            res.writeHead(404).end(JSON.stringify({ error: "Asset not found" }));
+            sendJsonError(res, 404, "Asset not found");
             finish(404);
             return;
           }
@@ -2901,7 +2937,7 @@ if (TRANSPORT_MODE === "http") {
           const resolvedPath = path.resolve(job.outputRef);
           const dataDir = path.resolve(CONFIG.DATA_DIR);
           if (!resolvedPath.startsWith(dataDir)) {
-            res.writeHead(403).end(JSON.stringify({ error: "Forbidden" }));
+            sendJsonError(res, 403, "Forbidden");
             finish(403);
             return;
           }
@@ -2911,16 +2947,16 @@ if (TRANSPORT_MODE === "http") {
           } catch (err: unknown) {
             const isForbidden = err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "EACCES";
             if (isForbidden) {
-              res.writeHead(403).end(JSON.stringify({ error: "Forbidden" }));
+              sendJsonError(res, 403, "Forbidden");
               finish(403);
             } else {
-              res.writeHead(404).end(JSON.stringify({ error: "Asset file is missing" }));
+              sendJsonError(res, 404, "Asset file is missing");
               finish(404);
             }
             return;
           }
           if (!realPath.startsWith(dataDir)) {
-            res.writeHead(403).end(JSON.stringify({ error: "Forbidden" }));
+            sendJsonError(res, 403, "Forbidden");
             finish(403);
             return;
           }
@@ -2968,19 +3004,14 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/providers-config" && req.method === "PUT") {
-          const body = await readJsonBody<{ modality?: GenerationModality; provider?: string; apiKey?: string; voiceId?: string; groupId?: string }>(req);
-          if (!body.modality || !body.provider || !body.apiKey) {
-            res.writeHead(400).end(JSON.stringify({ error: "modality, provider, and apiKey are required" }));
+          const parsed = validateBody(SaveProviderConfigBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
-          const saved = saveProviderConfig({
-            modality: body.modality,
-            provider: body.provider,
-            apiKey: body.apiKey,
-            voiceId: body.voiceId,
-            groupId: body.groupId,
-          }, deploymentMode);
+          const { modality, provider, apiKey, voiceId, groupId } = parsed.data;
+          const saved = saveProviderConfig({ modality, provider, apiKey, voiceId, groupId }, deploymentMode);
           refreshProviderRouter();
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ saved, config: getStoredProviderConfigSummary() }));
           finish(200);
@@ -2988,13 +3019,13 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/providers-config" && req.method === "DELETE") {
-          const body = await readJsonBody<{ modality?: GenerationModality }>(req);
-          if (!body.modality) {
-            res.writeHead(400).end(JSON.stringify({ error: "modality is required" }));
+          const parsed = validateBody(ClearProviderConfigBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
-          clearProviderConfig(body.modality);
+          clearProviderConfig(parsed.data.modality);
           refreshProviderRouter();
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ config: getStoredProviderConfigSummary() }));
           finish(200);
@@ -3011,19 +3042,17 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/api-keys" && req.method === "POST") {
-          const body = await readJsonBody<{ name?: string; rateLimitMax?: number }>(req);
-          const keyName = body.name?.trim();
-          if (!keyName) {
-            res.writeHead(400).end(JSON.stringify({ error: "name is required" }));
+          const parsed = validateBody(CreateApiKeyBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
+          const { name: keyName, rateLimitMax } = parsed.data;
 
-          const rateLimitMax = typeof body.rateLimitMax === "number" && Number.isFinite(body.rateLimitMax)
-            ? Math.max(1, Math.floor(body.rateLimitMax))
-            : parseInt(process.env.QUILLBY_RATE_LIMIT ?? "60", 10);
+          const effectiveLimit = rateLimitMax ?? parseInt(process.env.QUILLBY_RATE_LIMIT ?? "60", 10);
 
-          const result = await authApi.createApiKey(authState.userId, keyName, rateLimitMax);
+          const result = await authApi.createApiKey(authState.userId, keyName, effectiveLimit);
           const keys = await listApiKeysFromDb(db, apikeyTable, authState.userId);
           const meta = keys.find((entry: ListedApiKey) => entry.id === result.id);
 
@@ -3036,13 +3065,13 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/api-keys" && req.method === "DELETE") {
-          const body = await readJsonBody<{ keyId?: string }>(req);
-          if (!body.keyId) {
-            res.writeHead(400).end(JSON.stringify({ error: "keyId is required" }));
+          const parsed = validateBody(DeleteApiKeyBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
-          await deleteApiKeyFromDb(db, apikeyTable, body.keyId);
+          await deleteApiKeyFromDb(db, apikeyTable, parsed.data.keyId);
           res.writeHead(204).end();
           finish(204);
           return;
@@ -3057,9 +3086,14 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/profile" && req.method === "PUT") {
-          const body = await readJsonBody<Record<string, unknown>>(req);
+          const parsed = validateBody(SaveProfileBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
+            finish(400);
+            return;
+          }
           const existing = await activeStorage.loadContext();
-          const merged = { ...(existing ?? {}), ...body };
+          const merged = { ...(existing ?? {}), ...parsed.data };
           await activeStorage.saveContext(merged as Parameters<typeof activeStorage.saveContext>[0]);
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ profile: merged }));
           finish(200);
@@ -3075,20 +3109,21 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/memory/delete" && req.method === "POST") {
-          const body = await readJsonBody<{ memoryType?: string; index?: number }>(req);
-          if (!body.memoryType || typeof body.index !== "number") {
-            res.writeHead(400).end(JSON.stringify({ error: "memoryType and index are required" }));
+          const parsed = validateBody(MemoryDeleteBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
+          const { memoryType, index } = parsed.data;
           const mem = await activeStorage.loadTypedMemory();
-          const bucket = body.memoryType as keyof typeof mem;
+          const bucket = memoryType as keyof typeof mem;
           if (!Array.isArray(mem[bucket])) {
-            res.writeHead(400).end(JSON.stringify({ error: `Unknown memory type: ${body.memoryType}` }));
+            sendJsonError(res, 400, `Unknown memory type: ${memoryType}`);
             finish(400);
             return;
           }
-          (mem[bucket] as string[]).splice(body.index, 1);
+          (mem[bucket] as string[]).splice(index, 1);
           await activeStorage.replaceTypedMemory(mem);
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ memory: mem }));
           finish(200);
@@ -3104,13 +3139,13 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/feeds" && req.method === "POST") {
-          const body = await readJsonBody<{ url?: string }>(req);
-          const feedUrl = body.url?.trim();
-          if (!feedUrl) {
-            res.writeHead(400).end(JSON.stringify({ error: "url is required" }));
+          const parsed = validateBody(FeedUrlBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
+          const feedUrl = parsed.data.url;
           const existing = await activeStorage.loadSources();
           if (!existing.includes(feedUrl)) {
             await activeStorage.appendSources([feedUrl]);
@@ -3122,22 +3157,21 @@ if (TRANSPORT_MODE === "http") {
         }
 
         if (url.pathname === "/api/app/feeds" && req.method === "DELETE") {
-          const body = await readJsonBody<{ url?: string }>(req);
-          const feedUrl = body.url?.trim();
-          if (!feedUrl) {
-            res.writeHead(400).end(JSON.stringify({ error: "url is required" }));
+          const parsed = validateBody(FeedUrlBodySchema, await readJsonBody(req));
+          if (!parsed.ok) {
+            sendJsonError(res, 400, parsed.error);
             finish(400);
             return;
           }
           const existing = await activeStorage.loadSources();
-          await activeStorage.replaceSources(existing.filter((u) => u !== feedUrl));
+          await activeStorage.replaceSources(existing.filter((u) => u !== parsed.data.url));
           const updated = await activeStorage.loadSources();
           res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ feeds: updated }));
           finish(200);
           return;
         }
 
-        res.writeHead(404).end(JSON.stringify({ error: "Not found" }));
+        sendJsonError(res, 404, "Not found");
         finish(404);
         return;
       }

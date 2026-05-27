@@ -29,6 +29,7 @@ const Settings = lazyNamed(() => import("./pages/Settings"), "Settings");
 const Profile = lazyNamed(() => import("./pages/Profile"), "Profile");
 const Memory = lazyNamed(() => import("./pages/Memory"), "Memory");
 const Feeds = lazyNamed(() => import("./pages/Feeds"), "Feeds");
+const Connectors = lazyNamed(() => import("./pages/Connectors"), "Connectors");
 
 class ErrorBoundary extends Component<
   { children: React.ReactNode },
@@ -187,6 +188,14 @@ export function App() {
             element={
               <RequireAuth>
                 <LazyPage component={Settings} />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/connectors"
+            element={
+              <RequireAuth>
+                <LazyPage component={Connectors} />
               </RequireAuth>
             }
           />

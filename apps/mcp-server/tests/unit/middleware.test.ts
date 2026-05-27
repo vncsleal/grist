@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import type http from "node:http";
 import type { Socket } from "node:net";
+import { z } from "zod";
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -278,14 +279,14 @@ describe("sendJsonError", () => {
     const mod = await import("../../src/mcp/middleware.js");
     const res = mockRes();
     mod.sendJsonError(res, 429, "Too many requests");
-    expect(JSON.parse(res._body as string)).toEqual({ error: "Too many requests" });
+    expect(JSON.parse(res._body as string)).toEqual({ ok: false, error: "Too many requests" });
   });
 
   it("includes extra fields when provided", async () => {
     const mod = await import("../../src/mcp/middleware.js");
     const res = mockRes();
     mod.sendJsonError(res, 400, "Bad request", { field: "name" });
-    expect(JSON.parse(res._body as string)).toEqual({ error: "Bad request", field: "name" });
+    expect(JSON.parse(res._body as string)).toEqual({ ok: false, error: "Bad request", field: "name" });
   });
 
   it("sets Content-Type header to application/json", async () => {
@@ -302,5 +303,100 @@ describe("sendJsonError", () => {
     const before = res._body;
     mod.sendJsonError(res, 500, "fail");
     expect(res._body).toBe(before);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateBody
+// ---------------------------------------------------------------------------
+describe("validateBody", () => {
+  const schema = z.object({ name: z.string().min(1), age: z.number().int().min(0) });
+
+  it("returns parsed data for valid input", async () => {
+    const mod = await import("../../src/mcp/middleware.js");
+    const result = mod.validateBody(schema, { name: "Alice", age: 30 });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual({ name: "Alice", age: 30 });
+    }
+  });
+
+  it("returns error for invalid input", async () => {
+    const mod = await import("../../src/mcp/middleware.js");
+    const result = mod.validateBody(schema, { name: "" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("name");
+    }
+  });
+
+  it("rejects extra unknown keys", async () => {
+    const strictSchema = z.object({ name: z.string() }).strict();
+    const mod = await import("../../src/mcp/middleware.js");
+    const result = mod.validateBody(strictSchema, { name: "Alice", extra: true });
+    expect(result.ok).toBe(false);
+  });
+
+  it("includes field path in error message", async () => {
+    const mod = await import("../../src/mcp/middleware.js");
+    const result = mod.validateBody(schema, { name: "Alice", age: -1 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain("age");
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateQuery
+// ---------------------------------------------------------------------------
+describe("validateQuery", () => {
+  const schema = z.object({ limit: z.coerce.number().int().min(1).max(100) });
+
+  it("parses URL search params against schema", async () => {
+    const mod = await import("../../src/mcp/middleware.js");
+    const url = new URL("http://example.com/api?limit=10");
+    const result = mod.validateQuery(schema, url);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual({ limit: 10 });
+    }
+  });
+
+  it("returns error for invalid query params", async () => {
+    const mod = await import("../../src/mcp/middleware.js");
+    const url = new URL("http://example.com/api?limit=999");
+    const result = mod.validateQuery(schema, url);
+    expect(result.ok).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// sendJsonSuccess
+// ---------------------------------------------------------------------------
+describe("sendJsonSuccess", () => {
+  it("writes 200 with ok: true and data", async () => {
+    const mod = await import("../../src/mcp/middleware.js");
+    const res = mockRes();
+    mod.sendJsonSuccess(res, { cards: [{ id: "1" }] });
+    const body = JSON.parse(res._body as string);
+    expect(res._status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.cards).toEqual([{ id: "1" }]);
+  });
+
+  it("sets Content-Type header", async () => {
+    const mod = await import("../../src/mcp/middleware.js");
+    const res = mockRes();
+    mod.sendJsonSuccess(res, {});
+    expect(res._headers["Content-Type"]).toBe("application/json");
+  });
+
+  it("is a no-op if headers already sent", async () => {
+    const mod = await import("../../src/mcp/middleware.js");
+    const res = mockRes();
+    Object.defineProperty(res, "headersSent", { value: true });
+    mod.sendJsonSuccess(res, { data: "should-not-appear" });
+    expect(res._body).toBe("");
   });
 });
