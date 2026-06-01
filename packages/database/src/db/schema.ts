@@ -24,7 +24,10 @@ export const session = sqliteTable("session", {
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
-}, (t) => [index("session_user_id_idx").on(t.userId)]);
+}, (t) => [
+  index("session_user_id_idx").on(t.userId),
+  index("session_expires_at_idx").on(t.expiresAt),
+]);
 
 export const account = sqliteTable("account", {
   id: text("id").primaryKey(),
@@ -202,6 +205,7 @@ export const hostedWorkspaceJob = sqliteTable("hosted_workspace_job", {
   index("hosted_job_user_workspace_idx").on(t.userId, t.workspaceId),
   index("hosted_job_user_ws_modality_idx").on(t.userId, t.workspaceId, t.modality),
   index("hosted_job_status_idx").on(t.status),
+  index("hosted_job_status_updated_idx").on(t.status, t.updatedAt),
 ]);
 
 // ── Content Plans (v3) ───────────────────────────────────────────────────────
