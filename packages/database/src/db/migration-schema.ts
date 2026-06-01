@@ -1,4 +1,9 @@
 import {
+  user,
+  session,
+  account,
+  verification,
+  apikey,
   hostedUserState,
   hostedWorkspace,
   hostedWorkspaceContext,
@@ -16,6 +21,11 @@ import {
 } from "./schema.js";
 
 export {
+  user,
+  session,
+  account,
+  verification,
+  apikey,
   hostedUserState,
   hostedWorkspace,
   hostedWorkspaceContext,
