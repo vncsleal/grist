@@ -65,7 +65,6 @@ import {
   getPlanLimits,
   isCloudMode,
   isPlanEnforcementEnabled,
-  verifyStripeWebhookSignature,
 } from "../billing.js";
 import { CONFIG, getDeploymentMode } from "../config.js";
 import {
@@ -3249,22 +3248,7 @@ if (TRANSPORT_MODE === "http") {
           chunks.push(chunk as Buffer);
         }
         const rawBody = Buffer.concat(chunks).toString("utf-8");
-        if (!verifyStripeWebhookSignature(rawBody, signature)) {
-          res.writeHead(400).end("Invalid webhook signature");
-          finish(400);
-          return;
-        }
-
-        let event: unknown;
-        try {
-          event = JSON.parse(rawBody);
-        } catch {
-          res.writeHead(400).end("Invalid JSON");
-          finish(400);
-          return;
-        }
-
-        const result = await applyStripeWebhookEvent(db, event as Record<string, unknown>);
+        const result = await applyStripeWebhookEvent(db, rawBody, signature);
         res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ received: true, ...result }));
         finish(200);
         return;
