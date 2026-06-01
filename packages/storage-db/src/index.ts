@@ -52,7 +52,7 @@ import {
   hostedSession,
 } from "@quillby/database";
 import { eq, and, or, sql, desc, asc, count, gte, lte, lt, ne, isNull, inArray, type SQL } from "drizzle-orm";
-import { ensureHostedTables, runHostedMigrations } from "@quillby/database";
+import { runHostedMigrations, pushHostedSchema } from "@quillby/database";
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from "node:crypto";
 import {
   getPlanLimits,
@@ -193,7 +193,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
         if (this.migrationsFolder) {
           await runHostedMigrations(this.db, this.migrationsFolder);
         } else {
-          await ensureHostedTables(this.db);
+          await pushHostedSchema(this.db);
         }
         // Bootstrap the user's workspace system if this is their first access.
         const existing = await this.db
