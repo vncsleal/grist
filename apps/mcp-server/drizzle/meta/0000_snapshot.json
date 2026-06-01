@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "1b40a83e-6ee5-4c5d-97c0-013490330472",
+  "id": "1c5ea029-c8ea-4525-86a1-d3979aef158f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "hosted_plan": {
@@ -91,20 +91,22 @@
         }
       },
       "indexes": {
-        "hosted_plan_user_ws_idx": {
-          "name": "hosted_plan_user_ws_idx",
-          "columns": [
-            "user_id",
-            "workspace_id"
-          ],
-          "isUnique": false
-        },
-        "hosted_plan_user_ws_status_idx": {
-          "name": "hosted_plan_user_ws_status_idx",
+        "hosted_plan_user_ws_created_idx": {
+          "name": "hosted_plan_user_ws_created_idx",
           "columns": [
             "user_id",
             "workspace_id",
-            "status"
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "hosted_plan_user_ws_status_created_idx": {
+          "name": "hosted_plan_user_ws_status_created_idx",
+          "columns": [
+            "user_id",
+            "workspace_id",
+            "status",
+            "created_at"
           ],
           "isUnique": false
         }
@@ -367,10 +369,12 @@
           ],
           "isUnique": false
         },
-        "hosted_task_plan_id_idx": {
-          "name": "hosted_task_plan_id_idx",
+        "hosted_task_plan_user_ws_idx": {
+          "name": "hosted_task_plan_user_ws_idx",
           "columns": [
-            "plan_id"
+            "plan_id",
+            "user_id",
+            "workspace_id"
           ],
           "isUnique": false
         },
@@ -424,7 +428,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "hosted_user_state_user_id_user_id_fk": {
+          "name": "hosted_user_state_user_id_user_id_fk",
+          "tableFrom": "hosted_user_state",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -521,6 +539,14 @@
             "user_id"
           ],
           "isUnique": false
+        },
+        "hosted_workspace_user_name_idx": {
+          "name": "hosted_workspace_user_name_idx",
+          "columns": [
+            "user_id",
+            "name"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {},
@@ -585,8 +611,16 @@
           ],
           "isUnique": false
         },
-        "hosted_access_workspace_idx": {
-          "name": "hosted_access_workspace_idx",
+        "hosted_access_grantee_ws_idx": {
+          "name": "hosted_access_grantee_ws_idx",
+          "columns": [
+            "grantee_user_id",
+            "workspace_id"
+          ],
+          "isUnique": false
+        },
+        "hosted_access_owner_ws_idx": {
+          "name": "hosted_access_owner_ws_idx",
           "columns": [
             "owner_user_id",
             "workspace_id"
@@ -710,11 +744,12 @@
         }
       },
       "indexes": {
-        "hosted_draft_user_ws_idx": {
-          "name": "hosted_draft_user_ws_idx",
+        "hosted_draft_user_ws_created_idx": {
+          "name": "hosted_draft_user_ws_created_idx",
           "columns": [
             "user_id",
-            "workspace_id"
+            "workspace_id",
+            "created_at"
           ],
           "isUnique": false
         }
@@ -870,20 +905,22 @@
         }
       },
       "indexes": {
-        "hosted_job_user_workspace_idx": {
-          "name": "hosted_job_user_workspace_idx",
-          "columns": [
-            "user_id",
-            "workspace_id"
-          ],
-          "isUnique": false
-        },
-        "hosted_job_user_ws_modality_idx": {
-          "name": "hosted_job_user_ws_modality_idx",
+        "hosted_job_user_ws_created_idx": {
+          "name": "hosted_job_user_ws_created_idx",
           "columns": [
             "user_id",
             "workspace_id",
-            "modality"
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "hosted_job_user_ws_modality_created_idx": {
+          "name": "hosted_job_user_ws_modality_created_idx",
+          "columns": [
+            "user_id",
+            "workspace_id",
+            "modality",
+            "created_at"
           ],
           "isUnique": false
         },
@@ -893,9 +930,31 @@
             "status"
           ],
           "isUnique": false
+        },
+        "hosted_job_status_updated_idx": {
+          "name": "hosted_job_status_updated_idx",
+          "columns": [
+            "status",
+            "updated_at"
+          ],
+          "isUnique": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "hosted_workspace_job_user_id_user_id_fk": {
+          "name": "hosted_workspace_job_user_id_user_id_fk",
+          "tableFrom": "hosted_workspace_job",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

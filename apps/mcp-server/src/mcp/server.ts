@@ -22,7 +22,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PKG = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../package.json"), "utf-8")) as { version: string };
-const DRIZZLE_MIGRATIONS_DIR = path.resolve(__dirname, "../../drizzle/hosted");
+const DRIZZLE_MIGRATIONS_DIR = path.resolve(__dirname, "../../drizzle");
 
 if (
   process.argv[1] &&

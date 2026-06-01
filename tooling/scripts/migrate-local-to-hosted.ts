@@ -29,7 +29,7 @@ import {
   hostedWorkspaceSeenUrls,
   hostedWorkspaceHarvest,
 } from "../src/db/schema.js";
-import { ensureHostedTables } from "../src/db/migrate-hosted.js";
+import { runHostedMigrations } from "../src/db/migrate-hosted.js";
 import { HarvestBundleSchema, TypedMemorySchema } from "../src/types.js";
 import {
   listWorkspaces,
@@ -94,7 +94,10 @@ async function main() {
   const dbUrl = process.env.QUILLBY_AUTH_DB_URL ?? "file:./quillby-auth.db";
   const { db } = createDb(dbUrl, process.env.LIBSQL_AUTH_TOKEN);
 
-  if (!dryRun) await ensureHostedTables(db);
+  if (!dryRun) {
+    const migrationsDir = path.resolve(import.meta.dirname, "../../apps/mcp-server/drizzle");
+    await runHostedMigrations(db, migrationsDir);
+  }
 
   // ── Migrate each workspace ────────────────────────────────────────────────
 

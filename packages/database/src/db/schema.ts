@@ -117,6 +117,7 @@ export const hostedWorkspace = sqliteTable("hosted_workspace", {
 }, (t) => [
   primaryKey({ columns: [t.userId, t.workspaceId] }),
   index("hosted_workspace_user_id_idx").on(t.userId),
+  index("hosted_workspace_user_name_idx").on(t.userId, t.name),
 ]);
 
 export const hostedWorkspaceContext = sqliteTable("hosted_workspace_context", {
@@ -160,7 +161,7 @@ export const hostedWorkspaceDraft = sqliteTable("hosted_workspace_draft", {
   cardId: integer("card_id"),
   content: text("content").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
-}, (t) => [index("hosted_draft_user_workspace_idx").on(t.userId, t.workspaceId)]);
+}, (t) => [index("hosted_draft_user_ws_created_idx").on(t.userId, t.workspaceId, t.createdAt)]);
 
 // ── Workspace sharing / team access (v1.2) ───────────────────────────────
 // Tracks which users have been granted access to another user's workspace.
@@ -176,6 +177,7 @@ export const hostedWorkspaceAccess = sqliteTable("hosted_workspace_access", {
 }, (t) => [
   primaryKey({ columns: [t.ownerUserId, t.workspaceId, t.granteeUserId] }),
   index("hosted_access_grantee_idx").on(t.granteeUserId),
+  index("hosted_access_grantee_ws_idx").on(t.granteeUserId, t.workspaceId),
   index("hosted_access_owner_ws_idx").on(t.ownerUserId, t.workspaceId),
 ]);
 
@@ -202,8 +204,8 @@ export const hostedWorkspaceJob = sqliteTable("hosted_workspace_job", {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().default(now),
 }, (t) => [
-  index("hosted_job_user_workspace_idx").on(t.userId, t.workspaceId),
-  index("hosted_job_user_ws_modality_idx").on(t.userId, t.workspaceId, t.modality),
+  index("hosted_job_user_ws_created_idx").on(t.userId, t.workspaceId, t.createdAt),
+  index("hosted_job_user_ws_modality_created_idx").on(t.userId, t.workspaceId, t.modality, t.createdAt),
   index("hosted_job_status_idx").on(t.status),
   index("hosted_job_status_updated_idx").on(t.status, t.updatedAt),
 ]);
@@ -223,8 +225,8 @@ export const hostedPlan = sqliteTable("hosted_plan", {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().default(now),
 }, (t) => [
-  index("hosted_plan_user_ws_idx").on(t.userId, t.workspaceId),
-  index("hosted_plan_user_ws_status_idx").on(t.userId, t.workspaceId, t.status),
+  index("hosted_plan_user_ws_created_idx").on(t.userId, t.workspaceId, t.createdAt),
+  index("hosted_plan_user_ws_status_created_idx").on(t.userId, t.workspaceId, t.status, t.createdAt),
 ]);
 
 // ── Content Tasks (v3) ───────────────────────────────────────────────────────
@@ -249,7 +251,7 @@ export const hostedTask = sqliteTable("hosted_task", {
 }, (t) => [
   index("hosted_task_user_ws_idx").on(t.userId, t.workspaceId),
   index("hosted_task_user_ws_status_idx").on(t.userId, t.workspaceId, t.status),
-  index("hosted_task_plan_id_idx").on(t.planId),
+  index("hosted_task_plan_user_ws_idx").on(t.planId, t.userId, t.workspaceId),
   index("hosted_task_user_ws_due_date_idx").on(t.userId, t.workspaceId, t.dueDate),
 ]);
 

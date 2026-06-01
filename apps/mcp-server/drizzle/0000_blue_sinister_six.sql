@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS `hosted_plan` (
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `hosted_plan_user_ws_idx` ON `hosted_plan` (`user_id`,`workspace_id`);--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `hosted_plan_user_ws_status_idx` ON `hosted_plan` (`user_id`,`workspace_id`,`status`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_plan_user_ws_created_idx` ON `hosted_plan` (`user_id`,`workspace_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_plan_user_ws_status_created_idx` ON `hosted_plan` (`user_id`,`workspace_id`,`status`,`created_at`);--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS `hosted_session` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
@@ -52,13 +52,14 @@ CREATE TABLE IF NOT EXISTS `hosted_task` (
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `hosted_task_user_ws_idx` ON `hosted_task` (`user_id`,`workspace_id`);--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `hosted_task_user_ws_status_idx` ON `hosted_task` (`user_id`,`workspace_id`,`status`);--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `hosted_task_plan_id_idx` ON `hosted_task` (`plan_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_task_plan_user_ws_idx` ON `hosted_task` (`plan_id`,`user_id`,`workspace_id`);--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `hosted_task_user_ws_due_date_idx` ON `hosted_task` (`user_id`,`workspace_id`,`due_date`);--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS `hosted_user_state` (
 	`user_id` text PRIMARY KEY NOT NULL,
 	`current_workspace_id` text NOT NULL,
 	`plan` text DEFAULT 'free' NOT NULL,
-	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS `hosted_workspace` (
@@ -77,6 +78,7 @@ CREATE TABLE IF NOT EXISTS `hosted_workspace` (
 );
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `hosted_workspace_user_id_idx` ON `hosted_workspace` (`user_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_workspace_user_name_idx` ON `hosted_workspace` (`user_id`,`name`);--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS `hosted_workspace_access` (
 	`owner_user_id` text NOT NULL,
 	`workspace_id` text NOT NULL,
@@ -87,7 +89,8 @@ CREATE TABLE IF NOT EXISTS `hosted_workspace_access` (
 );
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `hosted_access_grantee_idx` ON `hosted_workspace_access` (`grantee_user_id`);--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `hosted_access_workspace_idx` ON `hosted_workspace_access` (`owner_user_id`,`workspace_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_access_grantee_ws_idx` ON `hosted_workspace_access` (`grantee_user_id`,`workspace_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_access_owner_ws_idx` ON `hosted_workspace_access` (`owner_user_id`,`workspace_id`);--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS `hosted_workspace_context` (
 	`user_id` text NOT NULL,
 	`workspace_id` text NOT NULL,
@@ -106,7 +109,7 @@ CREATE TABLE IF NOT EXISTS `hosted_workspace_draft` (
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `hosted_draft_user_ws_idx` ON `hosted_workspace_draft` (`user_id`,`workspace_id`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_draft_user_ws_created_idx` ON `hosted_workspace_draft` (`user_id`,`workspace_id`,`created_at`);--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS `hosted_workspace_harvest` (
 	`user_id` text NOT NULL,
 	`workspace_id` text NOT NULL,
@@ -128,12 +131,14 @@ CREATE TABLE IF NOT EXISTS `hosted_workspace_job` (
 	`card_id` integer,
 	`meta` text,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
-	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `hosted_job_user_workspace_idx` ON `hosted_workspace_job` (`user_id`,`workspace_id`);--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `hosted_job_user_ws_modality_idx` ON `hosted_workspace_job` (`user_id`,`workspace_id`,`modality`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_job_user_ws_created_idx` ON `hosted_workspace_job` (`user_id`,`workspace_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_job_user_ws_modality_created_idx` ON `hosted_workspace_job` (`user_id`,`workspace_id`,`modality`,`created_at`);--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `hosted_job_status_idx` ON `hosted_workspace_job` (`status`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `hosted_job_status_updated_idx` ON `hosted_workspace_job` (`status`,`updated_at`);--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS `hosted_workspace_memory` (
 	`user_id` text NOT NULL,
 	`workspace_id` text NOT NULL,
