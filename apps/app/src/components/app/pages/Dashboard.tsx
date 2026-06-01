@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Separator, Button, Spinner } from "@heroui/react";
+import { Separator, Button, Skeleton } from "@heroui/react";
 import {
   getProfile,
   listCards,
@@ -52,7 +52,7 @@ const ReadProgress = React.memo(function ReadProgress() {
   }, []);
   return (
     <div
-      className="fixed top-16 left-0 h-0.5 z-[9999] bg-accent/60 transition-[width] duration-[80ms] linear"
+      className="fixed top-16 left-0 h-0.5 z-50 bg-accent/60"
       style={{ width: `${pct}%` }}
     />
   );
@@ -162,8 +162,8 @@ export function Dashboard() {
     { id: "next",    n: "05", label: "What to do next" },
   ];
 
-  const fadeInClasses = `transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-    animate ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[10px]"
+  const fadeInClasses = `transition-all duration-500 ease-out ${
+    animate ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2.5"
   }`;
 
   return (
@@ -190,27 +190,34 @@ export function Dashboard() {
       </div>
 
       {loading ? (
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <Spinner size="lg" />
+        <div className="min-h-[60vh] flex flex-col gap-4 p-10 max-w-[1040px] mx-auto">
+          <Skeleton className="h-4 w-24 rounded" />
+          <Skeleton className="h-8 w-64 rounded" />
+          <Skeleton className="h-4 w-96 rounded" />
+          <div className="mt-8 space-y-3">
+            <Skeleton className="h-3 w-32 rounded" />
+            <Skeleton className="h-3 w-full rounded" />
+            <Skeleton className="h-3 w-3/4 rounded" />
+          </div>
         </div>
       ) : (
         /* two-column reading layout */
         <div className="grid grid-cols-[180px_1fr] max-md:grid-cols-1 max-w-[1040px] mx-auto gap-0">
           {/* ── TOC sidebar ── */}
           <aside className="sticky top-16 h-[calc(100vh-64px)] overflow-y-auto [scrollbar-width:none] py-10 pl-6 pr-0 border-r border-border max-md:hidden">
-            <div className="font-mono text-[0.52rem] tracking-[0.2em] uppercase text-muted/50 mb-6">
+            <div className="font-mono text-xs tracking-widest uppercase text-muted/50 mb-6">
               In this briefing
             </div>
             {tocSections.map(({ id, n, label }) => (
-              <div key={id} className="mb-[1.35rem]">
-                <span className="font-mono text-[0.48rem] tracking-[0.1em] text-muted/40">{n}</span>
+              <div key={id} className="mb-5">
+                <span className="font-mono text-[10px] tracking-wider text-muted/40">{n}</span>
                 <a
                   href={`#${id}`}
                   onClick={(e) => {
                     e.preventDefault();
                     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
-                  className={`block font-display text-[0.82rem] font-normal no-underline leading-[1.4] mt-0.5 transition-colors duration-150 hover:text-foreground ${
+                  className={`block font-display text-sm font-normal no-underline leading-snug mt-0.5 transition-colors duration-150 hover:text-foreground ${
                     activeId === id ? "text-accent" : "text-muted"
                   }`}
                 >
@@ -230,12 +237,12 @@ export function Dashboard() {
               className={fadeInClasses}
               style={{ transitionDelay: "0s" }}
             >
-              <p className="font-mono text-[0.58rem] tracking-[0.16em] uppercase text-muted/50 mb-6">
+              <p className="font-mono text-xs tracking-wide uppercase text-muted/50 mb-6">
                 {fmtDate()} &middot; {fmtTime()}
               </p>
 
-              {/* Greeting — matches reference: "Good morning,\n<name>." */}
-              <h1 className="font-display text-[clamp(2.2rem,4vw,3.75rem)] font-bold tracking-[-0.035em] leading-[1.08] text-foreground mb-3">
+              {/* Greeting */}
+              <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight leading-tight text-foreground mb-3">
                 {timeGreeting()},<br />
                 <em className="italic font-light text-accent">
                   {firstName ? `${firstName}.` : "let's get started."}
@@ -244,21 +251,21 @@ export function Dashboard() {
 
               {/* Role / industry */}
               {(profile?.role || profile?.industry) ? (
-                <p className="font-display italic font-light text-[clamp(0.93rem,1.4vw,1.05rem)] text-muted leading-[1.8] max-w-[56ch] mb-4">
+                <p className="font-display italic font-light text-base md:text-lg text-muted leading-relaxed max-w-prose mb-4">
                   {profile?.role && <><span className="text-foreground font-semibold not-italic">{profile.role}</span></>}
                   {profile?.role && profile?.industry && " in the "}
                   {profile?.industry && <><span className="text-foreground font-semibold not-italic">{profile.industry}</span> industry</>}
                   {"."}{(profile?.platforms ?? []).length > 0 && <> Writing on <span className="text-foreground font-semibold not-italic">{profile!.platforms!.join(" · ")}</span>.</>}
                 </p>
               ) : (
-                <p className="font-display italic font-light text-[1rem] text-muted leading-[1.8] mb-4">
+                <p className="font-display italic font-light text-base text-muted leading-relaxed mb-4">
                   Your profile isn&rsquo;t set up yet.{" "}
                   <DotLink onClick={() => navigate("/profile")}>Tell me about yourself →</DotLink>
                 </p>
               )}
 
               {/* Editorial brief */}
-              <p className="font-display italic font-light text-[1.025rem] text-muted leading-[1.85] max-w-[58ch] mb-3">
+              <p className="font-display italic font-light text-base text-muted leading-relaxed max-w-prose mb-3">
                 {feedCount > 0
                   ? <><span className="text-foreground font-semibold not-italic">{feedCount}</span> {feedCount === 1 ? "source" : "sources"} monitored. </>
                   : <><DotLink onClick={() => navigate("/feeds")}>Add a source</DotLink> to start surfacing ideas. </>
@@ -275,14 +282,14 @@ export function Dashboard() {
 
               {/* Voice */}
               {profile?.voice && (
-                <p className="font-display italic font-light text-[0.975rem] text-muted leading-[1.8] max-w-[58ch] mb-2">
+                <p className="font-display italic font-light text-sm text-muted leading-relaxed max-w-prose mb-2">
                   Your voice is <span className="text-foreground font-semibold not-italic">{profile.voice}</span>.
                 </p>
               )}
 
               {/* Goals */}
               {(profile?.contentGoals ?? []).length > 0 && (
-                <p className="font-display italic font-light text-[0.93rem] text-muted leading-[1.8] mt-2">
+                <p className="font-display italic font-light text-sm text-muted leading-relaxed mt-2">
                   {profile!.contentGoals!.length === 1
                     ? <>Your goal is to <span className="text-foreground font-semibold not-italic">{profile!.contentGoals![0]}</span>.</>
                     : <>Your goals are{" "}
@@ -300,13 +307,13 @@ export function Dashboard() {
 
               {/* Memory note */}
               {totalMem > 0 && (
-                <p className="font-display italic font-light text-[0.9rem] text-muted leading-[1.75] mt-2">
+                <p className="font-display italic font-light text-sm text-muted leading-relaxed mt-2">
                   Workspace memory holds <span className="text-foreground font-semibold not-italic">{totalMem}</span> {totalMem === 1 ? "note" : "notes"} — voice, style, and audience.{" "}
                   <DotLink onClick={() => navigate("/memory")}>Browse →</DotLink>
                 </p>
               )}
 
-              <p className="mt-[0.9rem]">
+              <p className="mt-3">
                 <MonoLink onClick={() => navigate("/profile")}>Edit profile →</MonoLink>
               </p>
 
@@ -337,33 +344,33 @@ export function Dashboard() {
                     return (
                       <div
                         key={card.id}
-                        className="group/db-story flex items-start gap-4 py-[0.875rem] cursor-pointer border-b border-border"
+                        className="group/db-story flex items-start gap-4 py-3.5 cursor-pointer border-b border-border"
                         role="button"
                         tabIndex={0}
                         onClick={() => navigate("/cards")}
                         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/cards"); }}
                       >
-                        <span className="font-mono text-[0.56rem] text-muted/45 shrink-0 w-[18px] pt-0.5">
+                        <span className="font-mono text-xs text-muted/45 shrink-0 w-[18px] pt-0.5">
                           0{i + 1}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <div className="text-[0.9375rem] leading-[1.45] mb-[0.2rem] text-muted transition-colors duration-150 group-hover/db-story:text-foreground">
+                          <div className="text-sm leading-normal mb-0.5 text-muted transition-colors duration-150 group-hover/db-story:text-foreground">
                             {card.title}
                           </div>
                           {(card.source || card.createdAt) && (
-                            <div className="font-mono text-[0.52rem] tracking-[0.07em] text-muted/45">
+                            <div className="font-mono text-xs tracking-wider text-muted/45">
                               {[card.source, fmtShortDate(card.createdAt)].filter(Boolean).join(" · ")}
                             </div>
                           )}
                         </div>
-                        <div className="shrink-0 flex items-center gap-[0.6rem]">
+                        <div className="shrink-0 flex items-center gap-2">
                           <div className="w-[38px] h-0.5 bg-border rounded-sm">
                             <div
                               className="h-full rounded-sm bg-accent/50"
                               style={{ width: `${scoreW}%` }}
                             />
                           </div>
-                          <span className="font-mono text-[0.53rem] text-accent opacity-0 transition-opacity duration-150 group-hover/db-story:opacity-75">
+                          <span className="font-mono text-xs text-accent opacity-0 transition-opacity duration-150 group-hover/db-story:opacity-75">
                             open →
                           </span>
                         </div>
@@ -372,7 +379,7 @@ export function Dashboard() {
                   })}
                 </div>
               ) : (
-                <p className="font-display italic font-light text-[0.925rem] text-muted leading-[1.85] mb-6 max-w-[58ch]">
+                <p className="font-display italic font-light text-sm text-muted leading-relaxed mb-6 max-w-prose">
                   {feedCount > 0
                     ? "Ask Claude to fetch fresh content, or wait for your sources to update."
                     : <><DotLink onClick={() => navigate("/feeds")}>Add a source →</DotLink></>
@@ -381,7 +388,7 @@ export function Dashboard() {
               )}
 
               {pending.length > topCards.length && (
-                <p className="font-mono text-[0.58rem] tracking-[0.1em] text-muted/50 mb-6">
+                <p className="font-mono text-xs tracking-wider text-muted/50 mb-6">
                   <MonoLink onClick={() => navigate("/cards")}>See all {pending.length} items in queue →</MonoLink>
                 </p>
               )}
@@ -419,14 +426,14 @@ export function Dashboard() {
                       ?? (draft.content ? `"${draft.content.replace(/^#+\s*/, "").slice(0, 55).trim()}…"` : "Untitled draft");
 
                     return (
-                      <div key={draft.id} className="grid grid-cols-[8px_1fr] gap-x-[0.9rem] mb-[1.75rem] items-start">
+                      <div key={draft.id} className="grid grid-cols-[8px_1fr] gap-x-3 mb-6 items-start">
                         <span
-                          className="block w-2 h-2 rounded-full mt-[0.42rem] animate-pulse"
+                          className="block w-2 h-2 rounded-full mt-1.5 animate-pulse"
                           style={{ background: dotColor, boxShadow: `0 0 7px ${dotColor}` }}
                         />
                         <div>
                           <div
-                            className="font-display text-[1.025rem] font-semibold text-foreground leading-[1.3] cursor-pointer transition-colors duration-150 hover:text-accent"
+                            className="font-display text-base font-semibold text-foreground leading-snug cursor-pointer transition-colors duration-150 hover:text-accent"
                             role="button"
                             tabIndex={0}
                             onClick={() => navigate("/drafts")}
@@ -434,7 +441,7 @@ export function Dashboard() {
                           >
                             {displayTitle}
                           </div>
-                          <div className="font-mono text-[0.53rem] tracking-[0.07em] text-muted/45 my-[0.3rem] mb-[0.45rem]">
+                          <div className="font-mono text-xs tracking-wider text-muted/45 my-1">
                             {[
                               draft.format,
                               wordCount ? `~${wordCount} words` : null,
@@ -443,14 +450,14 @@ export function Dashboard() {
                             ].filter(Boolean).join(" · ")}
                           </div>
                           {preview && (
-                            <p className="text-sm text-muted/75 leading-[1.6]">
+                            <p className="text-sm text-muted/75 leading-relaxed">
                               {preview}{(preview.length >= 115 ? "…" : "")}
                             </p>
                           )}
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="font-mono text-[0.57rem] tracking-[0.08em] text-accent/65 p-0 h-auto min-w-0 mt-2"
+                            className="font-mono text-xs tracking-wider text-accent/65 p-0 h-auto min-w-0 mt-2"
                             onPress={() => navigate("/drafts")}
                           >
                             {isReady ? "Open draft →" : "Finish draft →"}
@@ -460,13 +467,13 @@ export function Dashboard() {
                     );
                   })}
                   {drafts.length > 4 && (
-                    <p className="font-mono text-[0.57rem] tracking-[0.1em] text-muted/45">
+                    <p className="font-mono text-xs tracking-wider text-muted/45">
                       <MonoLink onClick={() => navigate("/drafts")}>+ {drafts.length - 4} more in queue →</MonoLink>
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="font-display italic font-light text-[0.925rem] text-muted leading-[1.85] mb-6 max-w-[58ch]">
+                <p className="font-display italic font-light text-sm text-muted leading-relaxed mb-6 max-w-prose">
                   Nothing written yet. Ask Claude: <span className="text-foreground not-italic">"write a post about [topic]"</span> — or shortlist a card first.
                 </p>
               )}
@@ -511,16 +518,16 @@ export function Dashboard() {
                 {ctaList.slice(0, 5).map(({ label, to }, i) => (
                   <div
                     key={i}
-                    className="group/db-cta flex items-center justify-between py-[0.9rem] cursor-pointer border-b border-border"
+                    className="group/db-cta flex items-center justify-between py-3 cursor-pointer border-b border-border"
                     role="button"
                     tabIndex={0}
                     onClick={() => navigate(to)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(to); }}
                   >
-                    <span className="font-display italic font-light text-[0.95rem] text-muted transition-colors duration-150 group-hover/db-cta:text-foreground">
+                    <span className="font-display italic font-light text-sm text-muted transition-colors duration-150 group-hover/db-cta:text-foreground">
                       {label}
                     </span>
-                    <span className="font-mono text-[0.57rem] text-accent opacity-0 transition-opacity duration-150 group-hover/db-cta:opacity-75 shrink-0 ml-4">
+                    <span className="font-mono text-xs text-accent opacity-0 transition-opacity duration-150 group-hover/db-cta:opacity-75 shrink-0 ml-4">
                       open →
                     </span>
                   </div>
@@ -543,12 +550,12 @@ function SectionRule() {
 
 function SectionHead({ title, sub }: { title: string; sub?: string }) {
   return (
-    <div className="mb-[1.75rem]">
-      <h2 className="font-display text-[1.6rem] font-bold tracking-[-0.02em] leading-[1.2] text-foreground">
+    <div className="mb-6">
+      <h2 className="font-display text-2xl font-bold tracking-tight leading-snug text-foreground">
         {title}
       </h2>
       {sub && (
-        <p className="text-sm text-muted leading-[1.6]">{sub}</p>
+        <p className="text-sm text-muted leading-relaxed">{sub}</p>
       )}
     </div>
   );
@@ -556,14 +563,14 @@ function SectionHead({ title, sub }: { title: string; sub?: string }) {
 
 function StatBlock({ n, label, color }: { n: number; label: string; color: string }) {
   return (
-    <div className="flex flex-col gap-[0.1rem]">
+    <div className="flex flex-col gap-0.5">
       <span
-        className="font-display text-[2.25rem] font-extrabold tracking-[-0.04em] leading-none"
+        className="font-display text-4xl font-extrabold tracking-tight leading-none"
         style={{ color }}
       >
         {n}
       </span>
-      <span className="font-mono text-[0.53rem] tracking-[0.13em] uppercase text-muted/55">
+      <span className="font-mono text-xs tracking-wider uppercase text-muted/55">
         {label}
       </span>
     </div>
