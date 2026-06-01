@@ -29,7 +29,7 @@ export const BlueprintSchema = z.object({
 export type Blueprint = z.infer<typeof BlueprintSchema>;
 
 export const ExecutionLogSchema = z.object({
-  stageName: z.string(),
+  stageName: z.string().min(1),
   status: StageStatusSchema,
   startedAt: z.string().optional(),
   completedAt: z.string().optional(),
@@ -41,11 +41,11 @@ export type ExecutionLog = z.infer<typeof ExecutionLogSchema>;
 
 export const CampaignSchema = z.object({
   id: z.string().min(1),
-  workspaceId: z.string(),
+  workspaceId: z.string().min(1),
   blueprintId: z.string().optional().default(""),
   name: z.string().min(1),
   status: CampaignStatusSchema,
-  stages: z.array(StageConfigSchema),
+  stages: z.array(StageConfigSchema).min(1),
   executions: z.array(ExecutionLogSchema).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
