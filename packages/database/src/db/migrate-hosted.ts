@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import type { QuillbyDb } from "../index.js";
+import { migrate as drizzleMigrate } from "drizzle-orm/libsql/migrator";
 
 /**
  * Check whether a column exists in a table using SQLite pragma introspection.
@@ -304,4 +305,16 @@ export async function ensureHostedTables(dbInstance: QuillbyDb): Promise<void> {
       if (!full.includes("duplicate column")) throw err;
     });
   }
+}
+
+/**
+ * Run Drizzle Kit managed migrations for hosted storage tables.
+ * Uses migration files from the provided folder path. The initial migration
+ * uses IF NOT EXISTS so it safely applies alongside existing tables.
+ */
+export async function runHostedMigrations(
+  db: QuillbyDb,
+  migrationsFolder: string,
+): Promise<void> {
+  await drizzleMigrate(db as never, { migrationsFolder });
 }
