@@ -99,6 +99,18 @@ export const hostedUserState = sqliteTable("hosted_user_state", {
   currentWorkspaceId: text("current_workspace_id").notNull(),
   /** Subscription plan: free | pro. Defaults to free. */
   plan: text("plan").notNull().default("free"),
+  /** Stripe customer ID for this user's billing account. */
+  stripeCustomerId: text("stripe_customer_id"),
+  /** Stripe subscription ID for the active subscription. */
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  /** Current subscription status from Stripe. */
+  subscriptionStatus: text("subscription_status"),
+  /** Unix timestamp (ms) when the current period ends. */
+  currentPeriodEnd: integer("current_period_end", { mode: "timestamp_ms" }),
+  /** Whether the subscription cancels at period end. */
+  cancelAtPeriodEnd: integer("cancel_at_period_end", { mode: "boolean" }),
+  /** Unix timestamp (ms) when the trial period ends, if applicable. */
+  trialEndsAt: integer("trial_ends_at", { mode: "timestamp_ms" }),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().default(now),
 });
 
@@ -273,4 +285,20 @@ export const hostedSession = sqliteTable("hosted_session", {
   index("hosted_session_user_ws_idx").on(t.userId, t.workspaceId),
   index("hosted_session_user_ws_state_idx").on(t.userId, t.workspaceId, t.state),
   index("hosted_session_user_ws_activity_idx").on(t.userId, t.workspaceId, t.lastActivityAt),
+]);
+
+// ── Stripe webhook idempotency tracking (v3.2) ─────────────────────────────
+// Each row records one processed Stripe webhook event so duplicate deliveries
+// are silently ignored. stripeEventId is unique to enforce idempotency.
+
+export const stripeWebhookEvent = sqliteTable("stripe_webhook_event", {
+  id: text("id").primaryKey(),
+  stripeEventId: text("stripe_event_id").notNull().unique(),
+  type: text("type").notNull(),
+  userId: text("user_id"),
+  status: text("status", { enum: ["processed", "skipped", "failed"] }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(now),
+}, (t) => [
+  index("stripe_webhook_event_id_idx").on(t.stripeEventId),
+  index("stripe_webhook_created_idx").on(t.createdAt),
 ]);

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Separator } from "@heroui/react/separator";
 import { Button } from "@heroui/react/button";
 import { Skeleton } from "@heroui/react/skeleton";
+import { Alert } from "@heroui/react/alert";
 import {
   getProfile,
   listCards,
@@ -203,7 +204,32 @@ export function Dashboard() {
           </div>
         </div>
       ) : (
-        /* two-column reading layout */
+        <>
+        {/* Setup banner — shown when profile is incomplete */}
+        {(!profile?.name || !profile?.voice) && !loading && (
+          <div className="max-w-[1040px] mx-auto mb-6">
+            <Alert status="accent">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>Complete your setup</Alert.Title>
+                <Alert.Description>
+                  Tell Quillby about yourself — your name, role, voice, and topics — so every
+                  story and draft is tailored to you.{" "}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                    onPress={() => navigate("/onboarding")}
+                  >
+                    Finish setup
+                  </Button>
+                </Alert.Description>
+              </Alert.Content>
+            </Alert>
+          </div>
+        )}
+
+        {/* two-column reading layout */}
         <div className="grid grid-cols-[180px_1fr] max-md:grid-cols-1 max-w-[1040px] mx-auto gap-0">
           {/* ── TOC sidebar ── */}
           <aside className="sticky top-16 h-[calc(100vh-64px)] overflow-y-auto [scrollbar-width:none] py-10 pl-6 pr-0 border-r border-border max-md:hidden">
@@ -539,6 +565,7 @@ export function Dashboard() {
 
           </main>
         </div>
+        </>
       )}
     </Layout>
   );

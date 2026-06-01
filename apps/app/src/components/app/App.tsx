@@ -30,6 +30,8 @@ const Profile = lazyNamed(() => import("./pages/Profile"), "Profile");
 const Memory = lazyNamed(() => import("./pages/Memory"), "Memory");
 const Feeds = lazyNamed(() => import("./pages/Feeds"), "Feeds");
 const Connectors = lazyNamed(() => import("./pages/Connectors"), "Connectors");
+const Pricing = lazyNamed(() => import("./pages/Pricing"), "Pricing");
+const Onboarding = lazyNamed(() => import("./pages/Onboarding"), "Onboarding");
 const ForgotPassword = lazyNamed(() => import("./pages/ForgotPassword"), "ForgotPassword");
 const ResetPassword = lazyNamed(() => import("./pages/ResetPassword"), "ResetPassword");
 const VerifyEmail = lazyNamed(() => import("./pages/VerifyEmail"), "VerifyEmail");
@@ -156,6 +158,22 @@ export function App() {
           element={
             <RequireAuth>
               <LazyPage component={Connectors} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/pricing"
+          element={
+            <RequireAuth>
+              <LazyPage component={Pricing} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/onboarding"
+          element={
+            <RequireAuth>
+              <LazyPage component={Onboarding} />
             </RequireAuth>
           }
         />

@@ -21,8 +21,11 @@
     "@fontsource/dm-mono": "^5.2.7",
     "@heroui/react": "^3.0.1",
     "@heroui/styles": "^3.0.1",
+    "@hookform/resolvers": "^4.1.0",
     "@tailwindcss/vite": "^4.2.1",
     "react": "^19.1.0",
+    "react-hook-form": "^7.54.0",
+    "zod": "^3.23.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^6.30.3",
     "tailwindcss": "^4.2.1"

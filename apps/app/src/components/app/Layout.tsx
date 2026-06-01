@@ -56,6 +56,7 @@ export function Layout({ children }: LayoutProps) {
                 <Tabs.Tab id="/feeds">Feeds<Tabs.Indicator /></Tabs.Tab>
                 <Tabs.Tab id="/memory">Memory<Tabs.Indicator /></Tabs.Tab>
                 <Tabs.Tab id="/profile">Profile<Tabs.Indicator /></Tabs.Tab>
+                {DEPLOY_MODE === "cloud" && <Tabs.Tab id="/pricing">Pricing<Tabs.Indicator /></Tabs.Tab>}
                 <Tabs.Tab id="/settings">Settings<Tabs.Indicator /></Tabs.Tab>
               </Tabs.List>
             </Tabs.ListContainer>

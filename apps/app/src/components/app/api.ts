@@ -164,8 +164,23 @@ export interface PlanInfo {
   plan: string;
   mode: string;
   planEnforcementEnabled: boolean;
-  limits?: Record<string, unknown>;
+  limits?: PlanLimitsInfo;
   billingPortalUrl?: string;
+}
+
+export interface PlanLimitsInfo {
+  maxOwnedWorkspaces: number | null;
+  maxDraftsPerWorkspace: number | null;
+  harvestCooldownMs: number | null;
+  imageCreditsPerMonth: number | null;
+  audioCreditsPerMonth: number | null;
+  videoCreditsPerMonth: number | null;
+}
+
+export interface UsageInfo {
+  imageCreditsUsed: number;
+  audioCreditsUsed: number;
+  videoCreditsUsed: number;
 }
 
 export interface ProviderCapability {
@@ -292,6 +307,22 @@ export async function listAssets(
 export async function getPlan(): Promise<PlanInfo> {
   const result = await callAppApi<PlanInfo>("/api/app/plan");
   return result as PlanInfo;
+}
+
+export async function getFullPlanInfo(): Promise<PlanInfo & { usage: UsageInfo }> {
+  const plan = await getPlan();
+  const jobs = plan.mode === "cloud" ? await listJobs() : [];
+  const now = new Date();
+  const currentMonth = jobs.filter((j) => {
+    const d = new Date(j.createdAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
+  const usage: UsageInfo = {
+    imageCreditsUsed: currentMonth.filter((j) => j.modality === "image").length,
+    audioCreditsUsed: currentMonth.filter((j) => j.modality === "audio").length,
+    videoCreditsUsed: currentMonth.filter((j) => j.modality === "video").length,
+  };
+  return { ...plan, usage };
 }
 
 export async function listConnectorApiKeys(): Promise<ConnectorApiKey[]> {

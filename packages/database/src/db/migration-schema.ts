@@ -12,6 +12,7 @@ import {
   hostedPlan,
   hostedTask,
   hostedSession,
+  stripeWebhookEvent,
 } from "./schema.js";
 
 export {
@@ -28,4 +29,5 @@ export {
   hostedPlan,
   hostedTask,
   hostedSession,
+  stripeWebhookEvent,
 };
