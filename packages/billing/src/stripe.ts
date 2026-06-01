@@ -121,6 +121,50 @@ export function resolvePlanFromSubscription(
   return hasProPrice ? "pro" : "free";
 }
 
+export type SubscriptionMetadata = {
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  subscriptionStatus: string | null;
+  currentPeriodEnd: Date | null;
+  cancelAtPeriodEnd: boolean | null;
+  trialEndsAt: Date | null;
+};
+
+function getSubscriptionNumericField(
+  sub: Stripe.Subscription,
+  field: "current_period_end" | "trial_end",
+): number | null {
+  return (sub as unknown as Record<string, unknown>)[field] as number | null;
+}
+
+export function extractSubscriptionMetadata(
+  subscription: Stripe.Subscription | null | undefined,
+): SubscriptionMetadata {
+  if (!subscription) return DEFAULT_SUBSCRIPTION_METADATA;
+
+  return {
+    stripeCustomerId: (subscription.customer as string | null) ?? null,
+    stripeSubscriptionId: subscription.id,
+    subscriptionStatus: subscription.status,
+    currentPeriodEnd: getSubscriptionNumericField(subscription, "current_period_end")
+      ? new Date(getSubscriptionNumericField(subscription, "current_period_end")! * 1000)
+      : null,
+    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    trialEndsAt: getSubscriptionNumericField(subscription, "trial_end")
+      ? new Date(getSubscriptionNumericField(subscription, "trial_end")! * 1000)
+      : null,
+  };
+}
+
+const DEFAULT_SUBSCRIPTION_METADATA: SubscriptionMetadata = {
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
+  subscriptionStatus: null,
+  currentPeriodEnd: null,
+  cancelAtPeriodEnd: null,
+  trialEndsAt: null,
+};
+
 export function resolveUserIdFromEvent(event: Stripe.Event): string | null {
   const object = "object" in event.data ? event.data.object : undefined;
   if (!object || typeof object !== "object") return null;

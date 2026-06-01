@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { TextField } from "@heroui/react/textfield";
 import { Input } from "@heroui/react/input";
 import { Label } from "@heroui/react/label";
@@ -20,13 +21,14 @@ import { Layout } from "../Layout";
 import { Skeleton } from "@heroui/react/skeleton";
 import {
   getConnection,
-  getPlan,
+  getFullPlanInfo,
   getProviderPolicy,
   getProviderConfig,
   saveProviderConfig as saveProviderConfigApi,
   clearProviderConfig as clearProviderConfigApi,
   getResolvedApiBaseUrl,
   type PlanInfo,
+  type UsageInfo,
   type ProviderConfigInfo,
   type ProviderPolicyInfo,
   createConnectorApiKey,
@@ -362,13 +364,41 @@ function SessionsSection() {
 
 // ─── Plan ─────────────────────────────────────────────────────────────────────
 
+function CreditBar({ label, used, total }: { label: string; used: number; total: number | null }) {
+  const max = total ?? 0;
+  const pct = max > 0 ? Math.min(100, Math.round((used / max) * 100)) : 0;
+  const isOver = max > 0 && used >= max;
+
+  return (
+    <div className="flex items-center gap-3 text-xs">
+      <span className="text-muted w-12 capitalize">{label}</span>
+      <div className="flex-1 h-1.5 rounded-full bg-border overflow-hidden">
+        {max > 0 ? (
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              isOver ? "bg-danger" : pct > 80 ? "bg-warning" : "bg-accent"
+            }`}
+            style={{ width: `${pct}%` }}
+          />
+        ) : (
+          <div className="h-full rounded-full bg-muted/30" style={{ width: "100%" }} />
+        )}
+      </div>
+      <span className={`font-mono w-20 text-right ${isOver ? "text-danger" : "text-foreground"}`}>
+        {used}{max > 0 ? ` / ${max}` : ""}
+      </span>
+    </div>
+  );
+}
+
 function PlanSection() {
-  const [info, setInfo] = useState<PlanInfo | null>(null);
+  const navigate = useNavigate();
+  const [info, setInfo] = useState<(PlanInfo & { usage?: UsageInfo }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getPlan()
+    getFullPlanInfo()
       .then(setInfo)
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load plan"))
       .finally(() => setLoading(false));
@@ -379,53 +409,81 @@ function PlanSection() {
   const apiBase = getResolvedApiBaseUrl();
 
   return (
-    <section>
+    <section className="flex flex-col gap-3">
       {error && <p className="text-xs text-danger font-mono">{error}</p>}
       {loading ? (
         <div className="flex justify-center py-4"><Skeleton className="h-4 w-32 rounded-lg" /></div>
       ) : info ? (
-        <p className="text-muted">
-          You&rsquo;re on the{" "}
-          <span className="text-foreground font-semibold">
-            {info.plan === "pro" ? "Pro" : "Free"}
-          </span>{" "}
-          plan.
-          {info.planEnforcementEnabled && info.limits && (
-            <span className="opacity-70">
-              {" "}
-              {[
-                info.limits.maxOwnedWorkspaces != null && `${info.limits.maxOwnedWorkspaces} workspaces`,
-                info.limits.maxDraftsPerWorkspace != null && `${info.limits.maxDraftsPerWorkspace} drafts per workspace`,
-              ].filter(Boolean).join(", ")}.
-            </span>
+        <>
+          <p className="text-muted">
+            You&rsquo;re on the{" "}
+            <span className="text-foreground font-semibold">
+              {info.plan === "pro" ? "Pro" : "Free"}
+            </span>{" "}
+            plan.
+            {info.planEnforcementEnabled && info.limits && (
+              <span className="opacity-70">
+                {" "}
+                {[
+                  info.limits.maxOwnedWorkspaces != null && `${info.limits.maxOwnedWorkspaces} workspaces`,
+                  info.limits.maxDraftsPerWorkspace != null && `${info.limits.maxDraftsPerWorkspace} drafts per workspace`,
+                ].filter(Boolean).join(", ")}.
+              </span>
+            )}
+          </p>
+
+          {/* Credit usage for Pro users */}
+          {info.plan === "pro" && info.usage && info.limits && (
+            <div className="flex flex-col gap-2 pt-1 pb-2">
+              {info.limits.imageCreditsPerMonth != null && (
+                <CreditBar label="Image" used={info.usage.imageCreditsUsed} total={info.limits.imageCreditsPerMonth} />
+              )}
+              {info.limits.audioCreditsPerMonth != null && (
+                <CreditBar label="Audio" used={info.usage.audioCreditsUsed} total={info.limits.audioCreditsPerMonth} />
+              )}
+              {info.limits.videoCreditsPerMonth != null && (
+                <CreditBar label="Video" used={info.usage.videoCreditsUsed} total={info.limits.videoCreditsPerMonth} />
+              )}
+            </div>
           )}
-          {info.plan === "free" && (
-            <>
-              {" "}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
-                onPress={() => { window.open(`${apiBase}/api/billing/upgrade`, "_blank", "noopener"); }}
-              >
-                Upgrade to Pro.
-              </Button>
-            </>
-          )}
-          {info.billingPortalUrl && (
-            <>
-              {" "}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
-                onPress={() => { window.open(`${apiBase}/api/billing/portal`, "_blank", "noopener"); }}
-              >
-                Manage billing.
-              </Button>
-            </>
-          )}
-        </p>
+
+          <p className="text-muted">
+            {info.plan === "free" && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                  onPress={() => { window.open(`${apiBase}/api/billing/upgrade`, "_blank", "noopener"); }}
+                >
+                  Upgrade to Pro
+                </Button>
+                {" \u2014 "}
+              </>
+            )}
+            {info.plan === "pro" && info.billingPortalUrl && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+                  onPress={() => { window.open(`${apiBase}/api/billing/portal`, "_blank", "noopener"); }}
+                >
+                  Manage billing
+                </Button>
+                {" \u2014 "}
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0"
+              onPress={() => navigate("/pricing")}
+            >
+              View pricing
+            </Button>
+          </p>
+        </>
       ) : null}
     </section>
   );

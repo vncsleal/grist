@@ -24,8 +24,29 @@ export async function pushHostedSchema(db: LibSQLDatabase<typeof schema>): Promi
     user_id TEXT PRIMARY KEY,
     current_workspace_id TEXT NOT NULL,
     plan TEXT NOT NULL DEFAULT 'free',
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    subscription_status TEXT,
+    current_period_end INTEGER,
+    cancel_at_period_end INTEGER,
+    trial_ends_at INTEGER,
     updated_at INTEGER NOT NULL DEFAULT (cast(unixepoch('subsecond') * 1000 as integer))
   )`));
+  // Add columns to existing databases — safe no-ops if already present.
+  for (const col of [
+    "stripe_customer_id TEXT",
+    "stripe_subscription_id TEXT",
+    "subscription_status TEXT",
+    "current_period_end INTEGER",
+    "cancel_at_period_end INTEGER",
+    "trial_ends_at INTEGER",
+  ]) {
+    try {
+      await db.run(sql.raw(`ALTER TABLE hosted_user_state ADD COLUMN ${col}`));
+    } catch {
+      // Column already exists — swallow the error.
+    }
+  }
   await db.run(sql.raw(`CREATE TABLE IF NOT EXISTS hosted_workspace (
     user_id TEXT NOT NULL, workspace_id TEXT NOT NULL, name TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '', face_reference_image_url TEXT,
@@ -149,4 +170,18 @@ export async function pushHostedSchema(db: LibSQLDatabase<typeof schema>): Promi
     ON hosted_session(user_id, workspace_id, state)`));
   await db.run(sql.raw(`CREATE INDEX IF NOT EXISTS hosted_session_user_ws_activity_idx
     ON hosted_session(user_id, workspace_id, last_activity_at)`));
+
+  // ── Stripe webhook idempotency tracking ──────────────────────────────────
+  await db.run(sql.raw(`CREATE TABLE IF NOT EXISTS stripe_webhook_event (
+    id TEXT PRIMARY KEY,
+    stripe_event_id TEXT NOT NULL UNIQUE,
+    type TEXT NOT NULL,
+    user_id TEXT,
+    status TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (cast(unixepoch('subsecond') * 1000 as integer))
+  )`));
+  await db.run(sql.raw(`CREATE INDEX IF NOT EXISTS stripe_webhook_event_id_idx
+    ON stripe_webhook_event(stripe_event_id)`));
+  await db.run(sql.raw(`CREATE INDEX IF NOT EXISTS stripe_webhook_created_idx
+    ON stripe_webhook_event(created_at)`));
 }

@@ -78,8 +78,9 @@ export function Workspaces() {
           <Alert.Content>
             <Alert.Title>Welcome to Quillby!</Alert.Title>
             <Alert.Description>
-              You&apos;re in. Create your first workspace by opening Claude with the Quillby connector
-              attached and asking:{" "}
+              You&apos;re in. <Link to="/onboarding" className="text-accent no-underline hover:underline font-semibold">Complete your setup</Link>{" "}
+              to tell Quillby about your voice, topics, and first content source — or create your
+              first workspace by opening Claude with the Quillby connector attached and asking:{" "}
               <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-surface-secondary">
                 Create a workspace called My Brand
               </code>

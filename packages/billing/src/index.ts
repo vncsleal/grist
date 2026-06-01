@@ -1,11 +1,13 @@
 import { eq } from "drizzle-orm";
 import { getDeploymentMode } from "@quillby/config";
-import { hostedUserState, type QuillbyDb } from "@quillby/database";
+import { hostedUserState, stripeWebhookEvent, type QuillbyDb } from "@quillby/database";
 import {
   constructWebhookEvent,
   isSubscriptionEvent,
   resolvePlanFromSubscription,
   resolveUserIdFromEvent,
+  extractSubscriptionMetadata,
+  getStripeClient,
   getOrCreateCustomer,
   createCheckoutSession,
   createCustomerPortalSession,
@@ -97,15 +99,58 @@ export function getPlanLimits(plan: HostedPlan): PlanLimits {
   return PLAN_LIMITS[plan];
 }
 
+export type SubscriptionInfo = {
+  plan: "free" | "pro";
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  subscriptionStatus: string | null;
+  currentPeriodEnd: Date | null;
+  cancelAtPeriodEnd: boolean | null;
+  trialEndsAt: Date | null;
+};
+
 export {
   constructWebhookEvent,
   isSubscriptionEvent,
   resolvePlanFromSubscription,
   resolveUserIdFromEvent,
+  extractSubscriptionMetadata,
   getOrCreateCustomer,
   createCheckoutSession,
   createCustomerPortalSession,
 };
+
+export async function getStripeSubscriptionDetails(
+  db: QuillbyDb,
+  userId: string,
+): Promise<SubscriptionInfo | null> {
+  const rows = await db
+    .select({
+      plan: hostedUserState.plan,
+      stripeCustomerId: hostedUserState.stripeCustomerId,
+      stripeSubscriptionId: hostedUserState.stripeSubscriptionId,
+      subscriptionStatus: hostedUserState.subscriptionStatus,
+      currentPeriodEnd: hostedUserState.currentPeriodEnd,
+      cancelAtPeriodEnd: hostedUserState.cancelAtPeriodEnd,
+      trialEndsAt: hostedUserState.trialEndsAt,
+    })
+    .from(hostedUserState)
+    .where(eq(hostedUserState.userId, userId))
+    .limit(1);
+
+  if (rows.length === 0) return null;
+
+  const row = rows[0];
+  return {
+    plan: row.plan,
+    stripeCustomerId: row.stripeCustomerId ?? null,
+    stripeSubscriptionId: row.stripeSubscriptionId ?? null,
+    subscriptionStatus: row.subscriptionStatus ?? null,
+    currentPeriodEnd: row.currentPeriodEnd ?? null,
+    cancelAtPeriodEnd: row.cancelAtPeriodEnd ?? null,
+    trialEndsAt: row.trialEndsAt ?? null,
+  };
+}
 
 export async function applyStripeWebhookEvent(db: QuillbyDb, rawBody: string, signature: string): Promise<{
   handled: boolean;
@@ -124,10 +169,27 @@ export async function applyStripeWebhookEvent(db: QuillbyDb, rawBody: string, si
 
   if (!isSubscriptionEvent(event.type)) return { handled: false, updated: false };
 
+  const stripeEventId = event.id;
+
+  // ── Idempotency check ──────────────────────────────────────────────────
+  const existingEvent = await db
+    .select({ id: stripeWebhookEvent.id })
+    .from(stripeWebhookEvent)
+    .where(eq(stripeWebhookEvent.stripeEventId, stripeEventId))
+    .limit(1);
+
+  if (existingEvent.length > 0) {
+    return { handled: true, updated: false };
+  }
+
   const userId = resolveUserIdFromEvent(event);
+
+  // ── Extract plan + subscription metadata ───────────────────────────────
   let plan: "free" | "pro" | null = null;
+  let subscriptionMetadata: import("./stripe.js").SubscriptionMetadata | null = null;
 
   if (event.type === "customer.subscription.deleted") {
+    subscriptionMetadata = null;
     plan = "free";
   } else if (
     event.type === "checkout.session.completed" ||
@@ -137,37 +199,99 @@ export async function applyStripeWebhookEvent(db: QuillbyDb, rawBody: string, si
     const eventObj = "object" in event.data ? event.data.object : undefined;
     const obj = eventObj as unknown as Record<string, unknown> | undefined;
     if (obj && typeof obj.subscription === "string") {
-      const { getStripeClient } = await import("./stripe.js");
       const subscription = await getStripeClient().subscriptions.retrieve(obj.subscription);
       plan = resolvePlanFromSubscription(subscription);
+      subscriptionMetadata = extractSubscriptionMetadata(subscription);
     } else if (obj && "items" in obj) {
-      plan = resolvePlanFromSubscription(obj as unknown as Parameters<typeof resolvePlanFromSubscription>[0]);
+      const sub = obj as unknown as Parameters<typeof resolvePlanFromSubscription>[0];
+      plan = resolvePlanFromSubscription(sub);
+      subscriptionMetadata = extractSubscriptionMetadata(sub);
     }
+  } else if (event.type === "invoice.payment_succeeded") {
+    subscriptionMetadata = null;
+    plan = null;
   } else if (event.type === "invoice.payment_failed") {
-    return { handled: true, updated: false, userId: userId ?? undefined };
+    if (!userId) {
+      await db.insert(stripeWebhookEvent).values({
+        id: crypto.randomUUID(),
+        stripeEventId,
+        type: event.type,
+        userId: null,
+        status: "skipped",
+        createdAt: new Date(),
+      });
+      return { handled: true, updated: false };
+    }
+
+    await db.insert(stripeWebhookEvent).values({
+      id: crypto.randomUUID(),
+      stripeEventId,
+      type: event.type,
+      userId,
+      status: "processed",
+      createdAt: new Date(),
+    });
+    return { handled: true, updated: false, userId };
   }
 
-  if (!userId || !plan) return { handled: true, updated: false };
+  if (!userId) {
+    await db.insert(stripeWebhookEvent).values({
+      id: crypto.randomUUID(),
+      stripeEventId,
+      type: event.type,
+      userId: null,
+      status: "skipped",
+      createdAt: new Date(),
+    });
+    return { handled: true, updated: false };
+  }
 
+  // ── Persist plan + subscription metadata ───────────────────────────────
   const existing = await db
     .select({ userId: hostedUserState.userId })
     .from(hostedUserState)
     .where(eq(hostedUserState.userId, userId))
     .limit(1);
 
+  const updateData: Record<string, unknown> = { updatedAt: new Date() };
+  if (plan !== null) updateData.plan = plan;
+  if (subscriptionMetadata) {
+    updateData.stripeCustomerId = subscriptionMetadata.stripeCustomerId;
+    updateData.stripeSubscriptionId = subscriptionMetadata.stripeSubscriptionId;
+    updateData.subscriptionStatus = subscriptionMetadata.subscriptionStatus;
+    updateData.currentPeriodEnd = subscriptionMetadata.currentPeriodEnd?.getTime() ?? null;
+    updateData.cancelAtPeriodEnd = subscriptionMetadata.cancelAtPeriodEnd;
+    updateData.trialEndsAt = subscriptionMetadata.trialEndsAt?.getTime() ?? null;
+  } else if (event.type === "customer.subscription.deleted") {
+    updateData.stripeSubscriptionId = null;
+    updateData.subscriptionStatus = null;
+    updateData.currentPeriodEnd = null;
+    updateData.cancelAtPeriodEnd = null;
+    updateData.trialEndsAt = null;
+  }
+
   if (existing.length === 0) {
     await db.insert(hostedUserState).values({
       userId,
       currentWorkspaceId: "default",
-      plan,
-      updatedAt: new Date(),
-    });
+      ...updateData,
+    } as typeof hostedUserState.$inferInsert);
   } else {
     await db
       .update(hostedUserState)
-      .set({ plan, updatedAt: new Date() })
+      .set(updateData as typeof hostedUserState.$inferInsert)
       .where(eq(hostedUserState.userId, userId));
   }
 
-  return { handled: true, updated: true, userId, plan };
+  // ── Record webhook event ───────────────────────────────────────────────
+  await db.insert(stripeWebhookEvent).values({
+    id: crypto.randomUUID(),
+    stripeEventId,
+    type: event.type,
+    userId,
+    status: "processed",
+    createdAt: new Date(),
+  });
+
+  return { handled: true, updated: true, userId, plan: plan ?? undefined };
 }

@@ -5,44 +5,81 @@ import { Button } from "@heroui/react/button";
 import { Alert } from "@heroui/react/alert";
 import { Form } from "@heroui/react/form";
 import { Input } from "@heroui/react/input";
-import { Label } from "@heroui/react/label";
 import { Tabs } from "@heroui/react/tabs";
-import { TextField } from "@heroui/react/textfield";
+import { FormField } from "../FormField";
+import { signInSchema, signUpSchema } from "../validation";
+import { useForm, type Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { z } from "zod";
 
-const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "").trim().toLowerCase();
+const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "")
+  .trim()
+  .toLowerCase();
 
 type AuthMode = "sign-in" | "sign-up";
+
+type AuthForm = z.infer<typeof signUpSchema>;
 
 export function Cloud() {
   const session = useSession();
   const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>("sign-in");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  const resolver: Resolver<AuthForm> = mode === "sign-in"
+    ? zodResolver(signInSchema) as unknown as Resolver<AuthForm>
+    : zodResolver(signUpSchema);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<AuthForm>({
+    resolver,
+  });
+
+  const isSignUp = mode === "sign-up";
 
   if (session.data) {
+    const isNewAccount = (() => {
+      try {
+        const flag = sessionStorage.getItem("quillby_new_account");
+        if (flag) sessionStorage.removeItem("quillby_new_account");
+        return flag === "1";
+      } catch { return false; }
+    })();
+    if (isNewAccount) {
+      return <Navigate to="/onboarding" replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  function handleModeChange(key: React.Key) {
+    const next = key as AuthMode;
+    setMode(next);
+    setApiError(null);
+    reset();
+  }
+
+  async function onSubmit(data: AuthForm) {
+    setApiError(null);
     try {
-      if (mode === "sign-up") {
-        await signUpEmail(name, email, password);
-        try { sessionStorage.setItem("quillby_new_account", "1"); } catch (err) { console.debug("sessionStorage not available", err); }
+      if (isSignUp) {
+        await signUpEmail(data.name, data.email, data.password);
+        try {
+          sessionStorage.setItem("quillby_new_account", "1");
+        } catch {
+          console.debug("sessionStorage not available");
+        }
       } else {
-        await signInEmail(email, password);
+        await signInEmail(data.email, data.password);
       }
       await session.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed");
-    } finally {
-      setLoading(false);
+      setApiError(
+        err instanceof Error ? err.message : "Authentication failed",
+      );
     }
   }
 
@@ -77,7 +114,8 @@ export function Cloud() {
             </em>
           </h2>
           <p className="text-base leading-relaxed text-muted">
-            Harvest fresh signals, shape compelling narratives, and publish across every channel — all from a single AI-native workspace.
+            Harvest fresh signals, shape compelling narratives, and publish
+            across every channel — all from a single AI-native workspace.
           </p>
 
           {/* Feature list */}
@@ -123,44 +161,66 @@ export function Cloud() {
           </div>
 
           {/* Mode toggle */}
-          <Tabs selectedKey={mode} onSelectionChange={(key) => setMode(key as AuthMode)}>
+          <Tabs
+            selectedKey={mode}
+            onSelectionChange={handleModeChange}
+          >
             <Tabs.ListContainer>
               <Tabs.List aria-label="Authentication mode">
-                <Tabs.Tab id="sign-in">Sign in<Tabs.Indicator /></Tabs.Tab>
-                <Tabs.Tab id="sign-up">Create account<Tabs.Indicator /></Tabs.Tab>
+                <Tabs.Tab id="sign-in">
+                  Sign in<Tabs.Indicator />
+                </Tabs.Tab>
+                <Tabs.Tab id="sign-up">
+                  Create account<Tabs.Indicator />
+                </Tabs.Tab>
               </Tabs.List>
             </Tabs.ListContainer>
           </Tabs>
 
           {/* Auth form */}
-          <Form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
-            {mode === "sign-up" && (
-              <TextField isRequired value={name} onChange={setName} name="name" className="w-full">
-                <Label>Name</Label>
-                <Input placeholder="Your name" />
-              </TextField>
+          <Form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
+            {isSignUp && (
+              <FormField label="Name" error={errors.name} isRequired>
+                <Input
+                  placeholder="Your name"
+                  {...register("name")}
+                />
+              </FormField>
             )}
 
-            <TextField isRequired type="email" value={email} onChange={setEmail} name="email" className="w-full">
-              <Label>Email</Label>
-              <Input placeholder="you@example.com" />
-            </TextField>
+            <FormField label="Email" error={errors.email} isRequired>
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                {...register("email")}
+              />
+            </FormField>
 
-            <TextField isRequired type="password" value={password} onChange={setPassword} name="password" className="w-full">
-              <Label>Password</Label>
-              <Input placeholder="••••••••" />
-            </TextField>
+            <FormField label="Password" error={errors.password} isRequired>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                {...register("password")}
+              />
+            </FormField>
+
             {mode === "sign-in" && (
-              <Link to="/forgot-password" className="text-xs text-accent hover:underline self-end -mt-2">
+              <Link
+                to="/forgot-password"
+                className="text-xs text-accent hover:underline self-end -mt-2"
+              >
                 Forgot password?
               </Link>
             )}
 
-            {error && (
+            {apiError && (
               <Alert status="danger">
                 <Alert.Indicator />
                 <Alert.Content>
-                  <Alert.Description>{error}</Alert.Description>
+                  <Alert.Description>{apiError}</Alert.Description>
                 </Alert.Content>
               </Alert>
             )}
@@ -168,16 +228,24 @@ export function Cloud() {
             <Button
               type="submit"
               variant="primary"
-              isDisabled={loading || session.isPending}
+              isDisabled={isSubmitting || session.isPending}
               className="w-full justify-center mt-1"
             >
-              {loading ? "Loading\u2026" : mode === "sign-in" ? "Sign in" : "Create account"}
+              {isSubmitting
+                ? "Loading\u2026"
+                : mode === "sign-in"
+                  ? "Sign in"
+                  : "Create account"}
             </Button>
           </Form>
 
           {DEPLOY_MODE !== "cloud" && (
             <div className="flex justify-center pt-1">
-              <Button variant="ghost" onPress={() => navigate("/connect/self-hosted")} className="text-sm">
+              <Button
+                variant="ghost"
+                onPress={() => navigate("/connect/self-hosted")}
+                className="text-sm"
+              >
                 Use a self-hosted server instead
               </Button>
             </div>
