@@ -17,6 +17,8 @@ pnpm build
 
 `./apps/mcp-server/bin/quillby-mcp` is the canonical entrypoint after building.
 
+For **self-hosted HTTP deployments**, see [docs/operations/deployment.md](operations/deployment.md) for Docker Compose setup, environment configuration, reverse proxy, and user management.
+
 ## Tools
 
 **For Claude Desktop user setup, see [README.md](../README.md).**
