@@ -24,9 +24,10 @@ export function transitionStage(
     updatedExecution,
   ];
 
-  const allCompleted = executions
-    .filter((e) => campaign.stages.some((s) => s.name === e.stageName))
-    .every((e) => e.status === "completed" || e.status === "skipped");
+  const allCompleted = campaign.stages.every((s) => {
+    const ex = executions.find((e) => e.stageName === s.name);
+    return ex && (ex.status === "completed" || ex.status === "skipped");
+  });
 
   const anyFailed = executions.some((e) => e.status === "failed");
 
