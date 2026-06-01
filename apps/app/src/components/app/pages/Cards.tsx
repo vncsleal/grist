@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Separator, Button } from "@heroui/react";
+import { Separator, Button, Alert, Skeleton } from "@heroui/react";
 import { listCards, curateCard, type Card } from "../api";
 import { Layout } from "../Layout";
-import { Spinner } from "@heroui/react";
 import { useWorkspace } from "../WorkspaceContext";
+import { Eyebrow, InlineAction, PageEmptyState } from "../primitives";
 
 type CurationStatus = "all" | "pending" | "shortlisted" | "skipped";
 
@@ -38,8 +38,7 @@ export function Cards() {
 
   useEffect(() => {
     void load(activeWsId, filterStatus);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterStatus, activeWsId]);
+  }, [filterStatus, activeWsId, load]);
 
   async function curate(card: Card, action: "shortlisted" | "skipped") {
     setActioning(card.id);
@@ -74,30 +73,19 @@ export function Cards() {
 
       {/* Header */}
       <div className="mb-12">
-        <p className="font-mono text-[0.62rem] tracking-[0.22em] uppercase mb-5 text-accent">
-          Reading queue
-        </p>
-        <h1 className="font-display text-4xl sm:text-5xl font-bold leading-[1.1] mb-6 tracking-[-0.03em] text-foreground">
+        <Eyebrow>Reading queue</Eyebrow>
+        <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-6 tracking-tight text-foreground">
           {headlineText()}
         </h1>
 
-        {/* Inline filter + workspace */}
+        {/* Inline filter */}
         <p className="text-sm font-mono text-muted">
           Show{" "}
           {FILTERS.map(({ label, value }, i, arr) => (
             <React.Fragment key={value}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onPress={() => setFilterStatus(value)}
-                className={`font-mono underline underline-offset-3 h-auto min-w-0 p-0 ${
-                  filterStatus === value
-                    ? "text-foreground font-semibold decoration-accent/70"
-                    : "text-muted font-normal decoration-accent/30"
-                }`}
-              >
-                {label}
-              </Button>
+              <InlineAction onClick={() => setFilterStatus(value)}>
+                <span className={filterStatus === value ? "text-foreground font-semibold" : ""}>{label}</span>
+              </InlineAction>
               {i < arr.length - 1 && <span> · </span>}
             </React.Fragment>
           ))}
@@ -105,11 +93,26 @@ export function Cards() {
       </div>
 
       {error && (
-        <p className="text-sm font-mono mb-8 text-danger">{error}</p>
+        <Alert status="danger" className="mb-8">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Content>
+        </Alert>
       )}
 
       {loading && cards.length === 0 ? (
-        <div className="flex justify-center py-16"><Spinner size="lg" /></div>
+        <div className="space-y-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-6 w-3/4 rounded-lg" />
+              <Skeleton className="h-4 w-1/2 rounded" />
+              <Skeleton className="h-4 w-full rounded" />
+            </div>
+          ))}
+        </div>
+      ) : cards.length === 0 ? (
+        <PageEmptyState message="Nothing here yet." />
       ) : (
         <div>
           {cards.map((card, i) => {
@@ -119,21 +122,19 @@ export function Cards() {
 
             return (
               <div key={card.id}>
-                {i > 0 && (
-                  <Separator className="my-7" />
-                )}
+                {i > 0 && <Separator variant="tertiary" className="my-7" />}
                 <div>
                   <Button
                     variant="ghost"
                     onPress={() => setExpandedId(isExpanded ? null : card.id)}
                     className="text-left w-full hover:opacity-70 transition-opacity p-0 h-auto min-w-0"
                   >
-                    <h2 className="font-display text-lg sm:text-xl font-semibold leading-snug tracking-[-0.015em] text-foreground">
+                    <h2 className="text-lg sm:text-xl font-semibold leading-snug tracking-tight text-foreground">
                       {card.title}
                     </h2>
                   </Button>
 
-                  <p className="mt-3 font-display text-base leading-relaxed tracking-[-0.01em] text-muted">
+                  <p className="mt-3 text-base leading-relaxed text-muted">
                     {(card.source || typeof card.score === "number") && (
                       <>
                         {card.source && <>This is from <span className="text-foreground font-semibold">{card.source}</span></>}
@@ -150,35 +151,23 @@ export function Cards() {
                     }`}>{status}</span>
                     {" — you can "}
                     {status !== "shortlisted" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onPress={() => void curate(card, "shortlisted")}
-                        isDisabled={isActioning}
-                        className="underline underline-offset-[4px] decoration-accent/40 h-auto min-w-0 p-0 text-muted font-[inherit]"
-                      >
-                        shortlist it
-                      </Button>
+                      <InlineAction onClick={() => void curate(card, "shortlisted")}>
+                        {isActioning ? "..." : "shortlist it"}
+                      </InlineAction>
                     )}
                     {status !== "shortlisted" && status !== "skipped" && " or "}
                     {status !== "skipped" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onPress={() => void curate(card, "skipped")}
-                        isDisabled={isActioning}
-                        className="underline underline-offset-[4px] decoration-accent/40 h-auto min-w-0 p-0 text-muted font-[inherit]"
-                      >
-                        skip it
-                      </Button>
+                      <InlineAction onClick={() => void curate(card, "skipped")}>
+                        {isActioning ? "..." : "skip it"}
+                      </InlineAction>
                     )}
                     {"."}
                   </p>
 
                   {isExpanded && (card.summary || card.url) && (
-                    <div className="mt-4">
+                    <div className="mt-4 space-y-3">
                       {card.summary && (
-                        <p className="font-display text-base leading-relaxed tracking-[-0.01em] text-muted">
+                        <p className="text-base leading-relaxed text-muted">
                           {card.summary}
                         </p>
                       )}
@@ -187,7 +176,7 @@ export function Cards() {
                           href={card.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-xs mt-3 block hover:opacity-60 transition-opacity text-accent"
+                          className="text-xs block hover:opacity-60 transition-opacity text-accent"
                         >
                           {card.url}
                         </a>
