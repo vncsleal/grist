@@ -26,6 +26,14 @@ export interface ToolStorage {
   updateWorkspaceMetadata(meta: Record<string, unknown>): Promise<{ id: string; [key: string]: unknown }>;
   latestHarvestExists(): Promise<boolean>;
   loadLatestHarvest(): Promise<Record<string, unknown> | null>;
+  saveHarvestOutput(cards: unknown[], seenUrls: Set<string>): Promise<string>;
+  saveSeenUrls(urls: Set<string>): Promise<void>;
+  getSeenUrls(): Promise<Set<string>>;
+  saveDraft(content: string, platform: string, cardId?: number): Promise<string>;
+  listDrafts(): Promise<unknown[]>;
+  saveCurationState(state: Record<string, "shortlisted" | "skipped">): Promise<void>;
+  appendTypedMemory(type: string, entries: string[], maxItems?: number): Promise<void>;
+  getPlan(): Promise<string>;
 }
 
 export type ToolResult = {
