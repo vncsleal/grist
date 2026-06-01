@@ -18,3 +18,4 @@ export type QuillbyDb = typeof db;
 
 export * from "./db/schema.js";
 export * from "./db/migrate-hosted.js";
+export { runHostedMigrations } from "./db/migrate-hosted.js";

@@ -52,7 +52,7 @@ import {
   hostedSession,
 } from "@quillby/database";
 import { eq, and, or, sql, desc, asc, count, gte, lte, lt, ne, isNull, inArray, type SQL } from "drizzle-orm";
-import { ensureHostedTables } from "@quillby/database";
+import { ensureHostedTables, runHostedMigrations } from "@quillby/database";
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from "node:crypto";
 import {
   getPlanLimits,
@@ -116,7 +116,8 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
 
   constructor(
     private readonly userId: string,
-    private readonly db: QuillbyDb = defaultDb
+    private readonly db: QuillbyDb = defaultDb,
+    private readonly migrationsFolder?: string,
   ) {}
 
   /** The user whose data rows are read/written for content operations. */
@@ -189,7 +190,11 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
   private async ensureInit(): Promise<void> {
     if (!this.initPromise) {
       this.initPromise = (async () => {
-        await ensureHostedTables(this.db);
+        if (this.migrationsFolder) {
+          await runHostedMigrations(this.db, this.migrationsFolder);
+        } else {
+          await ensureHostedTables(this.db);
+        }
         // Bootstrap the user's workspace system if this is their first access.
         const existing = await this.db
           .select({ id: hostedWorkspaceTable.workspaceId })
@@ -1303,11 +1308,10 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
 
 const hostedStorageCache = new Map<string, WorkspaceStorage>();
 
-export function getHostedUserStorage(userId: string): WorkspaceStorage {
-  // Use the raw userId — sanitization breaks FK constraints against auth user.id.
+export function getHostedUserStorage(userId: string, migrationsFolder?: string): WorkspaceStorage {
   const cached = hostedStorageCache.get(userId);
   if (cached) return cached;
-  const instance = new HostedDbWorkspaceStorage(userId);
+  const instance = new HostedDbWorkspaceStorage(userId, undefined, migrationsFolder);
   hostedStorageCache.set(userId, instance);
   return instance;
 }

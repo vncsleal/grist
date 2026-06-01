@@ -22,6 +22,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PKG = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../package.json"), "utf-8")) as { version: string };
+const DRIZZLE_MIGRATIONS_DIR = path.resolve(__dirname, "../../drizzle/hosted");
 
 if (
   process.argv[1] &&
@@ -2749,7 +2750,7 @@ if (TRANSPORT_MODE === "http") {
           return;
         }
 
-        const storage = getHostedUserStorage(authState.userId);
+        const storage = getHostedUserStorage(authState.userId, DRIZZLE_MIGRATIONS_DIR);
         const workspaceId = url.searchParams.get("workspaceId") ?? undefined;
         const activeStorage = workspaceId ? await storage.withWorkspace(workspaceId) : storage;
 
@@ -3193,7 +3194,7 @@ if (TRANSPORT_MODE === "http") {
           return;
         }
         const userId = billingAuthState.userId;
-        const userStorage = getHostedUserStorage(userId);
+        const userStorage = getHostedUserStorage(userId, DRIZZLE_MIGRATIONS_DIR);
         const plan = await userStorage.getPlan();
 
         const action = url.pathname.endsWith("/upgrade")
@@ -3369,7 +3370,7 @@ if (TRANSPORT_MODE === "http") {
 
         // New session
         const sessionServer = createMcpServer();
-        const userStorage = getHostedUserStorage(userId) as unknown as WorkspaceStorage & JobStorage & PlanStorage & SessionStore;
+        const userStorage = getHostedUserStorage(userId, DRIZZLE_MIGRATIONS_DIR) as unknown as WorkspaceStorage & JobStorage & PlanStorage & SessionStore;
         registerMcpHandlers(sessionServer, userStorage);
 
         const transport = new StreamableHTTPServerTransport({
@@ -3452,7 +3453,7 @@ if (TRANSPORT_MODE === "http") {
       logFatal("QUILLBY_API_KEY resolved no user — aborting");
       process.exit(1);
     }
-    stdioStorage = getHostedUserStorage(userId) as unknown as WorkspaceStorage & JobStorage & PlanStorage & SessionStore;
+    stdioStorage = getHostedUserStorage(userId, DRIZZLE_MIGRATIONS_DIR) as unknown as WorkspaceStorage & JobStorage & PlanStorage & SessionStore;
     logInfo("Authenticated via API key", { userId });
   }
   const server = createMcpServer();
