@@ -1,7 +1,15 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { getDeploymentMode } from "@quillby/config";
 import { hostedUserState, type QuillbyDb } from "@quillby/database";
+import {
+  constructWebhookEvent,
+  isSubscriptionEvent,
+  resolvePlanFromSubscription,
+  resolveUserIdFromEvent,
+  getOrCreateCustomer,
+  createCheckoutSession,
+  createCustomerPortalSession,
+} from "./stripe.js";
 
 export type HostedPlan = "free" | "pro";
 
@@ -89,102 +97,56 @@ export function getPlanLimits(plan: HostedPlan): PlanLimits {
   return PLAN_LIMITS[plan];
 }
 
-function parseStripeSignature(header: string): { timestamp: string; v1: string } | null {
-  const parts = header.split(",").map((p) => p.trim());
-  const t = parts.find((p) => p.startsWith("t="))?.slice(2);
-  const v1 = parts.find((p) => p.startsWith("v1="))?.slice(3);
-  if (!t || !v1) return null;
-  return { timestamp: t, v1 };
-}
-
-export function verifyStripeWebhookSignature(rawBody: string, signatureHeader: string): boolean {
-  const secret = process.env.QUILLBY_STRIPE_WEBHOOK_SECRET?.trim();
-  if (!secret) return false;
-  const parsed = parseStripeSignature(signatureHeader);
-  if (!parsed) return false;
-  const payload = `${parsed.timestamp}.${rawBody}`;
-  const expected = createHmac("sha256", secret).update(payload).digest("hex");
-  try {
-    return timingSafeEqual(Buffer.from(expected), Buffer.from(parsed.v1));
-  } catch {
-    // Buffer comparison failed — signature is invalid
-    return false;
-  }
-}
-
-type StripeEvent = {
-  type?: string;
-  data?: {
-    object?: {
-      metadata?: Record<string, string | undefined>;
-      client_reference_id?: string;
-      items?: { data?: Array<{ price?: { id?: string } }> };
-      plan?: { id?: string };
-      status?: string;
-      cancel_at_period_end?: boolean;
-    };
-  };
+export {
+  constructWebhookEvent,
+  isSubscriptionEvent,
+  resolvePlanFromSubscription,
+  resolveUserIdFromEvent,
+  getOrCreateCustomer,
+  createCheckoutSession,
+  createCustomerPortalSession,
 };
 
-function resolveStripeUserId(event: StripeEvent): string | null {
-  const obj = event.data?.object;
-  const md = obj?.metadata ?? {};
-  return (
-    md.quillbyUserId ??
-    md.userId ??
-    obj?.client_reference_id ??
-    null
-  );
-}
-
-function resolvePlanFromStripeEvent(event: StripeEvent): HostedPlan | null {
-  const type = event.type ?? "";
-  const obj = event.data?.object;
-  if (type === "customer.subscription.deleted") return "free";
-  if (obj?.status === "canceled") return "free";
-  if (obj?.cancel_at_period_end && type === "customer.subscription.updated") return "free";
-
-  const proPriceId = process.env.QUILLBY_STRIPE_PRO_PRICE_ID?.trim();
-  const mdPlan = obj?.metadata?.plan?.toLowerCase();
-  if (mdPlan === "pro") return "pro";
-  if (mdPlan === "free") return "free";
-
-  const itemPrices = obj?.items?.data?.map((i) => i.price?.id).filter(Boolean) as string[] | undefined;
-  const planPrice = obj?.plan?.id;
-  const isProByPrice = Boolean(
-    proPriceId && (itemPrices?.includes(proPriceId) || planPrice === proPriceId)
-  );
-  if (isProByPrice) return "pro";
-
-  if (
-    type === "checkout.session.completed" ||
-    type === "customer.subscription.created" ||
-    type === "customer.subscription.updated"
-  ) {
-    return "free";
-  }
-
-  return null;
-}
-
-export async function applyStripeWebhookEvent(db: QuillbyDb, event: StripeEvent): Promise<{
+export async function applyStripeWebhookEvent(db: QuillbyDb, rawBody: string, signature: string): Promise<{
   handled: boolean;
   updated: boolean;
   userId?: string;
-  plan?: HostedPlan;
+  plan?: "free" | "pro";
 }> {
   if (!isCloudMode()) return { handled: false, updated: false };
-  const type = event.type ?? "";
-  const supported = new Set([
-    "checkout.session.completed",
-    "customer.subscription.created",
-    "customer.subscription.updated",
-    "customer.subscription.deleted",
-  ]);
-  if (!supported.has(type)) return { handled: false, updated: false };
 
-  const userId = resolveStripeUserId(event);
-  const plan = resolvePlanFromStripeEvent(event);
+  let event;
+  try {
+    event = constructWebhookEvent(rawBody, signature);
+  } catch {
+    return { handled: false, updated: false };
+  }
+
+  if (!isSubscriptionEvent(event.type)) return { handled: false, updated: false };
+
+  const userId = resolveUserIdFromEvent(event);
+  let plan: "free" | "pro" | null = null;
+
+  if (event.type === "customer.subscription.deleted") {
+    plan = "free";
+  } else if (
+    event.type === "checkout.session.completed" ||
+    event.type === "customer.subscription.created" ||
+    event.type === "customer.subscription.updated"
+  ) {
+    const eventObj = "object" in event.data ? event.data.object : undefined;
+    const obj = eventObj as unknown as Record<string, unknown> | undefined;
+    if (obj && typeof obj.subscription === "string") {
+      const { getStripeClient } = await import("./stripe.js");
+      const subscription = await getStripeClient().subscriptions.retrieve(obj.subscription);
+      plan = resolvePlanFromSubscription(subscription);
+    } else if (obj && "items" in obj) {
+      plan = resolvePlanFromSubscription(obj as unknown as Parameters<typeof resolvePlanFromSubscription>[0]);
+    }
+  } else if (event.type === "invoice.payment_failed") {
+    return { handled: true, updated: false, userId: userId ?? undefined };
+  }
+
   if (!userId || !plan) return { handled: true, updated: false };
 
   const existing = await db

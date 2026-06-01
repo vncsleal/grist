@@ -19,6 +19,7 @@
   "dependencies": {
     "@quillby/config": "workspace:*",
     "@quillby/database": "workspace:*",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "stripe": "^22.2.0"
   }
 }
