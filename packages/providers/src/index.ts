@@ -7,6 +7,7 @@ export type {
 } from "./router.js";
 export { ProviderRouter } from "./router.js";
 export { McpSamplingAdapter } from "./sampling.js";
+export type { SamplingHost } from "./sampling.js";
 export type { ProviderCapability, ProviderPolicyReport } from "./policy.js";
 export { getProviderPolicyReport } from "./policy.js";
 

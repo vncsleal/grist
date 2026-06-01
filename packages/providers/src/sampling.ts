@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
  * Minimal interface for MCP sampling capability.
  * Avoids importing the full MCP SDK Server type.
  */
-interface SamplingHost {
+export interface SamplingHost {
   createMessage(params: {
     messages: { role: string; content: { type: string; text: string } }[];
     systemPrompt?: string;
