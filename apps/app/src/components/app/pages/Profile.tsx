@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Separator, Input, TextArea, Alert, Skeleton } from "@heroui/react";
+import { Button } from "@heroui/react/button";
+import { Separator } from "@heroui/react/separator";
+import { Input } from "@heroui/react/input";
+import { TextArea } from "@heroui/react/textarea";
+import { Alert } from "@heroui/react/alert";
+import { Skeleton } from "@heroui/react/skeleton";
 import { getProfile, updateProfile, type UserContextData } from "../api";
 import { Layout } from "../Layout";
 import { Eyebrow, InlineAction } from "../primitives";

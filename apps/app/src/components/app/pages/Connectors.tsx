@@ -8,7 +8,13 @@ import {
   type ConnectorApiKey,
 } from "../api";
 import { Layout, EmptyState, ErrorBanner } from "../Layout";
-import { Card, Button, Alert, TextField, Label, Input, Skeleton } from "@heroui/react";
+import { Card } from "@heroui/react/card";
+import { Button } from "@heroui/react/button";
+import { Alert } from "@heroui/react/alert";
+import { TextField } from "@heroui/react/textfield";
+import { Label } from "@heroui/react/label";
+import { Input } from "@heroui/react/input";
+import { Skeleton } from "@heroui/react/skeleton";
 import { Eyebrow } from "../primitives";
 
 function formatDate(iso?: string | null): string {

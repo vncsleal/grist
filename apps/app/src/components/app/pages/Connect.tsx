@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveConnection, ping, exchangeApiKey } from "../api";
-import { Card, Button, Alert, Form, Input, Label, TextField, Description } from "@heroui/react";
+import { Card } from "@heroui/react/card";
+import { Button } from "@heroui/react/button";
+import { Alert } from "@heroui/react/alert";
+import { Form } from "@heroui/react/form";
+import { Input } from "@heroui/react/input";
+import { Label } from "@heroui/react/label";
+import { TextField } from "@heroui/react/textfield";
+import { Description } from "@heroui/react/description";
 
 const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "").trim().toLowerCase();
 

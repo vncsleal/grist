@@ -1,13 +1,11 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  Button,
-  Spinner,
-  Alert,
-  Dropdown,
-  Avatar,
-  Tabs,
-} from "@heroui/react";
+import { Button } from "@heroui/react/button";
+import { Spinner } from "@heroui/react/spinner";
+import { Alert } from "@heroui/react/alert";
+import { Dropdown } from "@heroui/react/dropdown";
+import { Avatar } from "@heroui/react/avatar";
+import { Tabs } from "@heroui/react/tabs";
 import { signOut, useSession } from "./auth";
 import { clearConnection, getConnection } from "./api";
 import { useWorkspace } from "./WorkspaceContext";
