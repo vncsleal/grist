@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Separator, Alert, Skeleton } from "@heroui/react";
+import { Separator } from "@heroui/react/separator";
+import { Alert } from "@heroui/react/alert";
+import { Skeleton } from "@heroui/react/skeleton";
 import { getMemory, deleteMemoryEntry, type MemoryBuckets } from "../api";
 import { Layout } from "../Layout";
 import { useWorkspace } from "../WorkspaceContext";

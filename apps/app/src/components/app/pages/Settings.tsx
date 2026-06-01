@@ -1,13 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  TextField,
-  Input,
-  Label,
-  Button,
-  Separator,
-  Select,
-  ListBox,
-} from "@heroui/react";
+import { TextField } from "@heroui/react/textfield";
+import { Input } from "@heroui/react/input";
+import { Label } from "@heroui/react/label";
+import { Button } from "@heroui/react/button";
+import { Separator } from "@heroui/react/separator";
+import { Select } from "@heroui/react/select";
+import { ListBox } from "@heroui/react/list-box";
 import {
   useSession,
   updateUser,
@@ -19,7 +17,7 @@ import {
   type ActiveSession,
 } from "../auth";
 import { Layout } from "../Layout";
-import { Skeleton } from "@heroui/react";
+import { Skeleton } from "@heroui/react/skeleton";
 import {
   getConnection,
   getPlan,

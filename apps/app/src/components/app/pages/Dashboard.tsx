@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Separator, Button, Skeleton } from "@heroui/react";
+import { Separator } from "@heroui/react/separator";
+import { Button } from "@heroui/react/button";
+import { Skeleton } from "@heroui/react/skeleton";
 import {
   getProfile,
   listCards,

@@ -1,5 +1,5 @@
 import { Navigate, Link } from "react-router-dom";
-import { Skeleton } from "@heroui/react";
+import { Skeleton } from "@heroui/react/skeleton";
 import { useSession } from "../auth";
 import { getConnection } from "../api";
 

@@ -2,7 +2,11 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { listWorkspaces, selectWorkspace, type Workspace } from "../api";
 import { Layout, EmptyState, ErrorBanner } from "../Layout";
-import { Card, Button, Alert, Chip, Skeleton } from "@heroui/react";
+import { Card } from "@heroui/react/card";
+import { Button } from "@heroui/react/button";
+import { Alert } from "@heroui/react/alert";
+import { Chip } from "@heroui/react/chip";
+import { Skeleton } from "@heroui/react/skeleton";
 import { Eyebrow } from "../primitives";
 
 export function Workspaces() {

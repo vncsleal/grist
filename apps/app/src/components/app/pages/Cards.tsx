@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Separator, Button, Alert, Skeleton } from "@heroui/react";
+import { Separator } from "@heroui/react/separator";
+import { Button } from "@heroui/react/button";
+import { Alert } from "@heroui/react/alert";
+import { Skeleton } from "@heroui/react/skeleton";
 import { listCards, curateCard, type Card } from "../api";
 import { Layout } from "../Layout";
 import { useWorkspace } from "../WorkspaceContext";

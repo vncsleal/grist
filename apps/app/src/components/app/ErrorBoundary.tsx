@@ -1,5 +1,6 @@
 import React, { Component } from "react";
-import { Button, Alert } from "@heroui/react";
+import { Button } from "@heroui/react/button";
+import { Alert } from "@heroui/react/alert";
 
 interface Props {
   children: React.ReactNode;

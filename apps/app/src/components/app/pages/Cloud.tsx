@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { signInEmail, signUpEmail, useSession } from "../auth";
-import { Button, Alert, Form, Input, Label, Tabs, TextField } from "@heroui/react";
+import { Button } from "@heroui/react/button";
+import { Alert } from "@heroui/react/alert";
+import { Form } from "@heroui/react/form";
+import { Input } from "@heroui/react/input";
+import { Label } from "@heroui/react/label";
+import { Tabs } from "@heroui/react/tabs";
+import { TextField } from "@heroui/react/textfield";
 
 const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "").trim().toLowerCase();
 

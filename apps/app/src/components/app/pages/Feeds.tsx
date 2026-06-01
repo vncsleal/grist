@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Separator, Alert, Skeleton, TextField, Input, FieldError } from "@heroui/react";
+import { Separator } from "@heroui/react/separator";
+import { Alert } from "@heroui/react/alert";
+import { Skeleton } from "@heroui/react/skeleton";
+import { TextField } from "@heroui/react/textfield";
+import { Input } from "@heroui/react/input";
+import { FieldError } from "@heroui/react/field-error";
 import { listFeeds, addFeed, deleteFeed } from "../api";
 import { Layout } from "../Layout";
 import { useWorkspace } from "../WorkspaceContext";

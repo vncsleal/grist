@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Button, Alert } from "@heroui/react";
+import { Button } from "@heroui/react/button";
+import { Alert } from "@heroui/react/alert";
 import { verifyEmail } from "../auth";
 
 type VerifyState = "loading" | "verified" | "error" | "no-token";

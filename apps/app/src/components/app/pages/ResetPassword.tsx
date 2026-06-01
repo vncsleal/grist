@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Button, Alert, Form, Input, Label, TextField } from "@heroui/react";
+import { Button } from "@heroui/react/button";
+import { Alert } from "@heroui/react/alert";
+import { Form } from "@heroui/react/form";
+import { Input } from "@heroui/react/input";
+import { Label } from "@heroui/react/label";
+import { TextField } from "@heroui/react/textfield";
 import { resetPassword } from "../auth";
 
 export function ResetPassword() {
