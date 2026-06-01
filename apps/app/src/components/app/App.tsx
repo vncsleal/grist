@@ -1,6 +1,5 @@
 import React, { lazy, Suspense } from "react";
 import { HashRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { ToastProvider } from "@heroui/react";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { useSession } from "./auth";
 import { getConnection } from "./api";
@@ -73,101 +72,99 @@ function LazyPage({ component: Component }: { component: React.LazyExoticCompone
 
 export function App() {
   return (
-    <ToastProvider>
-      <HashRouter>
-        <WorkspaceProvider>
-        <Routes>
-          <Route path="/" element={<LazyPage component={Home} />} />
-          {DEPLOY_MODE !== "self-hosted" && <Route path="/cloud" element={<LazyPage component={Cloud} />} />}
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <LazyPage component={Dashboard} />
-              </RequireAuth>
-            }
-          />
-          {DEPLOY_MODE !== "cloud" && <Route path="/connect" element={<Navigate to="/connect/self-hosted" replace />} />}
-          {DEPLOY_MODE !== "cloud" && <Route path="/connect/self-hosted" element={<LazyPage component={Connect} />} />}
-          <Route
-            path="/cards"
-            element={
-              <RequireAuth>
-                <LazyPage component={Cards} />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/drafts"
-            element={
-              <RequireAuth>
-                <LazyPage component={Drafts} />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/jobs"
-            element={
-              <RequireAuth>
-                <LazyPage component={Jobs} />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/assets"
-            element={
-              <RequireAuth>
-                <LazyPage component={Assets} />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <RequireAuth>
-                <LazyPage component={Profile} />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/memory"
-            element={
-              <RequireAuth>
-                <LazyPage component={Memory} />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/feeds"
-            element={
-              <RequireAuth>
-                <LazyPage component={Feeds} />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <RequireAuth>
-                <LazyPage component={Settings} />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/connectors"
-            element={
-              <RequireAuth>
-                <LazyPage component={Connectors} />
-              </RequireAuth>
-            }
-          />
-          {DEPLOY_MODE !== "self-hosted" && <Route path="/forgot-password" element={<LazyPage component={ForgotPassword} />} />}
-          {DEPLOY_MODE !== "self-hosted" && <Route path="/reset-password" element={<LazyPage component={ResetPassword} />} />}
-          {DEPLOY_MODE !== "self-hosted" && <Route path="/verify-email" element={<LazyPage component={VerifyEmail} />} />}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        </WorkspaceProvider>
-      </HashRouter>
-      </ToastProvider>
+    <HashRouter>
+      <WorkspaceProvider>
+      <Routes>
+        <Route path="/" element={<LazyPage component={Home} />} />
+        {DEPLOY_MODE !== "self-hosted" && <Route path="/cloud" element={<LazyPage component={Cloud} />} />}
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth>
+              <LazyPage component={Dashboard} />
+            </RequireAuth>
+          }
+        />
+        {DEPLOY_MODE !== "cloud" && <Route path="/connect" element={<Navigate to="/connect/self-hosted" replace />} />}
+        {DEPLOY_MODE !== "cloud" && <Route path="/connect/self-hosted" element={<LazyPage component={Connect} />} />}
+        <Route
+          path="/cards"
+          element={
+            <RequireAuth>
+              <LazyPage component={Cards} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/drafts"
+          element={
+            <RequireAuth>
+              <LazyPage component={Drafts} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/jobs"
+          element={
+            <RequireAuth>
+              <LazyPage component={Jobs} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/assets"
+          element={
+            <RequireAuth>
+              <LazyPage component={Assets} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <LazyPage component={Profile} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/memory"
+          element={
+            <RequireAuth>
+              <LazyPage component={Memory} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/feeds"
+          element={
+            <RequireAuth>
+              <LazyPage component={Feeds} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <RequireAuth>
+              <LazyPage component={Settings} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/connectors"
+          element={
+            <RequireAuth>
+              <LazyPage component={Connectors} />
+            </RequireAuth>
+          }
+        />
+        {DEPLOY_MODE !== "self-hosted" && <Route path="/forgot-password" element={<LazyPage component={ForgotPassword} />} />}
+        {DEPLOY_MODE !== "self-hosted" && <Route path="/reset-password" element={<LazyPage component={ResetPassword} />} />}
+        {DEPLOY_MODE !== "self-hosted" && <Route path="/verify-email" element={<LazyPage component={VerifyEmail} />} />}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      </WorkspaceProvider>
+    </HashRouter>
   );
 }

@@ -45,7 +45,7 @@ export function Connect() {
               style={{ boxShadow: "0 0 24px color-mix(in oklch, var(--accent) 45%, transparent), 0 0 60px color-mix(in oklch, var(--accent) 12%, transparent)" }}
             />
           <div>
-            <h1 className="text-4xl font-bold text-foreground font-display tracking-tight leading-[1.1]">
+            <h1 className="text-4xl font-bold text-foreground tracking-tight leading-[1.1]">
               Connect your{" "}
               <em className="italic font-light text-accent">
                 server.

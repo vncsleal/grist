@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Alert, Skeleton } from "@heroui/react";
+import { Alert, Skeleton } from "@heroui/react";
 import { listAssets, type AssetInfo } from "../api";
 import { Layout } from "../Layout";
 import { useWorkspace } from "../WorkspaceContext";

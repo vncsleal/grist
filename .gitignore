@@ -27,3 +27,5 @@ coverage/
 quillby-auth.db
 *.bak-*
 *.bak-*/*
+*.backup.json
+backup*.json

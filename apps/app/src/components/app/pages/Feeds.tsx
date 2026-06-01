@@ -3,7 +3,7 @@ import { Separator, Alert, Skeleton, TextField, Input, FieldError } from "@herou
 import { listFeeds, addFeed, deleteFeed } from "../api";
 import { Layout } from "../Layout";
 import { useWorkspace } from "../WorkspaceContext";
-import { InlineAction, PageEmptyState } from "../primitives";
+import { InlineAction } from "../primitives";
 
 function getFeedLabel(url: string): string | null {
   try {
@@ -22,7 +22,7 @@ export function Feeds() {
   const [feeds, setFeeds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [deletingUrl, setDeletingUrl] = useState<string | null>(null);
+  const [_deletingUrl, setDeletingUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newUrl, setNewUrl] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
