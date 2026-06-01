@@ -19,7 +19,7 @@ import {
   type ActiveSession,
 } from "../auth";
 import { Layout } from "../Layout";
-import { Spinner } from "@heroui/react";
+import { Skeleton } from "@heroui/react";
 import {
   getConnection,
   getPlan,
@@ -295,7 +295,7 @@ function SessionsSection() {
     <section className="flex flex-col gap-3">
       {error && <p className="text-xs text-danger font-mono">{error}</p>}
       {loading ? (
-        <div className="flex justify-center py-4"><Spinner /></div>
+        <div className="flex justify-center py-4"><Skeleton className="h-4 w-32 rounded-lg" /></div>
       ) : sessions.length === 0 ? (
         <p className="text-muted opacity-60">No active sessions found.</p>
       ) : (
@@ -323,7 +323,7 @@ function SessionsSection() {
                     <>
                       {" \u2014 "}
                       {revoking === s.id ? (
-                        <Spinner />
+                        "Revokingu2026"
                       ) : (
                         <Button
                           variant="ghost"
@@ -384,7 +384,7 @@ function PlanSection() {
     <section>
       {error && <p className="text-xs text-danger font-mono">{error}</p>}
       {loading ? (
-        <div className="flex justify-center py-4"><Spinner /></div>
+        <div className="flex justify-center py-4"><Skeleton className="h-4 w-32 rounded-lg" /></div>
       ) : info ? (
         <p className="text-muted">
           You&rsquo;re on the{" "}
@@ -448,7 +448,7 @@ function ProviderSetupSection() {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center py-4"><Spinner /></div>;
+    return <div className="flex justify-center py-4"><Skeleton className="h-4 w-32 rounded-lg" /></div>;
   }
 
   if (error) {
@@ -595,7 +595,7 @@ function ProviderAdminSection() {
     <section className="flex flex-col gap-4">
       {error && <p className="text-xs text-danger font-mono">{error}</p>}
       {loading ? (
-        <div className="flex justify-center py-4"><Spinner /></div>
+        <div className="flex justify-center py-4"><Skeleton className="h-4 w-32 rounded-lg" /></div>
       ) : (
         <>
           <p className="text-muted">
@@ -846,7 +846,7 @@ function ConnectorsSection() {
       )}
 
       {loading && keys.length === 0 ? (
-        <div className="flex justify-center py-4"><Spinner /></div>
+        <div className="flex justify-center py-4"><Skeleton className="h-4 w-32 rounded-lg" /></div>
       ) : keys.length === 0 ? (
         <p className="text-muted opacity-60">No active keys yet.</p>
       ) : (
@@ -864,7 +864,7 @@ function ConnectorsSection() {
                 </span>
                 {" \u2014 "}
                 {revokingId === key.id ? (
-                  <Spinner />
+                  "Revokingu2026"
                 ) : (
                   <Button
                     variant="ghost"
@@ -974,7 +974,7 @@ export function Settings() {
   return (
     <Layout>
       <div className="mb-10">
-        <h1 className="text-3xl font-bold font-display tracking-tight text-foreground">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
           {name ? `${name}'s account.` : "Your account."}
         </h1>
       </div>

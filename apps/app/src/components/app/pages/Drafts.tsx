@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Separator, Button } from "@heroui/react";
+import { Separator, Button, Alert, Skeleton } from "@heroui/react";
 import { listDrafts, type Draft } from "../api";
 import { Layout } from "../Layout";
-import { Spinner } from "@heroui/react";
 import { useWorkspace } from "../WorkspaceContext";
+import { Eyebrow, InlineAction, PageEmptyState } from "../primitives";
 
 const FORMAT_LABELS: Record<string, string> = {
   linkedin: "LinkedIn",
@@ -46,11 +46,10 @@ export function Drafts() {
 
   useEffect(() => {
     void load(activeWsId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeWsId]);
+  }, [activeWsId, load]);
 
   function headlineText(): string {
-    if (loading && drafts.length === 0) return "Loading drafts…";
+    if (loading && drafts.length === 0) return "Loading drafts\u2026";
     if (drafts.length === 0) return "Nothing written yet.";
     if (drafts.length === 1) return "One draft still brewing.";
     return `${drafts.length} drafts still brewing.`;
@@ -64,35 +63,35 @@ export function Drafts() {
 
   return (
     <Layout>
-      {/* Ambient glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_60%_40%_at_20%_10%,color-mix(in_oklch,var(--accent)_6%,transparent),transparent)]"
-      />
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_60%_40%_at_20%_10%,color-mix(in_oklch,var(--accent)_6%,transparent),transparent)]" />
 
-      {/* Header */}
       <div className="mb-10">
-        <div className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
-          <span className="inline-block mr-2 w-4 h-px bg-accent opacity-60 align-middle" />
-          Content
-        </div>
-        <h1 className="font-display text-3xl font-bold leading-tight tracking-[-0.025em] text-foreground">
+        <Eyebrow>Content</Eyebrow>
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground">
           {headlineText()}
         </h1>
       </div>
 
       {error && (
-        <p className="mb-8 text-sm text-danger">
-          {error}
-        </p>
+        <Alert status="danger" className="mb-8">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Content>
+        </Alert>
       )}
 
       {loading && drafts.length === 0 ? (
-        <div className="flex justify-center py-16"><Spinner /></div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-5 w-3/4 rounded-lg" />
+              <Skeleton className="h-4 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
       ) : drafts.length === 0 ? (
-        <p className="font-display text-base leading-relaxed text-muted">
-          Ask me to generate a post from a card and it will appear here.
-        </p>
+        <PageEmptyState message="Ask me to generate a post from a card and it will appear here." />
       ) : (
         <div>
           {drafts.map((draft, idx) => {
@@ -102,21 +101,19 @@ export function Drafts() {
 
             return (
               <div key={draft.id}>
-                {idx > 0 && (
-                  <Separator className="my-6" />
-                )}
+                {idx > 0 && <Separator variant="tertiary" className="my-6" />}
 
                 <Button
                   variant="ghost"
                   onPress={() => setExpandedId(isExpanded ? null : draft.id)}
                   className="text-left w-full p-0 h-auto min-w-0"
                 >
-                  <span className="font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-foreground">
-                    {draft.title ?? `Draft ${draft.id.slice(0, 8)}…`}
+                  <span className="text-base font-semibold tracking-tight text-foreground">
+                    {draft.title ?? `Draft ${draft.id.slice(0, 8)}\u2026`}
                   </span>
                 </Button>
 
-                <p className="mt-1 font-display text-[0.9375rem] leading-relaxed text-muted">
+                <p className="mt-1 text-sm leading-relaxed text-muted">
                   {formatLabel
                     ? <>This is a {formatLabel} draft{dateStr ? <>, written on {dateStr}</> : null}.</>
                     : <>A draft{dateStr ? <>, written on {dateStr}</> : null}.</>
@@ -125,37 +122,21 @@ export function Drafts() {
                   {isExpanded ? (
                     <>
                       You can{" "}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onPress={() => handleCopy(draft)}
-                        isDisabled={copied === draft.id}
-                        className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display"
-                      >
+                      <InlineAction onClick={() => handleCopy(draft)}>
                         {copied === draft.id ? "copied!" : "copy it"}
-                      </Button>
+                      </InlineAction>
                       {" "}or{" "}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onPress={() => setExpandedId(null)}
-                        className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display"
-                      >
+                      <InlineAction onClick={() => setExpandedId(null)}>
                         collapse it
-                      </Button>.
+                      </InlineAction>.
                     </>
                   ) : (
-                    <>You can <Button
-                      variant="ghost"
-                      size="sm"
-                      onPress={() => setExpandedId(draft.id)}
-                      className="underline underline-offset-3 decoration-accent/40 h-auto min-w-0 p-0 text-muted font-display"
-                    >open it</Button>.</>
+                    <>You can <InlineAction onClick={() => setExpandedId(draft.id)}>open it</InlineAction>.</>
                   )}
                 </p>
 
                 {isExpanded && draft.content && (
-                  <pre className="mt-4 font-mono text-[0.8125rem] leading-relaxed whitespace-pre-wrap text-muted border-l-2 border-border pl-4">
+                  <pre className="mt-4 text-xs leading-relaxed whitespace-pre-wrap text-muted border-l-2 border-border pl-4">
                     {draft.content}
                   </pre>
                 )}

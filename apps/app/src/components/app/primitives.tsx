@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Skeleton } from "@heroui/react";
+import { Button, Skeleton, EmptyState } from "@heroui/react";
 
 export function DotLink({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
@@ -24,6 +24,60 @@ export function MonoLink({ onClick, children }: { onClick: () => void; children:
     >
       {children}
     </Button>
+  );
+}
+
+export function InlineAction({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onPress={onClick}
+      className="underline underline-offset-2 decoration-accent/40 h-auto min-w-0 p-0 text-accent hover:decoration-accent transition-all"
+    >
+      {children}
+    </Button>
+  );
+}
+
+export function Eyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="font-mono text-xs tracking-widest uppercase text-accent mb-1">
+      {children}
+    </div>
+  );
+}
+
+export function PageHeader({ title, description, eyebrow }: { title: string; description?: string; eyebrow?: string }) {
+  return (
+    <div className="mb-8">
+      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+      <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+      {description && (
+        <p className="text-sm text-muted leading-relaxed mt-1 max-w-prose">{description}</p>
+      )}
+    </div>
+  );
+}
+
+export function SectionHeading({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="mb-6">
+      <h2 className="text-xl font-bold text-foreground tracking-tight">{title}</h2>
+      {description && (
+        <p className="text-sm text-muted leading-relaxed">{description}</p>
+      )}
+    </div>
+  );
+}
+
+export function PageEmptyState({ icon, message, action }: { icon?: React.ReactNode; message: string; action?: React.ReactNode }) {
+  return (
+    <EmptyState className="flex h-full flex-col items-center justify-center gap-4 py-16">
+      {icon && <div className="text-muted">{icon}</div>}
+      <span className="text-sm text-muted">{message}</span>
+      {action && <div className="mt-2">{action}</div>}
+    </EmptyState>
   );
 }
 

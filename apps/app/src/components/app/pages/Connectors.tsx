@@ -8,7 +8,8 @@ import {
   type ConnectorApiKey,
 } from "../api";
 import { Layout, EmptyState, ErrorBanner } from "../Layout";
-import { Card, Button, Spinner, Alert, TextField, Label, Input } from "@heroui/react";
+import { Card, Button, Alert, TextField, Label, Input, Skeleton } from "@heroui/react";
+import { Eyebrow } from "../primitives";
 
 function formatDate(iso?: string | null): string {
   if (!iso) return "No expiry";
@@ -89,16 +90,13 @@ export function Connectors() {
     <Layout>
       <div className="flex items-start justify-between mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-2.5 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
-            <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
-            Remote access
-          </div>
-          <h1 className="text-3xl font-bold text-foreground font-display tracking-tight">
+          <Eyebrow>Remote access</Eyebrow>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">
             Connectors
           </h1>
         </div>
         <Button variant="ghost" onPress={() => void load()} isDisabled={loading} size="sm" className="mt-1">
-          {loading ? <Spinner /> : "Refresh"}
+          {loading ? "Loading\u2026" : "Refresh"}
         </Button>
       </div>
 
@@ -108,11 +106,8 @@ export function Connectors() {
         {/* Create key card */}
         <Card className="flex flex-col gap-5">
           <div>
-            <div className="flex items-center gap-2 mb-2 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
-              <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
-              Remote MCP access
-            </div>
-            <h2 className="text-xl font-bold text-foreground mb-2 font-display tracking-tight">
+            <Eyebrow>Remote MCP access</Eyebrow>
+            <h2 className="text-xl font-bold text-foreground mb-2 tracking-tight">
               Generate connector keys for Claude and other clients
             </h2>
             <p className="mt-2 text-sm leading-7 text-muted">
@@ -133,7 +128,7 @@ export function Connectors() {
 
           <div className="flex flex-wrap gap-3">
             <Button variant="primary" onPress={() => void handleCreate()} isDisabled={creating}>
-              {creating ? <Spinner /> : "Create API key"}
+              {creating ? "Creating\u2026" : "Create API key"}
             </Button>
             <Button
               variant="secondary"
@@ -176,11 +171,8 @@ export function Connectors() {
 
         {/* Setup card */}
         <Card className="flex flex-col gap-4">
-          <div className="flex items-center gap-2 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
-            <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
-            Setup
-          </div>
-          <h2 className="text-xl font-bold text-foreground font-display tracking-tight">
+          <Eyebrow>Setup</Eyebrow>
+          <h2 className="text-xl font-bold text-foreground tracking-tight">
             Connector details
           </h2>
 
@@ -211,13 +203,10 @@ export function Connectors() {
 
       {/* Keys list */}
       <div className="mt-10">
-        <div className="flex items-center gap-2 mb-5 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
-          <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
-          Active keys
-        </div>
+        <Eyebrow>Active keys</Eyebrow>
 
         {loading && keys.length === 0 ? (
-          <div className="flex justify-center py-16"><Spinner /></div>
+          <div className="flex justify-center py-16"><Skeleton className="h-4 w-48 rounded-lg" /></div>
         ) : keys.length === 0 ? (
           <EmptyState
             title="No connector keys yet"
@@ -244,7 +233,7 @@ export function Connectors() {
                   isDisabled={revokingId === key.id}
                   size="sm"
                 >
-                  {revokingId === key.id ? <Spinner /> : "Revoke"}
+                  {revokingId === key.id ? "Revoking\u2026" : "Revoke"}
                 </Button>
               </Card>
             ))}

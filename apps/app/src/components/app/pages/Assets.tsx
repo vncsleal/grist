@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@heroui/react";
+import { Alert, Skeleton } from "@heroui/react";
 import { listAssets, type AssetInfo } from "../api";
 import { Layout } from "../Layout";
-import { Spinner } from "@heroui/react";
 import { useWorkspace } from "../WorkspaceContext";
+import { Eyebrow, PageEmptyState } from "../primitives";
 
 const FILTERS = ["all", "image", "audio", "video"] as const;
 
@@ -40,7 +40,7 @@ export function Assets() {
   }, [activeWsId, filter, load]);
 
   const title = useMemo(() => {
-    if (loading && assets.length === 0) return "Loading assets…";
+    if (loading && assets.length === 0) return "Loading assets\u2026";
     if (assets.length === 0) return "No generated assets yet.";
     if (assets.length === 1) return "One generated asset.";
     return `${assets.length} generated assets.`;
@@ -51,46 +51,59 @@ export function Assets() {
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-accent/[0.06] to-transparent" />
 
       <div className="mb-10">
-        <div className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
-          <span className="inline-block w-4 h-px bg-accent/60 mr-2 align-middle" />
-          Library
-        </div>
-        <h1 className="text-3xl font-bold leading-tight font-display tracking-tight text-foreground">
+        <Eyebrow>Library</Eyebrow>
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground">
           {title}
         </h1>
         <div className="mt-4 flex flex-wrap gap-2">
           {FILTERS.map((item) => (
-            <Button
+            <button
               key={item}
-              variant={item === filter ? "primary" : "ghost"}
-              size="sm"
-              className="rounded-full"
-              onPress={() => setFilter(item)}
+              type="button"
+              onClick={() => setFilter(item)}
+              className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                item === filter
+                  ? "bg-accent text-white border-accent"
+                  : "bg-transparent text-muted border-border hover:border-accent/50"
+              }`}
             >
               {item}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
-      {error && <p className="mb-8 text-sm text-danger">{error}</p>}
+      {error && (
+        <Alert status="danger" className="mb-8">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
 
       {loading && assets.length === 0 ? (
-        <div className="flex justify-center py-16"><Spinner /></div>
+        <div className="grid gap-5 md:grid-cols-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="rounded-2xl border border-border bg-surface p-4 space-y-3">
+              <Skeleton className="h-5 w-24 rounded-lg" />
+              <Skeleton className="h-3 w-32 rounded" />
+              <Skeleton className="h-40 w-full rounded-xl" />
+            </div>
+          ))}
+        </div>
       ) : assets.length === 0 ? (
-        <p className="text-base leading-relaxed font-display text-muted">
-          Finished assets will appear here once jobs complete.
-        </p>
+        <PageEmptyState message="Finished assets will appear here once jobs complete." />
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
           {assets.map((asset) => (
             <div key={asset.id} className="rounded-2xl border border-border bg-surface p-4">
-              <p className="font-display text-base font-semibold text-foreground capitalize">
+              <p className="text-base font-semibold text-foreground capitalize">
                 {asset.modality}
               </p>
-              <p className="mt-1 font-mono text-[0.75rem] text-muted">
+              <p className="mt-1 text-xs text-muted">
                 {formatDate(asset.createdAt)}
-                {asset.provider ? ` · ${asset.provider}` : ""}
+                {asset.provider ? ` \u00b7 ${asset.provider}` : ""}
               </p>
               <div className="mt-4">
                 {asset.modality === "image" ? (
@@ -102,10 +115,10 @@ export function Assets() {
                 )}
               </div>
               <div className="mt-3 flex gap-3">
-                <a href={asset.assetUrl} target="_blank" rel="noreferrer" className="text-foreground underline underline-offset-3 decoration-foreground/45">
+                <a href={asset.assetUrl} target="_blank" rel="noreferrer" className="text-sm text-foreground underline underline-offset-2 decoration-foreground/45">
                   Open
                 </a>
-                <a href={asset.assetUrl} download className="text-muted underline underline-offset-3 decoration-muted/45">
+                <a href={asset.assetUrl} download className="text-sm text-muted underline underline-offset-2 decoration-muted/45">
                   Download
                 </a>
               </div>

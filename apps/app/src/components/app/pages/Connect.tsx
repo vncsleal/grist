@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveConnection, ping, exchangeApiKey } from "../api";
-import { Card, Button, Spinner, Alert, Form, Input, Label, TextField, Description } from "@heroui/react";
+import { Card, Button, Alert, Form, Input, Label, TextField, Description } from "@heroui/react";
 
 const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "").trim().toLowerCase();
 
@@ -45,7 +45,7 @@ export function Connect() {
               style={{ boxShadow: "0 0 24px color-mix(in oklch, var(--accent) 45%, transparent), 0 0 60px color-mix(in oklch, var(--accent) 12%, transparent)" }}
             />
           <div>
-            <h1 className="text-4xl font-bold text-foreground font-display tracking-tight leading-[1.1]">
+            <h1 className="text-4xl font-bold text-foreground tracking-tight leading-[1.1]">
               Connect your{" "}
               <em className="italic font-light text-accent">
                 server.
@@ -116,7 +116,7 @@ export function Connect() {
               isDisabled={loading}
               className="w-full justify-center"
             >
-              {loading ? <Spinner /> : "Connect"}
+              {loading ? "Connecting\u2026" : "Connect"}
             </Button>
           </Form>
         </Card>

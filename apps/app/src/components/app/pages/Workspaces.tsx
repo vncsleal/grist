@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { listWorkspaces, selectWorkspace, type Workspace } from "../api";
 import { Layout, EmptyState, ErrorBanner } from "../Layout";
-import { Card, Button, Spinner, Alert, Chip } from "@heroui/react";
+import { Card, Button, Alert, Chip, Skeleton } from "@heroui/react";
+import { Eyebrow } from "../primitives";
 
 export function Workspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -57,16 +58,13 @@ export function Workspaces() {
     <Layout activeWorkspace={activeWs?.name}>
       <div className="flex items-start justify-between mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-2.5 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
-            <span className="inline-block w-4 h-px bg-accent/60 shrink-0" />
-            Management
-          </div>
-          <h1 className="text-3xl font-bold text-foreground font-display tracking-tight">
+          <Eyebrow>Workspaces</Eyebrow>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">
             Workspaces
           </h1>
         </div>
         <Button variant="ghost" onPress={load} isDisabled={loading} size="sm" className="mt-1">
-          {loading ? <Spinner /> : "Refresh"}
+          {loading ? "Loading\u2026" : "Refresh"}
         </Button>
       </div>
 
@@ -96,7 +94,7 @@ export function Workspaces() {
       {error && <ErrorBanner message={error} />}
 
       {loading && workspaces.length === 0 ? (
-        <div className="flex justify-center py-16"><Spinner /></div>
+        <div className="flex justify-center py-16"><Skeleton className="h-8 w-64 rounded-lg" /></div>
       ) : workspaces.length === 0 ? (
         <EmptyState
           title="No workspaces yet"
@@ -119,7 +117,7 @@ export function Workspaces() {
                     {ws.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold truncate text-foreground font-display tracking-tight">
+                    <p className="font-semibold truncate text-foreground tracking-tight">
                       {ws.name}
                     </p>
                     <p className="text-xs font-mono truncate mt-0.5 text-muted opacity-50">{ws.id}</p>
@@ -136,7 +134,7 @@ export function Workspaces() {
                       isDisabled={selecting === ws.id}
                       size="sm"
                     >
-                      {selecting === ws.id ? <Spinner /> : "Select"}
+                      {selecting === ws.id ? "Selecting\u2026" : "Select"}
                     </Button>
                   )}
                 </div>

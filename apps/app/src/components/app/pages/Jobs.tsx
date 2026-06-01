@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Separator } from "@heroui/react";
+import { Separator, Alert, Skeleton } from "@heroui/react";
 import { listJobs, type GenerationJobInfo } from "../api";
 import { Layout } from "../Layout";
-import { Spinner } from "@heroui/react";
 import { useWorkspace } from "../WorkspaceContext";
+import { Eyebrow, PageEmptyState } from "../primitives";
 
 const FILTERS = ["all", "image", "audio", "video"] as const;
 
@@ -58,7 +58,7 @@ export function Jobs() {
   }, [activeWsId, filter, load]);
 
   const title = useMemo(() => {
-    if (loading && jobs.length === 0) return "Loading jobs…";
+    if (loading && jobs.length === 0) return "Loading jobs\u2026";
     if (jobs.length === 0) return "No generation jobs yet.";
     if (jobs.length === 1) return "One generation job.";
     return `${jobs.length} generation jobs.`;
@@ -69,51 +69,64 @@ export function Jobs() {
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-accent/[0.06] to-transparent" />
 
       <div className="mb-10">
-        <div className="mb-3 font-mono text-[0.68rem] tracking-[0.14em] uppercase text-accent">
-          <span className="inline-block w-4 h-px bg-accent/60 mr-2 align-middle" />
-          Generation
-        </div>
-        <h1 className="text-3xl font-bold leading-tight font-display tracking-tight text-foreground">
+        <Eyebrow>Generation</Eyebrow>
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground">
           {title}
         </h1>
         <div className="mt-4 flex flex-wrap gap-2">
           {FILTERS.map((item) => (
-            <Button
+            <button
               key={item}
-              variant={item === filter ? "primary" : "ghost"}
-              size="sm"
-              className="rounded-full"
-              onPress={() => setFilter(item)}
+              type="button"
+              onClick={() => setFilter(item)}
+              className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                item === filter
+                  ? "bg-accent text-white border-accent"
+                  : "bg-transparent text-muted border-border hover:border-accent/50"
+              }`}
             >
               {item}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
-      {error && <p className="mb-8 text-sm text-danger">{error}</p>}
+      {error && (
+        <Alert status="danger" className="mb-8">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
 
       {loading && jobs.length === 0 ? (
-        <div className="flex justify-center py-16"><Spinner /></div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-5 w-48 rounded-lg" />
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-3 w-32 rounded" />
+            </div>
+          ))}
+        </div>
       ) : jobs.length === 0 ? (
-        <p className="text-base leading-relaxed font-display text-muted">
-          Generated images, audio clips, and videos will appear here once you start a job.
-        </p>
+        <PageEmptyState message="Generated images, audio clips, and videos will appear here once you start a job." />
       ) : (
         <div>
           {jobs.map((job, idx) => (
             <div key={job.id}>
-              {idx > 0 && <Separator className="my-6" />}
-              <p className="font-display text-base text-foreground">
+              {idx > 0 && <Separator variant="tertiary" className="my-6" />}
+              <p className="text-base text-foreground">
                 <span className="capitalize font-semibold">{job.modality}</span>
                 {" "}
-                <span className={`font-mono text-xs ${statusColor(job.status)}`}>{job.status}</span>
+                <span className={`text-xs ${statusColor(job.status)}`}>{job.status}</span>
               </p>
               <p className="mt-1 leading-relaxed text-muted">{job.prompt}</p>
-              <p className="mt-2 font-mono text-[0.75rem] text-muted">
+              <p className="mt-2 text-xs text-muted">
                 {formatDate(job.createdAt)}
-                {job.provider ? ` · ${job.provider}` : ""}
-                {job.outputRef ? " · output ready" : ""}
+                {job.provider ? ` \u00b7 ${job.provider}` : ""}
+                {job.outputRef ? " \u00b7 output ready" : ""}
               </p>
               {job.error && <p className="mt-2 text-sm text-danger">{job.error}</p>}
             </div>
