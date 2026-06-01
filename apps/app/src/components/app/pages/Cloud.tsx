@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { signInEmail, signUpEmail, useSession } from "../auth";
-import { Button, Spinner, Alert, Form, Input, Label, Tabs, TextField } from "@heroui/react";
+import { Button, Alert, Form, Input, Label, Tabs, TextField } from "@heroui/react";
 
 const DEPLOY_MODE = (import.meta.env.VITE_QUILLBY_DEPLOYMENT_MODE ?? "").trim().toLowerCase();
 
@@ -48,7 +48,7 @@ export function Cloud() {
 
         {/* Top wordmark */}
         <div>
-          <span className="font-display text-xl font-bold tracking-tight text-foreground">
+          <span className=" text-xl font-bold tracking-tight text-foreground">
             Quillby
           </span>
         </div>
@@ -64,7 +64,7 @@ export function Cloud() {
 
         {/* Headline */}
         <div className="flex flex-col gap-6 max-w-sm">
-          <h2 className="text-5xl font-bold text-foreground leading-[1.08] font-display tracking-tighter">
+          <h2 className="text-5xl font-bold text-foreground leading-[1.08] tracking-tighter">
             Content that{" "}
             <em className="italic font-light text-accent">
               moves with you.
@@ -99,14 +99,14 @@ export function Cloud() {
             alt="Quillby"
             className="w-72 h-72 object-contain"
           />
-          <span className="font-display text-lg font-bold tracking-tight text-foreground">
+          <span className=" text-lg font-bold tracking-tight text-foreground">
             Quillby
           </span>
         </div>
 
         <div className="w-full max-w-sm flex flex-col gap-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2 font-display tracking-tight leading-[1.1]">
+            <h1 className="text-3xl font-bold text-foreground mb-2 tracking-tight leading-[1.1]">
               {mode === "sign-in" ? "Welcome back" : "Create your account"}
             </h1>
             <p className="text-sm text-muted">
@@ -165,7 +165,7 @@ export function Cloud() {
               isDisabled={loading || session.isPending}
               className="w-full justify-center mt-1"
             >
-              {loading ? <Spinner /> : mode === "sign-in" ? "Sign in" : "Create account"}
+              {loading ? "Loading\u2026" : mode === "sign-in" ? "Sign in" : "Create account"}
             </Button>
           </Form>
 

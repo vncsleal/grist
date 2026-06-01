@@ -217,7 +217,7 @@ export function Dashboard() {
                     e.preventDefault();
                     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
-                  className={`block font-display text-sm font-normal no-underline leading-snug mt-0.5 transition-colors duration-150 hover:text-foreground ${
+                  className={`block text-sm font-normal no-underline leading-snug mt-0.5 transition-colors duration-150 hover:text-foreground ${
                     activeId === id ? "text-accent" : "text-muted"
                   }`}
                 >
@@ -242,7 +242,7 @@ export function Dashboard() {
               </p>
 
               {/* Greeting */}
-              <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight leading-tight text-foreground mb-3">
+              <h1 className=" text-4xl md:text-5xl font-bold tracking-tight leading-tight text-foreground mb-3">
                 {timeGreeting()},<br />
                 <em className="italic font-light text-accent">
                   {firstName ? `${firstName}.` : "let's get started."}
@@ -251,21 +251,21 @@ export function Dashboard() {
 
               {/* Role / industry */}
               {(profile?.role || profile?.industry) ? (
-                <p className="font-display italic font-light text-base md:text-lg text-muted leading-relaxed max-w-prose mb-4">
+                <p className=" italic font-light text-base md:text-lg text-muted leading-relaxed max-w-prose mb-4">
                   {profile?.role && <><span className="text-foreground font-semibold not-italic">{profile.role}</span></>}
                   {profile?.role && profile?.industry && " in the "}
                   {profile?.industry && <><span className="text-foreground font-semibold not-italic">{profile.industry}</span> industry</>}
                   {"."}{(profile?.platforms ?? []).length > 0 && <> Writing on <span className="text-foreground font-semibold not-italic">{profile!.platforms!.join(" · ")}</span>.</>}
                 </p>
               ) : (
-                <p className="font-display italic font-light text-base text-muted leading-relaxed mb-4">
+                <p className=" italic font-light text-base text-muted leading-relaxed mb-4">
                   Your profile isn&rsquo;t set up yet.{" "}
                   <DotLink onClick={() => navigate("/profile")}>Tell me about yourself →</DotLink>
                 </p>
               )}
 
               {/* Editorial brief */}
-              <p className="font-display italic font-light text-base text-muted leading-relaxed max-w-prose mb-3">
+              <p className=" italic font-light text-base text-muted leading-relaxed max-w-prose mb-3">
                 {feedCount > 0
                   ? <><span className="text-foreground font-semibold not-italic">{feedCount}</span> {feedCount === 1 ? "source" : "sources"} monitored. </>
                   : <><DotLink onClick={() => navigate("/feeds")}>Add a source</DotLink> to start surfacing ideas. </>
@@ -282,14 +282,14 @@ export function Dashboard() {
 
               {/* Voice */}
               {profile?.voice && (
-                <p className="font-display italic font-light text-sm text-muted leading-relaxed max-w-prose mb-2">
+                <p className=" italic font-light text-sm text-muted leading-relaxed max-w-prose mb-2">
                   Your voice is <span className="text-foreground font-semibold not-italic">{profile.voice}</span>.
                 </p>
               )}
 
               {/* Goals */}
               {(profile?.contentGoals ?? []).length > 0 && (
-                <p className="font-display italic font-light text-sm text-muted leading-relaxed mt-2">
+                <p className=" italic font-light text-sm text-muted leading-relaxed mt-2">
                   {profile!.contentGoals!.length === 1
                     ? <>Your goal is to <span className="text-foreground font-semibold not-italic">{profile!.contentGoals![0]}</span>.</>
                     : <>Your goals are{" "}
@@ -307,7 +307,7 @@ export function Dashboard() {
 
               {/* Memory note */}
               {totalMem > 0 && (
-                <p className="font-display italic font-light text-sm text-muted leading-relaxed mt-2">
+                <p className=" italic font-light text-sm text-muted leading-relaxed mt-2">
                   Workspace memory holds <span className="text-foreground font-semibold not-italic">{totalMem}</span> {totalMem === 1 ? "note" : "notes"} — voice, style, and audience.{" "}
                   <DotLink onClick={() => navigate("/memory")}>Browse →</DotLink>
                 </p>
@@ -379,7 +379,7 @@ export function Dashboard() {
                   })}
                 </div>
               ) : (
-                <p className="font-display italic font-light text-sm text-muted leading-relaxed mb-6 max-w-prose">
+                <p className=" italic font-light text-sm text-muted leading-relaxed mb-6 max-w-prose">
                   {feedCount > 0
                     ? "Ask Claude to fetch fresh content, or wait for your sources to update."
                     : <><DotLink onClick={() => navigate("/feeds")}>Add a source →</DotLink></>
@@ -433,7 +433,7 @@ export function Dashboard() {
                         />
                         <div>
                           <div
-                            className="font-display text-base font-semibold text-foreground leading-snug cursor-pointer transition-colors duration-150 hover:text-accent"
+                            className=" text-base font-semibold text-foreground leading-snug cursor-pointer transition-colors duration-150 hover:text-accent"
                             role="button"
                             tabIndex={0}
                             onClick={() => navigate("/drafts")}
@@ -473,7 +473,7 @@ export function Dashboard() {
                   )}
                 </div>
               ) : (
-                <p className="font-display italic font-light text-sm text-muted leading-relaxed mb-6 max-w-prose">
+                <p className=" italic font-light text-sm text-muted leading-relaxed mb-6 max-w-prose">
                   Nothing written yet. Ask Claude: <span className="text-foreground not-italic">"write a post about [topic]"</span> — or shortlist a card first.
                 </p>
               )}
@@ -524,7 +524,7 @@ export function Dashboard() {
                     onClick={() => navigate(to)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(to); }}
                   >
-                    <span className="font-display italic font-light text-sm text-muted transition-colors duration-150 group-hover/db-cta:text-foreground">
+                    <span className=" italic font-light text-sm text-muted transition-colors duration-150 group-hover/db-cta:text-foreground">
                       {label}
                     </span>
                     <span className="font-mono text-xs text-accent opacity-0 transition-opacity duration-150 group-hover/db-cta:opacity-75 shrink-0 ml-4">
@@ -551,7 +551,7 @@ function SectionRule() {
 function SectionHead({ title, sub }: { title: string; sub?: string }) {
   return (
     <div className="mb-6">
-      <h2 className="font-display text-2xl font-bold tracking-tight leading-snug text-foreground">
+      <h2 className=" text-2xl font-bold tracking-tight leading-snug text-foreground">
         {title}
       </h2>
       {sub && (
@@ -565,7 +565,7 @@ function StatBlock({ n, label, color }: { n: number; label: string; color: strin
   return (
     <div className="flex flex-col gap-0.5">
       <span
-        className="font-display text-4xl font-extrabold tracking-tight leading-none"
+        className=" text-4xl font-extrabold tracking-tight leading-none"
         style={{ color }}
       >
         {n}
