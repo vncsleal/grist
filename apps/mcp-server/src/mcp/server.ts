@@ -74,6 +74,7 @@ import {
   getProviderPolicyReport,
   validateUrl,
 } from "@quillby/providers";
+import type { SamplingHost } from "@quillby/providers";
 import type { GenerationModality } from "@quillby/core";
 import {
   GenerateImageArgsSchema,
@@ -3239,7 +3240,7 @@ if (TRANSPORT_MODE === "http") {
   // via the Server's createMessage() method (public API on the MCP Server class).
   try {
     const assetsDir = path.join(process.env.QUILLBY_HOME ?? process.env.HOME ?? "~", ".quillby", "assets");
-    providerRouter.setTier1(new McpSamplingAdapter(server.server, assetsDir));
+    providerRouter.setTier1(new McpSamplingAdapter(server.server as SamplingHost, assetsDir));
   } catch (e) {
     logWarn("McpSamplingAdapter init failed (generation falls through to Tier 2)", { error: String(e) });
   }
