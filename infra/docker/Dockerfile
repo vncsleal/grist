@@ -35,6 +35,7 @@ RUN pnpm install --filter @vncsleal/quillby... --no-frozen-lockfile --ignore-scr
 FROM deps AS build
 COPY . .
 RUN pnpm --filter @vncsleal/quillby build
+RUN pnpm deploy --filter @vncsleal/quillby --prod --legacy /app/deploy
 
 # ─── App (SPA) build ─────────────────────────────────────────────────────────────────
 FROM base AS build-app
@@ -46,6 +47,7 @@ COPY apps/app ./apps/app
 ARG VITE_QUILLBY_DEPLOYMENT_MODE=self-hosted
 ARG VITE_QUILLBY_API_BASE_URL=/
 RUN pnpm --filter @quillby/app build
+RUN pnpm deploy --filter @quillby/app --prod --legacy /app/deploy-app
 
 FROM node:22-alpine AS runtime
 WORKDIR /app
@@ -56,11 +58,9 @@ ENV QUILLBY_HTTP_HOST=0.0.0.0
 ENV QUILLBY_AUTH_DB_URL=file:/data/quillby-auth.db
 ENV QUILLBY_DEPLOYMENT_MODE=self-hosted
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/apps/mcp-server/package.json ./package.json
-COPY --from=build /app/apps/mcp-server/bin ./bin
-COPY --from=build /app/apps/mcp-server/dist ./dist
-COPY --from=build-app /app/apps/app/dist ./public/app
+COPY --from=build /app/deploy ./
+COPY --from=build-app /app/deploy-app ./public/app
+RUN apk add --no-cache wget
 
 VOLUME ["/data"]
 EXPOSE 3000
@@ -68,4 +68,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -q --spider http://localhost:3000/health || exit 1
 
-CMD ["node", "dist/mcp/server.js"]
+CMD ["node", "apps/mcp-server/dist/mcp/server.js"]
