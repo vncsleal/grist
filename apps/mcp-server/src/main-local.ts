@@ -25,8 +25,8 @@ async function main(): Promise<void> {
   }
   const recovered = await recoverOrphanedJobs(combinedStorage);
   if (recovered > 0) logInfo("Recovered orphaned jobs", { count: recovered });
-  process.on("SIGTERM", () => { slog("info", "stdio_shutdown", { signal: "SIGTERM" }); server.close().catch(() => {}); });
-  process.on("SIGINT", () => { slog("info", "stdio_shutdown", { signal: "SIGINT" }); server.close().catch(() => {}); });
+  process.on("SIGTERM", () => { slog("info", "stdio_shutdown", { signal: "SIGTERM" }); server.close().catch((e) => logWarn("stdio_server_close_error", { error: String(e) })); });
+  process.on("SIGINT", () => { slog("info", "stdio_shutdown", { signal: "SIGINT" }); server.close().catch((e) => logWarn("stdio_server_close_error", { error: String(e) })); });
   const sched = process.env.QUILLBY_SCHEDULE;
   if (sched) scheduleDaily(sched, runScheduledHarvest);
 }

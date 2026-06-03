@@ -52,12 +52,12 @@ export async function handleTool(raw: unknown, ctx: ToolContext) {
       }
       const allUrls = [...new Set([...googleUrls, ...mediumUrls, ...feedlyUrls, ...samplingUrls])];
       const addResult = await ctx.storage.appendSources(allUrls);
-      return { content: [{ type: "text" as const, text: JSON.stringify({ topics, googleNewsFeeds: googleUrls.length, mediumTagFeeds: mediumUrls.length, feedlyFeeds: feedlyUrls.length, samplingFeeds: samplingUrls.length, added: addResult.added, skipped: addResult.skipped, totalFeeds: (await ctx.storage.loadSources()).length }, null, 2) }], structuredContent: { topics, googleNewsFeeds: googleUrls.length, mediumTagFeeds: mediumUrls.length, feedlyFeeds: feedlyUrls.length, samplingFeeds: samplingUrls.length, added: addResult.added, skipped: addResult.skipped, totalFeeds: (await ctx.storage.loadSources()).length } };
+      return { content: [{ type: "text" as const, text: `Discovered feeds for: ${topics.join(", ")}. Added ${addResult.added} new feed(s) (${googleUrls.length} Google News, ${mediumUrls.length} Medium, ${feedlyUrls.length} Feedly, ${samplingUrls.length} from sampling), ${addResult.skipped} duplicate(s). Total: ${(await ctx.storage.loadSources()).length}.` }], structuredContent: { topics, googleNewsFeeds: googleUrls.length, mediumTagFeeds: mediumUrls.length, feedlyFeeds: feedlyUrls.length, samplingFeeds: samplingUrls.length, added: addResult.added, skipped: addResult.skipped, totalFeeds: (await ctx.storage.loadSources()).length } };
     }
     case "list": {
       const activeStorage = parsed.workspaceId ? await ctx.storage.withWorkspace(parsed.workspaceId) : ctx.storage;
       const sources = await activeStorage.loadSources();
-      return { content: [{ type: "text" as const, text: sources.length ? JSON.stringify({ count: sources.length, feeds: sources }, null, 2) : "No feeds configured. Use add_feeds." }], structuredContent: { count: sources.length, feeds: sources } };
+      return { content: [{ type: "text" as const, text: sources.length ? `${sources.length} feed(s) configured.` : "No feeds configured. Use add_feeds." }], structuredContent: { count: sources.length, feeds: sources } };
     }
     case "read": {
       const content = await enrichArticle(parsed.url, parsed.title ?? "");

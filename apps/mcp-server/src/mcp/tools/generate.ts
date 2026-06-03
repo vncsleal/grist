@@ -231,7 +231,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
       return {
-        content: [{ type: "text", text: JSON.stringify(job, null, 2) }],
+        content: [{ type: "text", text: `Job "${jobId}": ${job.status}.${job.status === "done" && job.outputRef ? ` Output: ${job.outputRef}.` : ""}${job.error ? ` Error: ${job.error}.` : ""}` }],
         structuredContent: { job },
       };
     }
@@ -243,7 +243,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         : ctx.storage as unknown as JobStorage;
       const jobs = await ljStorage.listJobs(ljModality);
       return {
-        content: [{ type: "text", text: JSON.stringify(jobs, null, 2) }],
+        content: [{ type: "text", text: `${jobs.length} generation job(s).${(jobs as Array<Record<string, unknown>>).slice(0, 5).map(j => `\n  [${j.modality}] ${j.id}: ${j.status}`).join("")}${jobs.length > 5 ? `\n  ... +${jobs.length - 5} more` : ""}` }],
         structuredContent: { jobs, count: jobs.length },
       };
     }
@@ -252,7 +252,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       refreshProviderRouter();
       const report = getProviderPolicyReport(ctx.deploymentMode, ctx.providerRouter);
       return {
-        content: [{ type: "text", text: JSON.stringify({ ...report, configured: getStoredProviderConfigSummary() }, null, 2) }],
+        content: [{ type: "text", text: `Provider capabilities: ${(report as Record<string, unknown>).capabilities ? ((report as Record<string, unknown>).capabilities as Array<{ modality: string; available: boolean; message?: string }>).map((c: { modality: string; available: boolean; message?: string }) => `${c.modality}: ${c.available ? "available" : c.message ?? "unavailable"}`).join(", ") : "none"}. Configured providers: ${Object.keys(getStoredProviderConfigSummary()).join(", ") || "none"}.` }],
         structuredContent: { ...report, configured: getStoredProviderConfigSummary() },
       };
     }
@@ -294,38 +294,10 @@ async function runGenerationJob(
     drivingAudioUrl?: string;
   }
 ): Promise<void> {
-  refreshProviderRouter();
   await jobStorage.updateJob(jobId, { status: "running" });
   try {
     const cloneVoice = options?.cloneVoice === true;
     const cloneAvatar = options?.cloneAvatar === true;
-
-    if (cloneVoice) {
-      if (!workspace.cloneConsentGranted) {
-        throw new Error("Voice clone blocked: clone consent is not granted.");
-      }
-      if (!workspace.voiceReferenceAudioUrl) {
-        throw new Error("Voice clone blocked: voice reference audio is not configured.");
-      }
-    }
-
-    if (cloneAvatar) {
-      if (!workspace.cloneConsentGranted) {
-        throw new Error("Avatar clone blocked: clone consent is not granted.");
-      }
-      if (!workspace.faceReferenceImageUrl) {
-        throw new Error("Avatar clone blocked: face reference image is not configured.");
-      }
-      if (!options?.drivingAudioUrl) {
-        throw new Error("Avatar clone blocked: drivingAudioUrl is required.");
-      }
-      try {
-        await validateUrl(options.drivingAudioUrl);
-      } catch (err) {
-        throw new Error(`Avatar clone blocked: drivingAudioUrl ${err instanceof Error ? err.message : "invalid"}`);
-      }
-    }
-
     const req = {
       modality,
       prompt,

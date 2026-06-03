@@ -28,7 +28,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext) {
     case "list": {
       const drafts = await storage.listDrafts();
       return {
-        content: [{ type: "text" as const, text: drafts.length ? JSON.stringify({ count: drafts.length, drafts }, null, 2) : "No saved drafts for this workspace yet." }],
+        content: [{ type: "text" as const, text: drafts.length ? `${drafts.length} draft(s) saved.${(drafts as Array<Record<string, unknown>>).slice(0, 5).map(d => `\n  [${d.platform ?? "?"}] ${(d.content as string ?? "").slice(0, 60)}${(d.content as string ?? "").length > 60 ? "…" : ""}`).join("")}${drafts.length > 5 ? `\n  … and ${drafts.length - 5} more` : ""}` : "No saved drafts for this workspace yet." }],
         structuredContent: { count: drafts.length, drafts },
       };
     }

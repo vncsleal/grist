@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ToolContext, ToolResult } from "./index.js";
+import type { UserContext, TypedMemory } from "@quillby/core";
 import { CardInputSchema } from "../../types.js";
 import { fetchArticles, preScoreArticles } from "../../agents/harvest.js";
 import { enrichArticle } from "../../extractors/content.js";
@@ -141,7 +142,7 @@ Return ONLY a JSON array of integers — the indices of the top ${topN} most rel
         .join("\n\n---\n\n");
       const cardPrompt = `You are a content strategist. Analyze these articles for a ${userCtx.role as string} in ${(userCtx.industry as string) ?? "their industry"}.
 
-${contextToPromptText(userCtx as never, typedMemory as never)}${voiceBlock}
+${contextToPromptText(userCtx as UserContext, typedMemory as TypedMemory)}${voiceBlock}
 
 ${articleBlobs}
 
@@ -231,7 +232,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
           })),
       };
       return {
-        content: [{ type: "text", text: JSON.stringify(briefResult, null, 2) }],
+        content: [{ type: "text", text: `Briefing generated for ${briefResult.date}. Checked ${briefResult.feedsChecked} feed(s), ${briefResult.headlinesSeen} headline(s) seen, ${briefResult.deepRead} article(s) deep-read, ${briefResult.cardsGenerated} card(s) generated. Top card: "${briefResult.brief[0]?.title ?? "N/A"}" (score ${briefResult.brief[0]?.score ?? "N/A"}).` }],
         structuredContent: briefResult as Record<string, unknown>,
       };
     }
@@ -308,7 +309,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         uncurated,
       };
       return {
-        content: [{ type: "text", text: JSON.stringify(briefing, null, 2) }],
+        content: [{ type: "text", text: `Briefing for "${briefing.workspace}" from ${briefing.generatedAt}: ${briefing.totalCards} card(s) total, ${briefing.curationSummary.shortlisted} shortlisted, ${briefing.curationSummary.skipped} skipped, ${briefing.curationSummary.uncurated} uncurated.` }],
         structuredContent: briefing as Record<string, unknown>,
       };
     }

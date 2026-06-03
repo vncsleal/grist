@@ -8,14 +8,8 @@ try {
     case "local":
       await import("./main-local.js");
       break;
-    case "cloud":
-      await import("./main-cloud.js");
-      break;
-    case "self-hosted":
-      await import("./main-selfhosted.js");
-      break;
     default:
-      logFatal(`Unknown deployment mode: ${mode}`);
+      logFatal(`Deployment mode "${mode}" is not implemented yet. Use local mode.`);
       process.exit(1);
   }
 } catch (err) {

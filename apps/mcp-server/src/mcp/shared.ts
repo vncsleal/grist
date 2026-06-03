@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { logWarn } from "../logger.js";
 import { getDeploymentMode } from "../config.js";
 import { ProviderRouter } from "@quillby/providers";
 import { buildDirectAdaptersFromConfig } from "../provider-config.js";
@@ -19,7 +20,7 @@ export function getProviderRouter(): ProviderRouter {
 }
 
 export function refreshProviderRouter(): void {
-  if (!_router) { console.warn("refreshProviderRouter called before ProviderRouter initialized"); return; }
+  if (!_router) { logWarn("refreshProviderRouter called before ProviderRouter initialized"); return; }
   const mode = getDeploymentMode();
   if (mode !== "cloud") {
     _router.setTier3(buildDirectAdaptersFromConfig(mode));

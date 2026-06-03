@@ -8,6 +8,8 @@ import { getDeploymentMode } from "../config.js";
 import { ProviderRouter } from "@quillby/providers";
 import type { PlanStorage, SessionStore } from "@quillby/workspace";
 import type { ToolResult } from "./tools/index.js";
+import { RESOURCES, readResource } from "./resources.js";
+import { PROMPTS, getPrompt } from "./prompts.js";
 import { PKG, refreshProviderRouter, setProviderRouter } from "./shared.js";
 
 import { tool as sessionTool, handleTool as handleSessionTool } from "./tools/session.js";
@@ -171,6 +173,15 @@ function registerMcpHandlers(server: McpServer, storage: WorkspaceStorage & JobS
     })),
   }));
   server.server.setRequestHandler(CallToolRequestSchema, async (req) => handleToolCall(server, storage, req.params.name, (req.params.arguments ?? {}) as Record<string, unknown>));
+  for (const r of RESOURCES) {
+    server.resource(r.name, r.uri, { description: r.description, mimeType: r.mimeType }, async () => {
+      const result = await readResource(r.uri, storage, { isCloudMode: () => false });
+      return { contents: result.contents };
+    });
+  }
+  for (const p of PROMPTS) {
+    server.prompt(p.name, p.description ?? "", (_args: unknown) => getPrompt(p.name, storage));
+  }
 }
 
 export { createMcpServer, registerMcpHandlers, handleToolCall, sample, refreshProviderRouter, recoverOrphanedJobs, runScheduledHarvest, scheduleDaily, validateEnv, providerRouter, deploymentMode, PKG, TOOLS };

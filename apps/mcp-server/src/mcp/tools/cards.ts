@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ToolContext, ToolResult } from "./index.js";
+import type { UserContext, TypedMemory } from "@quillby/core";
 import { CardInputSchema } from "../../types.js";
 import { PLATFORM_GUIDES } from "../../agents/compose.js";
 import { contextToPromptText } from "../../agents/onboard.js";
@@ -71,7 +72,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         })),
       };
       return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text", text: `Showing ${result.showing} of ${result.total} card(s) from ${result.generatedAt}.${result.cards.slice(0, 5).map(c => `\n  [${c.id}] ${c.title} (score ${c.relevanceScore})${c.curationStatus ? ` [${c.curationStatus}]` : ""}`).join("")}${result.cards.length > 5 ? `\n  ... +${result.cards.length - 5} more` : ""}` }],
         structuredContent: result as Record<string, unknown>,
       };
     }
@@ -101,7 +102,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
       return {
-        content: [{ type: "text", text: JSON.stringify(card, null, 2) }],
+        content: [{ type: "text", text: `Card #${(card as Record<string, unknown>).id}: "${(card as Record<string, unknown>).title}". Source: ${(card as Record<string, unknown>).source}. Score: ${(card as Record<string, unknown>).relevanceScore}. Thesis: ${(card as Record<string, unknown>).thesis}. Tags: ${((card as Record<string, unknown>).trendTags as string[] ?? []).join(", ")}.` }],
         structuredContent: card as Record<string, unknown>,
       };
     }
@@ -232,7 +233,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       const generatePrompt = `You are writing a ${genPlatform} post for ${(userCtx.name as string) ?? "a content creator"} — a ${userCtx.role as string} in ${(userCtx.industry as string) ?? "their industry"}.
 
 ## User profile
-${contextToPromptText(userCtx as never, typedMemory as never)
+${contextToPromptText(userCtx as UserContext, typedMemory as TypedMemory)
   .split("\n")
   .map((line) => `- ${line}`)
   .join("\n")}
@@ -292,7 +293,7 @@ ${guide}
         draft: draftResult.text.trim(),
       };
       return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text", text: `Draft generated for ${result.platform} (card #${result.cardId}, angle: "${result.angle}"). Saved to ${result.savedTo}.\n\n${result.draft}` }],
         structuredContent: result,
       };
     }

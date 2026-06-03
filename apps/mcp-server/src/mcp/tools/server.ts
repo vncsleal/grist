@@ -132,7 +132,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       const plan = await ctx.storage.getPlan();
       const limits = billing.getPlanLimits(plan as import("../../billing.js").HostedPlan);
       return {
-        content: [{ type: "text", text: JSON.stringify({ plan, limits, enforcementEnabled: billing.isPlanEnforcementEnabled() }, null, 2) }],
+        content: [{ type: "text", text: `Plan: ${plan as string}. Limits: ${limits ? Object.entries(limits as Record<string, unknown>).map(([k, v]) => `${k}: ${v as string}`).join(", ") : "N/A"}. Enforcement: ${billing.isPlanEnforcementEnabled() ? "enabled" : "disabled"}.` }],
         structuredContent: { plan, limits, enforcementEnabled: billing.isPlanEnforcementEnabled() },
       };
     }
@@ -147,7 +147,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         { name: "pro", price: "$29/mo", description: "Unlimited workspaces, drafts, and AI generation credits", limits: billing.getPlanLimits("pro") },
       ];
       return {
-        content: [{ type: "text", text: JSON.stringify({ plans }, null, 2) }],
+        content: [{ type: "text", text: `Available plans:\n${(plans as Array<Record<string, unknown>>).map(p => `  ${p.name as string}: ${p.price as string} — ${p.description as string}`).join("\n")}` }],
         structuredContent: { plans },
       };
     }
@@ -167,7 +167,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
       return {
-        content: [{ type: "text", text: JSON.stringify({ action: parsed.billingAction, url, plan: currentPlan }, null, 2) }],
+        content: [{ type: "text", text: `Billing action "${parsed.billingAction}" for plan "${currentPlan as string}". URL: ${url}.` }],
         structuredContent: { action: parsed.billingAction, url, plan: currentPlan },
       };
     }

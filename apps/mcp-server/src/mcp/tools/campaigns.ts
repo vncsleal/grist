@@ -608,17 +608,18 @@ async function handleList(args: Record<string, unknown>, ctx: ToolContext): Prom
   };
 }
 
+function getNextStages(campaign: CampaignType): CampaignType["stages"] {
+  return campaign.stages.filter((stage) => {
+    const execution = campaign.executions.find((e) => e.stageName === stage.name);
+    if (execution && (execution.status === "running" || execution.status === "completed" || execution.status === "skipped")) return false;
+    if (execution && execution.status === "failed") return false;
+    return stage.dependsOn.every((dep) => {
+      const depExec = campaign.executions.find((e) => e.stageName === dep);
+      return depExec && (depExec.status === "completed" || depExec.status === "skipped");
+    });
+  });
+}
+
 function getNextStagesCount(campaign: CampaignType): number {
-  const { getNextStages } = { getNextStages: (c: CampaignType) =>
-    c.stages.filter((stage) => {
-      const execution = c.executions.find((e) => e.stageName === stage.name);
-      if (execution && (execution.status === "running" || execution.status === "completed" || execution.status === "skipped")) return false;
-      if (execution && execution.status === "failed") return false;
-      return stage.dependsOn.every((dep) => {
-        const depExec = c.executions.find((e) => e.stageName === dep);
-        return depExec && (depExec.status === "completed" || depExec.status === "skipped");
-      });
-    })
-  };
   return getNextStages(campaign).length;
 }

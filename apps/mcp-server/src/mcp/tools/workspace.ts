@@ -56,7 +56,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         current: workspace.id === currentWorkspaceId,
       }));
       return {
-        content: [{ type: "text" as const, text: JSON.stringify({ currentWorkspaceId, workspaces }, null, 2) }],
+        content: [{ type: "text" as const, text: `Current workspace: ${currentWorkspaceId}. Available: ${workspaces.map(w => `${w.name}${w.current ? " (current)" : ""}`).join(", ")}.` }],
         structuredContent: { currentWorkspaceId, workspaces },
       };
     }
@@ -91,10 +91,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         activeStorage.loadSources(),
       ]);
       return {
-        content: [{
-          type: "text" as const,
-          text: JSON.stringify({ workspace, current: true, context: ctxData, memory: mem, feedCount: sources.length }, null, 2),
-        }],
+        content: [{ type: "text" as const, text: `Workspace: ${workspace.name} (${workspace.id}). Feeds: ${sources.length}. Memory: ${mem ? `${Object.keys(mem).length} type(s)` : "none"}. Context role: ${(ctxData as Record<string, unknown>)?.role ?? "not set"}, topics: ${((ctxData as Record<string, unknown>)?.topics as string[] ?? []).join(", ")}.` }],
         structuredContent: { workspace, current: true, context: ctxData, memory: mem, feedCount: sources.length },
       };
     }
@@ -118,7 +115,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       const ctxData = (await activeStorage.loadContext()) as Record<string, unknown>;
       const getCtxWs = await activeStorage.getCurrentWorkspace();
       return {
-        content: [{ type: "text" as const, text: JSON.stringify({ workspace: getCtxWs, context: ctxData }, null, 2) }],
+        content: [{ type: "text" as const, text: `Profile for workspace "${getCtxWs.name}": role=${(ctxData as Record<string, unknown>).role}, topics=${((ctxData as Record<string, unknown>).topics as string[]).join(", ")}, platforms=${((ctxData as Record<string, unknown>).platforms as string[]).join(", ")}.` }],
         structuredContent: { workspace: getCtxWs, context: ctxData },
       };
     }
@@ -150,13 +147,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       });
 
       return {
-        content: [{ type: "text" as const, text: JSON.stringify({
-          workspaceId: workspace.id,
-          cloneConsentGranted: workspace.cloneConsentGranted,
-          faceReferenceImageUrl: workspace.faceReferenceImageUrl,
-          voiceReferenceAudioUrl: workspace.voiceReferenceAudioUrl,
-          cloneConsentAt: workspace.cloneConsentAt,
-        }, null, 2) }],
+        content: [{ type: "text" as const, text: `Identity saved for workspace ${workspace.id}. Clone consent: ${workspace.cloneConsentGranted ? "granted" : "not granted"}.${workspace.faceReferenceImageUrl ? ` Face ref: ${workspace.faceReferenceImageUrl}.` : ""}${workspace.voiceReferenceAudioUrl ? ` Voice ref: ${workspace.voiceReferenceAudioUrl}.` : ""}` }],
         structuredContent: {
           workspaceId: workspace.id,
           cloneConsentGranted: workspace.cloneConsentGranted,
@@ -191,11 +182,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
 
       if (workspace.elevenlabsClonedVoiceId && !overwrite) {
         return {
-          content: [{ type: "text" as const, text: JSON.stringify({
-            workspaceId: workspace.id,
-            elevenlabsClonedVoiceId: workspace.elevenlabsClonedVoiceId,
-            status: "already_cloned",
-          }, null, 2) }],
+          content: [{ type: "text" as const, text: `Workspace ${workspace.id} already has a cloned voice (ID: ${workspace.elevenlabsClonedVoiceId}). Pass overwrite=true to re-clone.` }],
           structuredContent: {
             workspaceId: workspace.id,
             elevenlabsClonedVoiceId: workspace.elevenlabsClonedVoiceId,
@@ -214,11 +201,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       const updated = await activeStorage.updateWorkspaceMetadata({ elevenlabsClonedVoiceId: clonedVoiceId });
 
       return {
-        content: [{ type: "text" as const, text: JSON.stringify({
-          workspaceId: updated.id,
-          elevenlabsClonedVoiceId: updated.elevenlabsClonedVoiceId,
-          status: "cloned",
-        }, null, 2) }],
+        content: [{ type: "text" as const, text: `Voice cloned successfully for workspace ${updated.id}. Clone ID: ${updated.elevenlabsClonedVoiceId}.` }],
         structuredContent: {
           workspaceId: updated.id,
           elevenlabsClonedVoiceId: updated.elevenlabsClonedVoiceId,
@@ -236,7 +219,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
 
       if (!workspace.elevenlabsClonedVoiceId) {
         return {
-          content: [{ type: "text" as const, text: JSON.stringify({ workspaceId: workspace.id, status: "no_clone" }, null, 2) }],
+          content: [{ type: "text" as const, text: `Workspace ${workspace.id} has no voice clone to delete.` }],
           structuredContent: { workspaceId: workspace.id, status: "no_clone" },
         };
       }
@@ -250,7 +233,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       await activeStorage.updateWorkspaceMetadata({ elevenlabsClonedVoiceId: "" });
 
       return {
-        content: [{ type: "text" as const, text: JSON.stringify({ workspaceId: workspace.id, status: "deleted" }, null, 2) }],
+        content: [{ type: "text" as const, text: `Voice clone deleted for workspace ${workspace.id}.` }],
         structuredContent: { workspaceId: workspace.id, status: "deleted" },
       };
     }
