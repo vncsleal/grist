@@ -3,7 +3,7 @@ import { slog, logInfo, logWarn, logError, logFatal } from "../logger.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import { storage, type WorkspaceStorage, type JobStorage } from "@quillby/storage-fs";
+import type { WorkspaceStorage, JobStorage } from "@quillby/storage-fs";
 import { getDeploymentMode } from "../config.js";
 import { ProviderRouter } from "@quillby/providers";
 import type { PlanStorage, SessionStore } from "@quillby/workspace";
@@ -93,7 +93,7 @@ async function recoverOrphanedJobs(storage: import("@quillby/workspace").JobStor
   return recovered;
 }
 
-async function runScheduledHarvest(): Promise<void> {
+async function runScheduledHarvest(storage: WorkspaceStorage): Promise<void> {
   const tag = "[quillby-schedule]";
   if (!await storage.contextExists()) { logInfo("No profile saved — skipping harvest", { tag }); return; }
   const ctx = (await storage.loadContext())!;
@@ -164,7 +164,7 @@ async function handleToolCall(server: McpServer, storage: WorkspaceStorage, name
 
 const TOOLS = [sessionTool, draftsTool, memoryTool, feedsTool, workspaceTool, briefingTool, cardsTool, campaignTool, planningTool, generateTool, serverTool] as const;
 
-function registerMcpHandlers(server: McpServer, storage: WorkspaceStorage & JobStorage & PlanStorage & SessionStore): void {
+function registerMcpHandlers(server: McpServer, storage: WorkspaceStorage & JobStorage & PlanStorage & SessionStore, isCloudModeOverride?: () => boolean): void {
   server.server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: TOOLS.map(t => ({
       name: t.name,
@@ -175,7 +175,7 @@ function registerMcpHandlers(server: McpServer, storage: WorkspaceStorage & JobS
   server.server.setRequestHandler(CallToolRequestSchema, async (req) => handleToolCall(server, storage, req.params.name, (req.params.arguments ?? {}) as Record<string, unknown>));
   for (const r of RESOURCES) {
     server.resource(r.name, r.uri, { description: r.description, mimeType: r.mimeType }, async () => {
-      const result = await readResource(r.uri, storage, { isCloudMode: () => false });
+      const result = await readResource(r.uri, storage, { isCloudMode: isCloudModeOverride ?? (() => false) });
       return { contents: result.contents };
     });
   }

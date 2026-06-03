@@ -187,6 +187,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         updatedAt: now,
       };
       await genStorage.saveJob(job);
+      activeJobCounts[modalKey] = (activeJobCounts[modalKey] ?? 0) + 1;
 
       const tier = ctx.providerRouter.resolvesTier(modality);
       const tierLabel = tier === "sampling" ? "MCP Sampling" : tier === "cloud" ? "Cloud" : tier === "direct" ? "Direct" : "unavailable";
@@ -203,7 +204,6 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
 
-      activeJobCounts[modalKey] = (activeJobCounts[modalKey] ?? 0) + 1;
       void runGenerationJob(genStorage, jobId, modality, prompt, memory, genWs as WorkspaceMetadata, ctx.providerRouter, {
         aspectRatio,
         cloneVoice,

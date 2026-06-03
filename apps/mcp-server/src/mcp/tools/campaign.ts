@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { ToolContext } from "./index.js";
 import { handleCampaignTool } from "./campaigns.js";
 
-const CampaignSchema = z.discriminatedUnion("action" as never, [
+const CampaignSchema = z.discriminatedUnion("action" as const, [
   z.object({ action: z.literal("create"), name: z.string(), blueprintId: z.string().optional(), blueprint: z.array(z.record(z.unknown())).optional(), workspaceId: z.string().optional() }),
   z.object({ action: z.literal("start"), campaignId: z.string(), workspaceId: z.string().optional() }),
   z.object({ action: z.literal("pause"), campaignId: z.string(), workspaceId: z.string().optional() }),

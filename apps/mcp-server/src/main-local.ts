@@ -28,7 +28,7 @@ async function main(): Promise<void> {
   process.on("SIGTERM", () => { slog("info", "stdio_shutdown", { signal: "SIGTERM" }); server.close().catch((e) => logWarn("stdio_server_close_error", { error: String(e) })); });
   process.on("SIGINT", () => { slog("info", "stdio_shutdown", { signal: "SIGINT" }); server.close().catch((e) => logWarn("stdio_server_close_error", { error: String(e) })); });
   const sched = process.env.QUILLBY_SCHEDULE;
-  if (sched) scheduleDaily(sched, runScheduledHarvest);
+  if (sched) scheduleDaily(sched, () => runScheduledHarvest(combinedStorage));
 }
 
 main().catch((err) => { slog("fatal", "startup_error", { error: err instanceof Error ? err.message : String(err) }); process.exit(1); });
