@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 import { eq } from "drizzle-orm";
-import { createDb, HostedDbWorkspaceStorage } from "../../src/storage.js";
+import { createDb, HostedDbWorkspaceStorage } from "@quillby/storage-db";
 import { hostedWorkspace } from "../../src/db/schema.js";
 
 const ORIGINAL_ENV = { ...process.env };

@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 import { sql } from "drizzle-orm";
-import { createDb, HostedDbWorkspaceStorage } from "../../src/storage.js";
+import { createDb, HostedDbWorkspaceStorage } from "@quillby/storage-db";
 import type { GenerationJob } from "@quillby/core";
 
 let tempDir = "";

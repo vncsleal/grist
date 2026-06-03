@@ -11,7 +11,7 @@ import { beforeEach, afterEach, describe, expect, it } from "vitest";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { createDb, HostedDbWorkspaceStorage } from "../../src/storage.js";
+import { createDb, HostedDbWorkspaceStorage } from "@quillby/storage-db";
 
 let tempDir = "";
 let tempDbPath = "";

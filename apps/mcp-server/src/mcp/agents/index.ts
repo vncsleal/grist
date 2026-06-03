@@ -106,7 +106,7 @@ async function handleDelegate(
     let result: string;
     if (agent.capabilities.canSample) {
       const sampled = await ctx.sample(prompt, maxTokens ?? 4096);
-      result = sampled ?? "[Sampling unavailable — agent cannot process this task without host AI support]";
+      result = sampled.ok ? sampled.text : "[Sampling unavailable — agent cannot process this task without host AI support]";
     } else {
       result = `Agent ${agent.label} does not support autonomous processing. Describe the task to the user and ask them to use the appropriate tools manually.`;
     }
