@@ -1,8 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import type { ToolContext, ToolResult } from "./index.js";
+import type { ToolContext, ToolResult, FullStorage } from "./index.js";
 import type { GenerationModality, TypedMemory, WorkspaceMetadata } from "@quillby/core";
-import type { JobStorage } from "@quillby/workspace";
 import type { ProviderRouter } from "@quillby/providers";
 import { validateUrl, getProviderPolicyReport } from "@quillby/providers";
 import { refreshProviderRouter } from "../shared.js";
@@ -109,16 +108,16 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         workspaceId?: string;
       };
 
-      const genStorage: JobStorage = genWsId
-        ? (await ctx.storage.withWorkspace(genWsId)) as unknown as JobStorage
-        : ctx.storage as unknown as JobStorage;
-      const genWs = await (genStorage as unknown as { getCurrentWorkspace: () => Promise<Record<string, unknown>> }).getCurrentWorkspace() as Record<string, unknown> & {
+      const genStorage: FullStorage = genWsId
+        ? await ctx.storage.withWorkspace(genWsId) as FullStorage
+        : ctx.storage;
+      const genWs = await genStorage.getCurrentWorkspace() as Record<string, unknown> & {
         cloneConsentGranted?: boolean;
         voiceReferenceAudioUrl?: string;
         faceReferenceImageUrl?: string;
         id?: string;
       };
-      const memory = await (genStorage as unknown as { loadTypedMemory: () => Promise<TypedMemory> }).loadTypedMemory();
+      const memory = await genStorage.loadTypedMemory() as TypedMemory;
 
       if (modality === "audio" && cloneVoice) {
         if (!genWs.cloneConsentGranted) {
@@ -163,7 +162,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
           const limitKey = `${modality}CreditsPerMonth` as keyof typeof limits;
           const limit = limits[limitKey as keyof typeof limits];
           if (limit !== null && limit >= 0) {
-            const monthlyCount = await (genStorage as unknown as { getMonthlyJobCount?: (modality: GenerationModality) => Promise<number> }).getMonthlyJobCount?.(modality) ?? 0;
+            const monthlyCount = await genStorage.getMonthlyJobCount?.(modality) ?? 0;
             if (monthlyCount >= limit) {
               return {
                 content: [{ type: "text", text: `Monthly ${modality} generation limit reached (${monthlyCount}/${limit}). Upgrade your plan for more capacity.` }],
@@ -219,9 +218,9 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
 
     case "get_job": {
       const { jobId, workspaceId: gjWsId } = parsed;
-      const gjStorage: JobStorage = gjWsId
-        ? (await ctx.storage.withWorkspace(gjWsId)) as unknown as JobStorage
-        : ctx.storage as unknown as JobStorage;
+      const gjStorage: FullStorage = gjWsId
+        ? await ctx.storage.withWorkspace(gjWsId) as FullStorage
+        : ctx.storage;
       const job = await gjStorage.loadJob(jobId);
       if (!job) {
         return {
@@ -238,9 +237,9 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
 
     case "list_jobs": {
       const { modality: ljModality, workspaceId: ljWsId } = parsed;
-      const ljStorage: JobStorage = ljWsId
-        ? (await ctx.storage.withWorkspace(ljWsId)) as unknown as JobStorage
-        : ctx.storage as unknown as JobStorage;
+      const ljStorage: FullStorage = ljWsId
+        ? await ctx.storage.withWorkspace(ljWsId) as FullStorage
+        : ctx.storage;
       const jobs = await ljStorage.listJobs(ljModality);
       return {
         content: [{ type: "text", text: `${jobs.length} generation job(s).${(jobs as Array<Record<string, unknown>>).slice(0, 5).map(j => `\n  [${j.modality}] ${j.id}: ${j.status}`).join("")}${jobs.length > 5 ? `\n  ... +${jobs.length - 5} more` : ""}` }],
@@ -280,7 +279,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
 }
 
 async function runGenerationJob(
-  jobStorage: JobStorage,
+  jobStorage: FullStorage,
   jobId: string,
   modality: GenerationModality,
   prompt: string,

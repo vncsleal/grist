@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { ToolContext } from "./index.js";
-import type { SessionStore, PlanStorage } from "@quillby/workspace";
 import { handleSessionStart, handleSessionStatus, handleSessionClose } from "../sessions.js";
 
 const SessionSchema = z.discriminatedUnion("action", [
@@ -17,12 +16,12 @@ export const tool = {
 
 export async function handleTool(raw: unknown, ctx: ToolContext) {
   const parsed = SessionSchema.parse(raw);
-  const store = ctx.storage as unknown as SessionStore & PlanStorage;
   const args = { ...parsed, workspaceId: parsed.workspaceId } as Record<string, unknown>;
 
   switch (parsed.action) {
-    case "start": return handleSessionStart(store, store, args);
-    case "get": return handleSessionStatus(store, store, args);
-    case "close": return handleSessionClose(store, store, args);
+    case "start": return handleSessionStart(ctx.storage, ctx.storage, args);
+    case "get": return handleSessionStatus(ctx.storage, ctx.storage, args);
+    case "close": return handleSessionClose(ctx.storage, ctx.storage, args);
   }
+
 }

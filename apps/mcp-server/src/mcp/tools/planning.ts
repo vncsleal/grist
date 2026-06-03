@@ -1,6 +1,5 @@
 import { z } from "zod";
-import type { ToolContext, ToolResult } from "./index.js";
-import type { PlanStorage } from "@quillby/workspace";
+import type { ToolContext, ToolResult, FullStorage } from "./index.js";
 import {
   handlePlanCreate,
   handlePlanList,
@@ -21,7 +20,7 @@ const PlanningSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("get_calendar"), dateStart: z.string(), dateEnd: z.string(), workspaceId: z.string().optional() }),
 ]);
 
-const actionToHandler: Record<string, (storage: PlanStorage, args: Record<string, unknown>) => Promise<ToolResult>> = {
+const actionToHandler: Record<string, (storage: FullStorage, args: Record<string, unknown>) => Promise<ToolResult>> = {
   create_plan: handlePlanCreate,
   list_plans: handlePlanList,
   get_tasks: handlePlanToday,
@@ -48,11 +47,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
   return handler(storage, parsed as Record<string, unknown>);
 }
 
-async function resolvePlanStorage(ctx: ToolContext, workspaceId?: string): Promise<PlanStorage> {
+async function resolvePlanStorage(ctx: ToolContext, workspaceId?: string): Promise<FullStorage> {
   const storage = workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
-  const planStorage = storage as unknown as PlanStorage;
-  if (typeof planStorage.createPlan !== "function") {
-    throw new Error("Planning operations not supported by this storage backend");
-  }
-  return planStorage;
+  return storage as FullStorage;
 }

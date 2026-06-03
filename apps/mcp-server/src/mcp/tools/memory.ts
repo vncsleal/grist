@@ -1,8 +1,9 @@
 import { z } from "zod";
 import type { ToolContext } from "./index.js";
+import type { TypedMemory } from "@quillby/core";
 
 const MEMORY_TYPES = ["voice_examples", "style_rules", "audience_insights", "do_not_say", "successful_posts", "campaign_context", "source_preferences", "visual_style", "voice_profile", "face_profile"] as const;
-const MEMORY_MAP: Record<string, string> = { voice_examples: "voiceExamples", style_rules: "styleRules", audience_insights: "audienceInsights", do_not_say: "doNotSay", successful_posts: "successfulPosts", campaign_context: "campaignContext", source_preferences: "sourcePreferences", visual_style: "visualStyle", voice_profile: "voiceProfile", face_profile: "faceProfile" };
+const MEMORY_MAP: Record<string, keyof TypedMemory> = { voice_examples: "voiceExamples", style_rules: "styleRules", audience_insights: "audienceInsights", do_not_say: "doNotSay", successful_posts: "successfulPosts", campaign_context: "campaignContext", source_preferences: "sourcePreferences", visual_style: "visualStyle", voice_profile: "voiceProfile", face_profile: "faceProfile" };
 
 const MemorySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), entries: z.array(z.string()), memoryType: z.enum(MEMORY_TYPES).default("voice_examples"), workspaceId: z.string().optional() }),

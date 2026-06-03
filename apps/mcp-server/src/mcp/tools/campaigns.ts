@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
-import type { ToolContext, ToolResult } from "./index.js";
-import type { CampaignStore } from "@quillby/workspace";
+import type { ToolContext, ToolResult, FullStorage } from "./index.js";
 import {
   CampaignSchema,
   BlueprintSchema,
@@ -86,13 +85,13 @@ const CampaignListArgsSchema = z.object({
   workspaceId: z.string().optional(),
 });
 
-async function resolveStore(ctx: ToolContext, workspaceId?: string): Promise<CampaignStore> {
+async function resolveStore(ctx: ToolContext, workspaceId?: string): Promise<FullStorage> {
   const storage = workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
-  const store = storage as unknown as CampaignStore;
-  if (typeof store.createCampaign !== "function") {
+  const full = storage as FullStorage;
+  if (typeof full.createCampaign !== "function") {
     throw new Error("Campaign operations not supported by this storage backend");
   }
-  return store;
+  return full;
 }
 
 export const campaignToolDefinitions: Tool[] = [

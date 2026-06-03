@@ -3,11 +3,9 @@ import { slog, logInfo, logWarn, logError, logFatal } from "../logger.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import type { WorkspaceStorage, JobStorage } from "@quillby/storage-fs";
 import { getDeploymentMode } from "../config.js";
 import { ProviderRouter } from "@quillby/providers";
-import type { PlanStorage, SessionStore } from "@quillby/workspace";
-import type { ToolResult } from "./tools/index.js";
+import type { FullStorage, ToolResult } from "./tools/index.js";
 import { RESOURCES, readResource } from "./resources.js";
 import { PROMPTS, getPrompt } from "./prompts.js";
 import { PKG, refreshProviderRouter, setProviderRouter } from "./shared.js";
@@ -80,7 +78,7 @@ function createMcpServer(): McpServer {
   return new McpServer(SERVER_INFO, { capabilities: { tools: {}, resources: {}, prompts: {}, logging: {} } });
 }
 
-async function recoverOrphanedJobs(storage: import("@quillby/workspace").JobStorage): Promise<number> {
+async function recoverOrphanedJobs(storage: FullStorage): Promise<number> {
   const jobs = await storage.listJobs();
   const cutoff = Date.now() - 5 * 60 * 1000;
   let recovered = 0;
@@ -93,7 +91,7 @@ async function recoverOrphanedJobs(storage: import("@quillby/workspace").JobStor
   return recovered;
 }
 
-async function runScheduledHarvest(storage: WorkspaceStorage): Promise<void> {
+async function runScheduledHarvest(storage: FullStorage): Promise<void> {
   const tag = "[quillby-schedule]";
   if (!await storage.contextExists()) { logInfo("No profile saved — skipping harvest", { tag }); return; }
   const ctx = (await storage.loadContext())!;
@@ -139,7 +137,7 @@ function scheduleDaily(timeStr: string, fn: () => Promise<void>): void {
   tick();
 }
 
-async function handleToolCall(server: McpServer, storage: WorkspaceStorage, name: string, args: Record<string, unknown> = {}): Promise<ToolResult> {
+async function handleToolCall(server: McpServer, storage: FullStorage, name: string, args: Record<string, unknown> = {}): Promise<ToolResult> {
   try {
     const ctx = { server, storage, deploymentMode, providerRouter, sample: (prompt: string, maxTokens?: number) => sample(server, prompt, maxTokens) };
     switch (name) {
@@ -164,7 +162,7 @@ async function handleToolCall(server: McpServer, storage: WorkspaceStorage, name
 
 const TOOLS = [sessionTool, draftsTool, memoryTool, feedsTool, workspaceTool, briefingTool, cardsTool, campaignTool, planningTool, generateTool, serverTool] as const;
 
-function registerMcpHandlers(server: McpServer, storage: WorkspaceStorage & JobStorage & PlanStorage & SessionStore, isCloudModeOverride?: () => boolean): void {
+function registerMcpHandlers(server: McpServer, storage: FullStorage, isCloudModeOverride?: () => boolean): void {
   server.server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: TOOLS.map(t => ({
       name: t.name,
