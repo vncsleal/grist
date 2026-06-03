@@ -44,9 +44,11 @@ beforeAll(async () => {
   dbUrl = `file:${path.join(tempDir, "auth.db")}`;
   port = 3100 + Math.floor(Math.random() * 400);
 
+  const secret = "test-secret-do-not-use-in-production-0123456789abc";
   const env = {
     QUILLBY_AUTH_DB_URL: dbUrl,
     BETTER_AUTH_URL: `http://localhost:${port}`,
+    BETTER_AUTH_SECRET: secret,
   };
 
   runOrThrow("pnpm", ["--filter", "@vncsleal/quillby", "db:push"], env);
@@ -72,6 +74,7 @@ beforeAll(async () => {
       PORT: String(port),
       QUILLBY_AUTH_DB_URL: dbUrl,
       BETTER_AUTH_URL: `http://localhost:${port}`,
+      BETTER_AUTH_SECRET: secret,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
