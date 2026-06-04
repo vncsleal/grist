@@ -3,26 +3,42 @@
 ## Deployment Model
 
 ```
-                    LOCAL                          CLOUD                         SELF-HOSTED
-               ┌──────────────┐              ┌──────────────┐               ┌──────────────┐
-    User       │  Claude etc  │              │  Claude etc  │               │  Claude etc  │
-               └──────┬───────┘              └──────┬───────┘               └──────┬───────┘
-                      │ stdio                      │ streamable HTTP              │ streamable HTTP
-               ┌──────┴───────┐              ┌──────┴───────┐               ┌──────┴───────┐
-    Apps       │    apps/mcp  │              │    apps/mcp   │               │   apps/mcp    │
-               │  (standalone)│              └──────┬───────┘               └──────┬───────┘
-               │              │                     │ HTTP (internal)              │ HTTP (internal)
-               └──────────────┘              ┌──────┴───────┐               ┌──────┴───────┐
-                                             │   apps/api   │               │   apps/api    │
-                                             │              │               │               │
-               ┌──────────────┐              │ + apps/cloud │               │ + apps/portal │
-               │  no data     │              └──────────────┘               └──────────────┘
-               │  no auth     │                                                 │
-               │  filesystem  │              ┌──────────────┐               ┌──┴────────────┐
-               └──────────────┘              │  Turso DB    │               │  libSQL (your │
-                                             │  (managed)   │               │     infra)    │
-                                             └──────────────┘               └───────────────┘
+                          ALL MODES                        CLOUD + SELF-HOSTED
+                     ┌──────────────────────┐          ┌──────────────────────────┐
+                     │    apps/site          │          │    apps/cloud            │
+                     │  marketing + docs     │          │  dashboard (React SPA)   │
+                     │  (Astro, public)      │          │  (authenticated)         │
+                     └──────────┬───────────┘          └──────────┬───────────────┘
+                                │                                │
+                                ▼                                ▼
+                     ┌──────────────────────┐          ┌──────────────────────────┐
+                     │    apps/mcp           │          │    apps/api              │
+                     │  MCP tools & protocol │          │  REST: auth, billing,   │
+                     │  (stdio + HTTP)       │          │  webhooks, team mgmt    │
+                     └──────────┬───────────┘          └──────────┬───────────────┘
+                                │                                │
+         ┌──────────────────────┼────────────────────────────────┘
+         │                      │                                │
+         ▼                      ▼                                ▼
+┌────────────────┐    ┌──────────────────┐             ┌──────────────────┐
+│  LOCAL          │    │  CLOUD           │             │  SELF-HOSTED     │
+│  storage-fs     │    │  Turso DB         │             │  libSQL (your   │
+│  no auth        │    │  managed          │             │  infra)          │
+│  filesystem     │    └──────────────────┘             │                  │
+└────────────────┘                                      │ + apps/portal    │
+                                                         │  (bundled admin) │
+                                                         └──────────────────┘
 ```
+
+## The Four Apps
+
+| App | Stack | Auth | Deploy | Users |
+|-----|-------|------|--------|-------|
+| `apps/site` | Astro | None (public) | Static/CDN | Everyone (marketing, docs, pricing, blog) |
+| `apps/mcp` | TypeScript MCP SDK | None / API keys | Binary / Docker | AI clients (Claude, VS Code, Cursor) |
+| `apps/api` | Hono + Drizzle | better-auth | Docker | `apps/cloud`, `apps/portal`, CLI |
+| `apps/cloud` | React + Tailwind | Session cookie | CDN + API | Cloud subscribers |
+| `apps/portal` | React (minimal) | Admin key | Bundled in api | Self-hosted admins |
 
 ## App Boundaries
 
@@ -193,11 +209,12 @@ apps/cloud
 
 | Step | App | Depends On | Effort |
 |------|-----|-----------|--------|
-| 1. Scaffold `api` | `apps/api` | Nothing | 2 days |
-| 2. Move auth routes from old server.ts | `apps/api` | Step 1 | 1 day |
+| 0. Polish `apps/site` with docs + client configs | `apps/site` | Nothing | 1 day |
+| 1. Scaffold `apps/api` (Hono + routes) | `apps/api` | Nothing | 2 days |
+| 2. Move auth routes from old `apps/app` | `apps/api` | Step 1 | 1 day |
 | 3. Move billing + Stripe webhooks | `apps/api` | Step 1 | 1 day |
 | 4. Build cloud MCP entrypoint (`main-cloud.ts`) | `apps/mcp` | Nothing | 1 day |
-| 5. Build `cloud` from scratch | `apps/cloud` | Step 1 | 2 weeks |
+| 5. Build `apps/cloud` from scratch | `apps/cloud` | Step 1 | 2 weeks |
 | 6. Wire cloud MCP → `storage-db` | `apps/mcp` | Step 4 | 1 day |
 | 7. Docker Compose for self-hosted | `infra/docker` | Step 1-6 | 1 day |
-| 8. Self-hosted admin UI | `apps/api` (bundled) | Step 7 | 1 day |
+| 8. Self-hosted admin portal | `apps/portal` | Step 7 | 1 day |
