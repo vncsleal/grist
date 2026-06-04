@@ -65,6 +65,40 @@ Claude will ask a few questions about your work, your audience, and what you pub
 
 4. Fully quit and reopen Claude Desktop, then say: *Set me up with Quillby*
 
+### VS Code
+
+Create `.vscode/mcp.json` in your project root:
+
+```json
+{
+  "servers": {
+    "quillby": {
+      "command": "quillby-mcp"
+    }
+  }
+}
+```
+
+### Cursor
+
+Create `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "quillby": {
+      "command": "quillby-mcp"
+    }
+  }
+}
+```
+
+### Claude Code
+
+```bash
+claude mcp add --transport stdio --scope project quillby -- quillby-mcp
+```
+
 ---
 
 ## Every day
