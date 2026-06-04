@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ToolContext, ToolResult } from "./index.js";
+import type { ToolContext, ToolResult, FullStorage } from "./index.js";
 import { UserContextSchema } from "../../types.js";
 import { SetCloneIdentityArgsSchema, CloneVoiceArgsSchema } from "../schemas.js";
 import { validateUrl, ElevenLabsAdapter } from "@quillby/providers";
@@ -40,8 +40,8 @@ async function resolveStorage(parsed: z.infer<typeof Schema>, storage: ToolConte
   const workspaceId = "workspaceId" in parsed && typeof parsed.workspaceId === "string"
     ? parsed.workspaceId
     : undefined;
-  if (!workspaceId) return storage;
-  return storage.withWorkspace(workspaceId);
+  if (!workspaceId) return storage as FullStorage;
+  return storage.withWorkspace(workspaceId) as Promise<FullStorage>;
 }
 
 export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolResult> {

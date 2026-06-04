@@ -8,7 +8,9 @@ import { buildDirectAdaptersFromConfig } from "../provider-config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const _pkgPath = [path.resolve(__dirname, "package.json"), path.resolve(__dirname, "../package.json"), path.resolve(__dirname, "../../package.json")].find((p) => { try { return fs.statSync(p).isFile(); } catch { return false; } });
+const _pkgCandidates = [path.resolve(__dirname, "package.json"), path.resolve(__dirname, "../package.json"), path.resolve(__dirname, "../../package.json"), path.resolve(__dirname, "../../../package.json")];
+const _pkgPath = _pkgCandidates.find((p) => { try { return fs.statSync(p).isFile(); } catch { return false; } });
+if (!_pkgPath) throw new Error(`Cannot find package.json. Tried: ${_pkgCandidates.join(", ")}`);
 
 export const PKG = JSON.parse(fs.readFileSync(_pkgPath!, "utf-8")) as { version: string };
 
