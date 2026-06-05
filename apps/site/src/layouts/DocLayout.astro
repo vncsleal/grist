@@ -1,0 +1,30 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { render } from 'astro:content';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+const { title, description } = Astro.props;
+const { Content } = await render(Astro.props.entry);
+---
+<BaseLayout title={title} description={description}>
+  <Nav />
+  <main style="max-width: 800px; margin: 2rem auto; padding: 0 1.5rem; min-height: calc(100vh - 200px);">
+    <h1 style="font-family: var(--serif); font-size: 2.5rem; margin-bottom: 2rem; color: var(--text);">{title}</h1>
+    <article style="font-size: 1rem; line-height: 1.8; color: var(--muted);">
+      <Content />
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style is:global>
+  article h2 { font-family: var(--serif); font-size: 1.5rem; color: var(--text); margin: 2rem 0 0.75rem; }
+  article h3 { font-size: 1.1rem; color: var(--text); margin: 1.5rem 0 0.5rem; }
+  article p { margin-bottom: 1rem; }
+  article code { background: var(--bg-2); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--mono); font-size: 0.875rem; color: var(--violet-3); }
+  article pre { background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; margin-bottom: 1rem; }
+  article pre code { background: none; padding: 0; color: inherit; }
+  article ul, article ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  article li { margin-bottom: 0.35rem; }
+  article a { color: var(--violet-3); }
+</style>

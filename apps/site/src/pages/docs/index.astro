@@ -1,23 +1,21 @@
 ---
-import '../../styles/global.css';
-
-const docPages = [
-  { title: "Architecture Overview", path: "/docs/architecture" },
-  { title: "Installation Guide", path: "/docs/install" },
-  { title: "Client Configuration", path: "/docs/clients" },
-  { title: "Provider Setup", path: "/docs/providers" },
-  { title: "Release Plan", path: "/docs/release-plan" },
-];
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { getCollection } from 'astro:content';
+const docs = await getCollection('docs');
+docs.sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
 ---
-<html lang="en">
-  <head><meta charset="utf-8" /><title>Docs — Quillby</title><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
-  <body style="background:#0c0915;color:#f0eafa;font-family:system-ui;padding:2rem;max-width:800px;margin:0 auto;">
-    <h1 style="font-size:2rem;font-weight:700;">Documentation</h1>
-    <p style="color:rgba(240,234,250,0.45);margin-bottom:2rem;">Guides, architecture, and reference for Quillby.</p>
-    <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:0.75rem;">
-      {docPages.map(p => (
-        <li><a href={p.path} style="color:#a78bfa;text-decoration:none;font-size:1.05rem;">{p.title} →</a></li>
+<BaseLayout title="Documentation — Quillby">
+  <Nav />
+  <main style="max-width: 800px; margin: 2rem auto; padding: 0 1.5rem; min-height: calc(100vh - 200px);">
+    <h1 style="font-family: var(--serif); font-size: 2.5rem; margin-bottom: 1rem; color: var(--text);">Documentation</h1>
+    <p style="color: var(--muted); margin-bottom: 2rem;">Guides and reference for installing and using Quillby.</p>
+    <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+      {docs.map(d => (
+        <li><a href={"/docs/" + d.id} style="color: var(--violet-3); text-decoration: none; font-size: 1.1rem;">{d.data.title} →</a></li>
       ))}
     </ul>
-  </body>
-</html>
+  </main>
+  <Footer />
+</BaseLayout>

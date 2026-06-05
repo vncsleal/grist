@@ -1,0 +1,53 @@
+---
+const links = [
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#modes", label: "Modes" },
+  { href: "/docs", label: "Docs" },
+  { href: "https://github.com/vncsleal/quillby", label: "GitHub", external: true },
+];
+---
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="/quillby.png" alt="Quillby" />
+    <span class="nav-logo-name">Quillby</span>
+  </a>
+  <ul class="nav-links">
+    {links.map(l => (
+      <li><a href={l.href} target={l.external ? "_blank" : undefined} rel={l.external ? "noopener" : undefined}>{l.label}</a></li>
+    ))}
+    <li><a href="/docs" class="nav-pill">Install</a></li>
+  </ul>
+</nav>
+
+<style>
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    padding: 0 clamp(1.5rem, 5vw, 5rem);
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    isolation: isolate;
+  }
+  nav::before {
+    content: ''; position: absolute; inset: 0;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    background: rgba(12,9,21,0.4);
+    -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+    pointer-events: none; z-index: -1;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+  .nav-logo img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 14px rgba(167,139,250,0.45); }
+  .nav-logo-name { font-family: var(--serif); font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+  .nav-links a { font-size: 0.8125rem; font-weight: 500; color: var(--muted); text-decoration: none; letter-spacing: 0.02em; transition: color 0.15s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-pill {
+    background: linear-gradient(135deg, var(--violet-2), var(--violet));
+    color: #fff !important; padding: 0.45rem 1.2rem; border-radius: 100px;
+    font-weight: 700 !important;
+    box-shadow: 0 0 18px rgba(124,58,237,0.4);
+    transition: box-shadow 0.2s, transform 0.15s !important;
+  }
+  .nav-pill:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(124,58,237,0.6) !important; }
+  @media (max-width:560px) { .nav-links li:not(:last-child) { display:none; } }
+</style>

@@ -1,0 +1,27 @@
+---
+const year = new Date().getFullYear();
+---
+<footer>
+  <div class="footer-left">
+    <span>&copy; {year} Quillby</span>
+  </div>
+  <div class="footer-right">
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+    <a href="https://github.com/vncsleal/quillby" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</footer>
+
+<style>
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 2rem clamp(1.5rem, 5vw, 5rem);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.8125rem; color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  footer a:hover { color: var(--text); }
+  .footer-left { display: flex; align-items: center; gap: 0.6rem; }
+  .footer-right { display: flex; gap: 1.75rem; }
+</style>

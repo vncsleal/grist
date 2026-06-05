@@ -1,0 +1,44 @@
+---
+const { title, description, ogImage } = Astro.props;
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/quillby.png" type="image/png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title ?? "Quillby"}</title>
+    <meta name="description" content={description ?? "Quillby — Your AI Content Agent"} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title ?? "Quillby"} />
+    <meta property="og:description" content={description ?? "Quillby — Your AI Content Agent"} />
+    <meta property="og:image" content={ogImage ?? "/og.png"} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title ?? "Quillby"} />
+    <meta name="twitter:description" content={description ?? "Quillby — Your AI Content Agent"} />
+    <meta name="twitter:image" content={ogImage ?? "/og.png"} />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0c0915" />
+    <slot name="head" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #0c0915; --bg-1: #110d1e; --bg-2: #16102a;
+    --surface: rgba(255,255,255,0.04); --surface-h: rgba(255,255,255,0.07);
+    --border: rgba(167,139,250,0.12); --border-h: rgba(167,139,250,0.28);
+    --violet: #a78bfa; --violet-2: #7c3aed; --violet-3: #c4b5fd;
+    --amber: #fbbf24; --text: #f0eafa;
+    --muted: rgba(240,234,250,0.45); --faint: rgba(240,234,250,0.2);
+    --serif: 'Fraunces', Georgia, serif; --sans: 'Nunito', system-ui, sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  @media (max-width:560px) { .nav-links li:not(:last-child) { display:none; } }
+</style>
