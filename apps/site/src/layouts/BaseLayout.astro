@@ -23,23 +23,77 @@ const { title, description, ogImage } = Astro.props;
     <slot name="head" />
   </head>
   <body>
+    <div class="glow-bg" aria-hidden="true"></div>
     <slot />
+    <div class="noise-overlay" aria-hidden="true"></div>
   </body>
 </html>
 
 <style is:global>
   :root {
-    --bg: #0c0915; --bg-1: #110d1e; --bg-2: #16102a;
-    --surface: rgba(255,255,255,0.04); --surface-h: rgba(255,255,255,0.07);
-    --border: rgba(167,139,250,0.12); --border-h: rgba(167,139,250,0.28);
-    --violet: #a78bfa; --violet-2: #7c3aed; --violet-3: #c4b5fd;
-    --amber: #fbbf24; --text: #f0eafa;
-    --muted: rgba(240,234,250,0.45); --faint: rgba(240,234,250,0.2);
-    --serif: 'Fraunces', Georgia, serif; --sans: 'Nunito', system-ui, sans-serif;
-    --mono: 'DM Mono', monospace;
+    --bg:        #0c0915;
+    --bg-1:      #110d1e;
+    --bg-2:      #16102a;
+    --surface:   rgba(255,255,255,0.04);
+    --surface-h: rgba(255,255,255,0.07);
+    --border:    rgba(167,139,250,0.12);
+    --border-h:  rgba(167,139,250,0.28);
+    --violet:    #a78bfa;
+    --violet-2:  #7c3aed;
+    --violet-3:  #c4b5fd;
+    --amber:     #fbbf24;
+    --text:      #f0eafa;
+    --muted:     rgba(240,234,250,0.45);
+    --faint:     rgba(240,234,250,0.2);
+    --serif:     'Fraunces', Georgia, serif;
+    --sans:      'Nunito', system-ui, sans-serif;
+    --mono:      'DM Mono', monospace;
   }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
-  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-  @media (max-width:560px) { .nav-links li:not(:last-child) { display:none; } }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  .glow-bg {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none; overflow: hidden;
+  }
+  .glow-bg::before {
+    content: ''; position: absolute;
+    top: -20%; left: 50%; transform: translateX(-50%);
+    width: 900px; height: 600px;
+    background: radial-gradient(ellipse at center, rgba(124,58,237,0.18) 0%, transparent 70%);
+    filter: blur(40px);
+  }
+  .glow-bg::after {
+    content: ''; position: absolute;
+    bottom: 10%; right: -10%;
+    width: 500px; height: 500px;
+    background: radial-gradient(ellipse at center, rgba(167,139,250,0.08) 0%, transparent 65%);
+    filter: blur(60px);
+  }
+
+  [data-reveal] { opacity:0; transform:translateY(16px); transition:opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1); }
+  [data-reveal].revealed { opacity:1; transform:none; }
+
+  @media (max-width:560px) {
+    .nav-links li:not(:last-child) { display:none; }
+  }
 </style>
