@@ -44,7 +44,7 @@ const claudeConfig = `{
 
       <div class="hero-visual">
         <div class="mascot-scene">
-          <img src="/hero-mascot-alpha.webp" alt="Quillby mascot" class="mascot-img" />
+          <img src="/hero-mascot-alpha.webp" alt="Quillby mascot" class="mascot-img" loading="eager" />
         </div>
       </div>
     </section>
@@ -430,7 +430,7 @@ const claudeConfig = `{
 
   .hero-visual { flex: 1 1 420px; position: relative; display: flex; align-items: center; justify-content: center; min-height: 400px; }
   .mascot-scene { position: relative; width: 380px; height: 380px; display: flex; align-items: center; justify-content: center; }
-  .mascot-img { width: 280px; height: 280px; object-fit: contain; border-radius: 50%; }
+  .mascot-img { width: 280px; height: 280px; object-fit: contain; }
 
   .container { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 clamp(1.5rem,5vw,5rem); }
   .eyebrow { display:inline-flex; align-items:center; gap:0.6rem; font-family:var(--mono); font-size:0.6875rem; letter-spacing:0.13em; text-transform:uppercase; color:var(--violet); margin-bottom:1.25rem; }
