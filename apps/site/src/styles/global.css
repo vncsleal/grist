@@ -110,3 +110,80 @@ a { color: inherit; }
 @media (max-width: 560px) {
   .nav-links li:not(:last-child) { display: none; }
 }
+
+/* ─── Shared layout ─── */
+.container { max-width: 1440px; margin: 0 auto; padding: 0 clamp(0.75rem, 2vw, 1.5rem); }
+.section { padding: var(--sp-section) 0; }
+.section-sm { padding: var(--sp-section-sm) 0; }
+
+/* ─── Shared typography ─── */
+.label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+.section-h2 {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 500;
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 100;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 1.25rem;
+}
+
+.section-h2 em {
+  font-style: italic;
+  font-weight: 500;
+}
+
+.section-p {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 60ch;
+  margin-bottom: 2.5rem;
+}
+
+/* ─── Shared buttons ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.5rem;
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), border-color 0.3s var(--ease-out), transform 0.2s var(--ease-out);
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-h); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+.btn-large {
+  padding: 0.85rem 2rem;
+  font-size: 0.9375rem;
+  border-radius: 10px;
+}

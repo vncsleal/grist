@@ -1,0 +1,71 @@
+<section class="section" id="campaigns" aria-labelledby="camp-heading">
+  <div class="container">
+    <p class="label reveal">Campaigns &amp; planning</p>
+    <h2 class="section-h2 reveal reveal-delay-1" id="camp-heading">
+      One post is easy.<br /><em>A month of them needs a plan.</em>
+    </h2>
+
+    <div class="camp-grid reveal reveal-delay-2">
+      <div class="camp-col">
+        <h3 class="camp-h3">Campaigns</h3>
+        <p class="camp-p">
+          Design multi-stage campaigns with automatic handoffs between stages.
+          Save and reuse successful campaign structures as templates.
+          Quillby moves through each stage automatically — you review the results.
+        </p>
+      </div>
+      <div class="camp-col">
+        <h3 class="camp-h3">Task board</h3>
+        <p class="camp-p">
+          See what's queued, in progress, and completed — all inside Claude.
+          Every campaign stage creates tasks automatically.
+          Drag and drop to reprioritize.
+        </p>
+      </div>
+      <div class="camp-col">
+        <h3 class="camp-h3">Content calendar</h3>
+        <p class="camp-p">
+          A weekly view of your upcoming posts, briefs, and deadlines.
+          The today queue shows what needs your attention right now.
+          Never lose track of what's publishing next.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .camp-grid {
+    margin-top: 3rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .camp-col {
+    padding: 0;
+  }
+
+  .camp-h3 {
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    font-weight: 500;
+    font-optical-sizing: auto;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .camp-p {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  @media (max-width: 860px) {
+    .camp-grid {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+  }
+</style>
