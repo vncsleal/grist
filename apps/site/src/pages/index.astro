@@ -2,526 +2,1122 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-
-const curlCommand = `curl -fsSL https://raw.githubusercontent.com/vncsleal/quillby/main/install.sh | bash`;
-
-const claudeConfig = `{
-  "mcpServers": {
-    "quillby": {
-      "command": "quillby-mcp"
-    }
-  }
-}`;
-
 ---
 
-<BaseLayout title="Quillby — Your AI Content Agent" description="Quillby reads your feeds, filters what matters, and delivers fresh drafts in your voice — with one workspace per project, client, or brand.">
-  <Fragment slot="head">
-    <link rel="alternate" hreflang="en" href="https://quillby.vercel.app/" />
-    <link rel="alternate" hreflang="pt-BR" href="https://quillby.vercel.app/pt-br/" />
-    <link rel="alternate" hreflang="x-default" href="https://quillby.vercel.app/" />
-    <link rel="canonical" href="https://quillby.vercel.app/" />
-  </Fragment>
+<BaseLayout
+  title="Quillby — Your AI Content Agent"
+  description="Quillby scans the internet for what matters in your niche, delivers a daily brief, and writes publish-ready drafts in your voice. Free. Runs locally."
+>
   <Nav />
-    <!-- HERO -->
-    <section class="hero">
-      <div class="hero-content">
-        
-        <h1 class="hero-headline">
-          The internet<br />
-          already wrote<br />
-          <em>your next post.</em>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1 class="hero-h1 reveal reveal-delay-1" id="hero-heading">
+          You read the brief.<br />
+          <em>It writes the post.</em>
         </h1>
-        <p class="hero-sub">
-          Ask Claude <strong>"what should I post today?"</strong> and get a ranked brief and a ready-to-publish draft — sourced from your feeds, filtered for your audience, written in your voice. Use one workspace per client, brand, newsletter, or Claude Project.
+        <p class="hero-sub reveal reveal-delay-2">
+          Quillby scans the internet for what matters in your niche,
+          delivers a daily brief, and writes publish-ready drafts in your voice.
         </p>
-        <div class="hero-actions">
-          <a href="#install" class="btn-primary">Install locally →</a>
-          <a href="#" class="btn-secondary">Explore cloud ↗</a>
+        <div class="hero-actions reveal reveal-delay-3">
+          <a href="#install" class="btn btn-primary">Install free</a>
+          <a href="#how-it-works" class="btn btn-ghost">See how it works</a>
         </div>
-        <p class="hero-proof">Free forever · Local-first · Multiple workspaces · No new apps</p>
+        <p class="hero-note reveal reveal-delay-4">Free &middot; Local &middot; Works with Claude Desktop</p>
       </div>
 
-      <div class="hero-visual">
-        <div class="mascot-scene">
-          <img src="/hero-mascot-alpha.webp" alt="Quillby mascot" class="mascot-img" loading="eager" />
+      <div class="hero-visual reveal reveal-delay-2">
+        <div class="mascot-wrap">
+          <img
+            src="/hero-mascot-alpha.webp"
+            alt=""
+            class="mascot-img"
+            loading="eager"
+          />
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="mode-sec" id="modes">
-      <div class="container">
-        <div class="eyebrow">Choose your mode</div>
-        <h2 class="sec-title">One product.<br /><em>Three deployment models.</em></h2>
-        <p class="sec-body">Quillby runs locally in Claude, on your own infrastructure, or as a managed cloud service. Pick the operating model first, then follow the setup path built for it.</p>
-        <div class="mode-grid">
-          <article data-reveal class="mode-card">
-            <div class="mode-kicker">Default</div>
-            <h3 class="mode-name">Local</h3>
-            <p class="mode-desc">Install Quillby on your machine and let Claude Desktop or another stdio-capable MCP client run it locally. No account. No server. Your workspace data stays under <code>~/.quillby</code>.</p>
-            <ul class="mode-list">
-              <li><strong>Best for:</strong> solo local-first use</li>
-              <li><strong>Transport:</strong> stdio MCP</li>
-              <li><strong>Setup:</strong> installer, script, or npm</li>
-            </ul>
-            <a href="#install" class="mode-link">Open local setup →</a>
-          </article>
-          <article data-reveal class="mode-card">
-            <div class="mode-kicker">Bring your own infra</div>
-            <h3 class="mode-name">Self-Host</h3>
-            <p class="mode-desc">Deploy the Quillby HTTP server yourself with Docker or your own platform, then connect Claude.ai custom connectors, ChatGPT/OpenAI tooling, or the Quillby dashboard to your endpoint.</p>
-            <ul class="mode-list">
-              <li><strong>Best for:</strong> technical teams and agencies</li>
-              <li><strong>Transport:</strong> HTTPS MCP endpoint</li>
-              <li><strong>Setup:</strong> Docker-first</li>
-            </ul>
-            <a href="#" class="mode-link">Open self-host guide →</a>
-          </article>
-          <article data-reveal class="mode-card">
-            <div class="mode-kicker">Managed</div>
-            <h3 class="mode-name">Cloud</h3>
-            <p class="mode-desc">Use Quillby as a hosted service with a managed dashboard, billing, and connector onboarding. The browser app should sign you in and attach you to the managed backend automatically.</p>
-            <ul class="mode-list">
-              <li><strong>Best for:</strong> cross-device use without ops work</li>
-              <li><strong>Transport:</strong> managed hosted MCP</li>
-              <li><strong>Setup:</strong> account and connector onboarding</li>
-            </ul>
-            <a href="#" class="mode-link">Open cloud overview →</a>
-          </article>
+  <!-- ═══ SOCIAL PROOF STRIP ═══ -->
+  <div class="strip" aria-hidden="true">
+    <div class="strip-inner">
+      <span>Marketing</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Copywriting</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Content Creation</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Freelancers</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Business Owners</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Niche Specialists</span>
+    </div>
+  </div>
+
+  <!-- ═══ PROBLEM ═══ -->
+  <section class="section" aria-labelledby="problem-heading">
+    <div class="container">
+      <h2 class="section-h2 reveal" id="problem-heading">
+        Consistent content is a<br /><em>full-time job you didn't sign up for.</em>
+      </h2>
+      <p class="section-p reveal reveal-delay-1">
+        It's not that you lack ideas. It's that finding, filtering, and writing
+        takes hours you don't have — every single day.
+      </p>
+      <div class="stats-grid reveal reveal-delay-2">
+        <div class="stat">
+          <span class="stat-num">40<small>min</small></span>
+          <span class="stat-desc">reading feeds daily</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">6<small>hrs</small></span>
+          <span class="stat-desc">writing per week</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">70<small>%</small></span>
+          <span class="stat-desc">quit within 3 months</span>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- PROBLEM / SOLUTION -->
-    <section class="problem-sec">
-      <div class="container">
-        <div class="eyebrow">The problem</div>
-        <h2 class="sec-title">Staying relevant is a<br /><em>full-time job.</em></h2>
-        <p class="sec-body">You have genuine expertise. The internet produces infinite noise. Between them stands the daily grind of reading, filtering, and turning it into something worth saying.</p>
+  <!-- ═══ HOW IT WORKS ═══ -->
+  <section class="section" id="how-it-works" aria-labelledby="how-heading">
+    <div class="container">
+      <p class="label reveal">How it works</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="how-heading">Three conversations. Done.</h2>
 
-        <div class="ps-grid">
-          <div data-reveal class="ps-col before">
-            <span class="ps-tag before">Before Quillby</span>
-            <ul class="ps-list">
-              <li><span class="ps-icon">—</span><div><strong>45 minutes</strong> scanning feeds, newsletters, and Twitter to find one thing worth writing about.</div></li>
-              <li><span class="ps-icon">—</span><div><strong>Blank page paralysis.</strong> You know your subject. You don't know where to start.</div></li>
-              <li><span class="ps-icon">—</span><div><strong>Generic AI output.</strong> You try ChatGPT and it sounds like a LinkedIn HR bot.</div></li>
-              <li><span class="ps-icon">—</span><div><strong>Posting irregularly</strong> because "finding something to say" isn't part of your actual job.</div></li>
-            </ul>
+      <div class="steps">
+        <!-- Step 1 -->
+        <div class="step reveal">
+          <div class="step-header">
+            <span class="step-num">01</span>
+            <div class="step-line"></div>
           </div>
-          <div data-reveal class="ps-col after">
-            <span class="ps-tag after">With Quillby</span>
-            <ul class="ps-list">
-              <li><span class="ps-icon">↗</span><div>Ask Claude <strong>"what should I post today?"</strong> and get a ranked brief of what's actually relevant.</div></li>
-              <li><span class="ps-icon">↗</span><div><strong>One-shot drafts</strong> sourced from real articles, structured as your kind of post.</div></li>
-              <li><span class="ps-icon">↗</span><div><strong>Sounds like you</strong> — not a template. Quillby learns your voice from examples you approve.</div></li>
-              <li><span class="ps-icon">↗</span><div><strong>Publish consistently</strong> without adding a single new tool, tab, or workflow to your day.</div></li>
-            </ul>
+          <div class="step-body">
+            <h3 class="step-h3">Install &amp; configure</h3>
+            <p class="step-p">
+              Double-click the installer, restart Claude. It asks about your niche
+              and tone. You answer once.
+            </p>
+            <div class="chat">
+              <div class="chat-row chat-user">
+                <span class="chat-who">You</span>
+                <p class="chat-bubble">Set me up as a TypeScript content creator.</p>
+              </div>
+              <div class="chat-row chat-ai">
+                <span class="chat-who">Quillby</span>
+                <p class="chat-bubble">Got it. I'll focus on TypeScript, web performance, and DX. What platforms do you post on?</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- HOW IT WORKS -->
-    <section class="how-sec" id="how-it-works">
-      <div class="container">
-        <div class="eyebrow">How it works</div>
-        <h2 class="sec-title">Four steps.<br /><em>Zero new apps.</em></h2>
-        <div class="steps-row">
-          {[
-            { n:'01', g:'⬇', title:'Install', desc:'Download the installer for your platform. Quillby wires itself into Claude Desktop automatically — no Terminal required.' },
-            { n:'02', g:'◎', title:'Set up a workspace', desc:'Create one workspace per client, brand, newsletter, or Claude Project. Each one gets its own profile, memory, feeds, and drafts.' },
-            { n:'03', g:'⌗', title:'Quillby reads the internet', desc:'RSS, Reddit, and Medium feeds are fetched, ranked by relevance to that workspace, and surfaced as a content brief.' },
-            { n:'04', g:'↑', title:'Publish in your voice', desc:'Request a draft. Claude writes it from the workspace profile, memory, and sourced article. Edit, approve, post.' },
-          ].map(s => (
-            <div data-reveal class="step-card">
-              <div class="step-num">{s.n}</div>
-              <span class="step-glyph">{s.g}</span>
-              <h3 class="step-title">{s.title}</h3>
-              <p class="step-desc">{s.desc}</p>
+        <!-- Step 2 -->
+        <div class="step reveal reveal-delay-1">
+          <div class="step-header">
+            <span class="step-num">02</span>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-body">
+            <h3 class="step-h3">Get your daily brief</h3>
+            <p class="step-p">
+              Every morning, a curated summary of what's relevant to your niche.
+              Scan it in two minutes.
+            </p>
+            <div class="chat">
+              <div class="chat-row chat-user">
+                <span class="chat-who">You</span>
+                <p class="chat-bubble">Give me today's brief.</p>
+              </div>
+              <div class="chat-row chat-ai">
+                <span class="chat-who">Quillby</span>
+                <p class="chat-bubble">Here's what happened in TypeScript today: Bun 1.2 ships native TS enums, TC39 Stage 4 for Set methods, Vercel drops Edge runtime in favor of…</p>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
-    </section>
 
-    <!-- FEATURES -->
-    <section class="feat-sec">
-      <div class="container">
-        <div class="eyebrow">What it does</div>
-        <h2 class="sec-title">Content intelligence,<br /><em>built into your workflow.</em></h2>
-        <div class="feat-grid">
-          <div data-reveal class="feat-card">
-            <div class="feat-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="2"/></svg>
-            </div>
-            <h3 class="feat-title">Reads the internet</h3>
-            <p class="feat-desc">RSS feeds, Reddit communities, Medium articles — Quillby monitors sources that matter to your industry, in real time.</p>
+        <!-- Step 3 -->
+        <div class="step reveal reveal-delay-2">
+          <div class="step-header">
+            <span class="step-num">03</span>
+            <div class="step-line"></div>
           </div>
-          <div data-reveal class="feat-card">
-            <div class="feat-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <div class="step-body">
+            <h3 class="step-h3">Draft in your voice</h3>
+            <p class="step-p">
+              Pick a story, ask for the post. Quillby writes a publish-ready draft
+              based on the real article, in your established voice.
+            </p>
+            <div class="chat">
+              <div class="chat-row chat-user">
+                <span class="chat-who">You</span>
+                <p class="chat-bubble">Write a LinkedIn post about the Bun update.</p>
+              </div>
+              <div class="chat-row chat-ai">
+                <span class="chat-who">Quillby</span>
+                <p class="chat-bubble">Draft ready — 220 words, punchy opening, ends with a question to drive comments. Want me to shorten it?</p>
+              </div>
             </div>
-            <h3 class="feat-title">Stays on-topic</h3>
-            <p class="feat-desc">Define your industry, audience, and excluded topics once. Quillby uses that profile to rank every article by relevance.</p>
-          </div>
-          <div data-reveal class="feat-card">
-            <div class="feat-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            </div>
-            <h3 class="feat-title">Writes in your voice</h3>
-            <p class="feat-desc">No generic AI slop. Quillby sources the material and Claude writes the post — sounding like you, not a content farm.</p>
-          </div>
-          <div data-reveal class="feat-card">
-            <div class="feat-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-            </div>
-            <h3 class="feat-title">Learns over time</h3>
-            <p class="feat-desc">Every draft you approve teaches Quillby your style. The more you use it, the less you edit.</p>
-          </div>
-          <div data-reveal class="feat-card">
-            <div class="feat-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
-            <h3 class="feat-title">One workspace per context</h3>
-            <p class="feat-desc">Keep client work, personal brand, newsletters, and campaigns separated. Each workspace has its own profile, memory, feeds, and outputs.</p>
-          </div>
-          <div data-reveal class="feat-card">
-            <div class="feat-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            </div>
-            <h3 class="feat-title">Any industry, any language</h3>
-            <p class="feat-desc">Healthcare, law, dev, finance, fashion — Quillby works for any niche, in any language Google News supports.</p>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- INSTALL -->
-    <section class="install-sec" id="install">
-      <div class="container">
-        <div class="eyebrow">Install</div>
-        <h2 class="sec-title">Up and running<br /><em>in three minutes.</em></h2>
+  <!-- ═══ WHO IT'S FOR ═══ -->
+  <section class="section" id="who-its-for" aria-labelledby="who-heading">
+    <div class="container">
+      <p class="label reveal">Who it's for</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="who-heading">
+        Built for people who create content<br /><em>alongside everything else.</em>
+      </h2>
 
-        <div class="install-wrap">
+      <div class="personas">
+        <div class="persona reveal">
+          <h3 class="persona-name">Freelance Copywriter</h3>
+          <p class="persona-desc">
+            Multiple clients, each with their own voice. One workspace per client.
+            Separate briefs, drafts in the right tone.
+          </p>
+        </div>
+        <div class="persona reveal reveal-delay-1">
+          <h3 class="persona-name">Business Owner</h3>
+          <p class="persona-desc">
+            You know your market cold, but posting consistently? There's never time.
+            Quillby keeps your brand visible without the grind.
+          </p>
+        </div>
+        <div class="persona reveal">
+          <h3 class="persona-name">Marketing Professional</h3>
+          <p class="persona-desc">
+            Track competitors, surface trends, spot case studies.
+            Turn all of it into content your audience actually reads.
+          </p>
+        </div>
+        <div class="persona reveal reveal-delay-1">
+          <h3 class="persona-name">Niche Specialist</h3>
+          <p class="persona-desc">
+            Law, finance, health, education, tech. Any field where
+            consistent content builds authority — and silence erodes it.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PRIVACY CALLOUT ═══ -->
+  <section class="privacy-banner reveal">
+    <div class="container">
+      <div class="privacy-inner">
+        <div class="privacy-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 1.667L3.333 4.167v5c0 3.917 2.834 7.583 6.667 8.5 3.833-.917 6.667-4.583 6.667-8.5v-5L10 1.667z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M7.5 10l1.667 1.667 3.333-3.334" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="privacy-text">
+          <strong>Your data stays on your machine.</strong>
+          Everything runs locally. Nothing is sent to our servers.
+          Quillby is open source and fully auditable.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ INSTALL ═══ -->
+  <section class="section" id="install" aria-labelledby="install-heading">
+    <div class="container">
+      <p class="label reveal">Get started</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="install-heading">
+        Three minutes to your<br /><em>first draft.</em>
+      </h2>
+
+      <ol class="install-steps reveal reveal-delay-2">
+        <li>
+          <span class="install-num">1</span>
           <div>
-            <div class="os-tabs-wrap" id="osTabs">
-              <button class="os-tab active" data-os="mac">macOS</button>
-              <button class="os-tab" data-os="win">Windows</button>
-              <button class="os-tab" data-os="linux">Linux</button>
-              <button class="os-tab" data-os="npm">npm</button>
-            </div>
-
-            <div id="os-mac">
-              <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg" class="dl-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Get Quillby for Mac
-              </a>
-              <p class="install-note">Works on Apple Silicon &amp; Intel. One double-click, no setup.<br />If macOS asks: right-click → <strong style="color:var(--text)">Open</strong>.</p>
-            </div>
-
-            <div id="os-win" class="hidden">
-              <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-windows.exe" class="dl-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Get Quillby for Windows
-              </a>
-              <p class="install-note">One double-click installer. No Terminal, no setup steps.</p>
-            </div>
-
-            <div id="os-linux" class="hidden">
-              <div class="code-block">
-                <div class="code-top"><span class="code-lang">bash</span><button class="copy-btn" data-copy={curlCommand}>copy</button></div>
-                <div class="code-body">{curlCommand}</div>
-              </div>
-            </div>
-
-            <div id="os-npm" class="hidden">
-              <div class="code-block">
-                <div class="code-top"><span class="code-lang">shell</span><button class="copy-btn" data-copy="npm install -g @vncsleal/quillby">copy</button></div>
-                <div class="code-body">npm install -g @vncsleal/quillby</div>
-              </div>
-              <div class="code-block">
-                <div class="code-top"><span class="code-lang">json · claude_desktop_config.json</span><button class="copy-btn" data-copy={claudeConfig}>copy</button></div>
-                <div class="code-body" style="font-size:0.73rem;">{claudeConfig}</div>
-              </div>
-            </div>
-
-            <div class="prompt-callout">
-              <div class="prompt-callout-label">Then open Claude and say</div>
-              <div class="prompt-callout-text">"Set me up with Quillby"</div>
-            </div>
+            <strong>Download the installer</strong>
+            <span class="install-detail">Double-click and follow the prompts. No terminal needed.</span>
           </div>
-
-          <div class="install-steps">
-            {[
-              { n:'1', t:'Install & restart Claude Desktop', b:'Run the installer, then fully quit and reopen Claude Desktop. Quillby loads automatically on startup.' },
-              { n:'2', t:'Create your first workspace', b:'Say "Set me up with Quillby" in Claude. For new users, Quillby creates a default workspace and saves your profile there.' },
-              { n:'3', t:'Discover your sources', b:'Quillby finds and subscribes to relevant RSS feeds, Reddit communities, and Medium articles for that workspace automatically.' },
-              { n:'4', t:'Ask what to post', b:'Every morning: "what should I post today?" — Quillby reads that workspace\'s feeds, ranks what\'s relevant, and writes a draft ready to publish.' },
-            ].map(s => (
-              <div data-reveal class="install-step">
-                <div class="install-step-num">{s.n}</div>
-                <div class="install-step-body"><h4>{s.t}</h4><p>{s.b}</p></div>
-              </div>
-            ))}
+        </li>
+        <li>
+          <span class="install-num">2</span>
+          <div>
+            <strong>Restart Claude Desktop</strong>
+            <span class="install-detail">Quillby appears automatically the next time you open Claude.</span>
           </div>
-        </div>
+        </li>
+        <li>
+          <span class="install-num">3</span>
+          <div>
+            <strong>Configure your niche</strong>
+            <span class="install-detail">Claude asks two questions. You answer once. That's the setup.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="install-cta reveal reveal-delay-3">
+        <a
+          href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg"
+          class="btn btn-primary btn-large"
+        >
+          Download for Mac
+        </a>
+        <p class="install-note">macOS &middot; Free &middot; No account required</p>
       </div>
-    </section>
 
-    <!-- INDUSTRIES -->
-    <section class="ind-sec">
-      <div class="container">
-        <div class="eyebrow">Built for every industry</div>
-        <h2 class="sec-title">If you have expertise,<br /><em>Quillby has your back.</em></h2>
-        <div class="ind-grid">
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-            <div class="ind-t">Developers</div>
-            <div class="ind-d">Track releases, framework shifts, and OSS trends without living on HN.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <div class="ind-t">Law &amp; legal</div>
-            <div class="ind-d">Surface case law, regulatory changes, and commentary from your practice.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <div class="ind-t">Finance</div>
-            <div class="ind-d">Follow market moves, earnings, and macro analysis filtered for your thesis.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/></svg>
-            <div class="ind-t">Design &amp; creative</div>
-            <div class="ind-d">Track tool launches and creative conversations worth your opinion.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            <div class="ind-t">Healthcare</div>
-            <div class="ind-d">Stay current on research, policy shifts, and clinical developments.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-            <div class="ind-t">Marketing</div>
-            <div class="ind-d">Monitor campaigns, platform changes, and measurement trends first.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <div class="ind-t">Real estate</div>
-            <div class="ind-d">Track market data, rates, and regional trends for your geography.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <div class="ind-t">Education</div>
-            <div class="ind-d">Follow curriculum debates, edtech launches, and policy shifts.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12m0 0C12 7 8 4 3 4c0 5 3 8 9 8zm0 0c0-5 4-8 9-8 0 5-3 8-9 8"/></svg>
-            <div class="ind-t">Agriculture</div>
-            <div class="ind-d">Seasonal trends, crop research, and market pricing for your region.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
-            <div class="ind-t">Construction</div>
-            <div class="ind-d">Monitor material prices, code updates, and project management tools.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            <div class="ind-t">Fashion &amp; retail</div>
-            <div class="ind-d">Trend spotting, supply chain news, and brand campaigns.</div>
-          </div>
-          <div data-reveal class="ind-card">
-            <svg class="ind-g" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            <div class="ind-t">Any niche</div>
-            <div class="ind-d">Define your topics in plain language. Quillby discovers the sources.</div>
-          </div>
+      <details class="other-installs reveal">
+        <summary>Other platforms</summary>
+        <div class="other-installs-body">
+          <p>
+            <span class="platform-label">Windows</span>
+            <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-windows.exe">Download .exe</a>
+          </p>
+          <p>
+            <span class="platform-label">Linux / npm</span>
+            <code>npm install -g @vncsleal/quillby</code>
+          </p>
+          <p>
+            <a href="/docs/install">Full installation guide &rarr;</a>
+          </p>
         </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ═══ FAQ ═══ -->
+  <section class="section section-sm" id="faq" aria-labelledby="faq-heading">
+    <div class="container">
+      <p class="label reveal">FAQ</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="faq-heading">Common questions</h2>
+
+      <div class="faq-list">
+        <details class="faq-item reveal">
+          <summary>Do I need to know how to code?</summary>
+          <div class="faq-body"><p>No. If you can have a conversation with Claude, you can use Quillby.</p></div>
+        </details>
+        <details class="faq-item reveal reveal-delay-1">
+          <summary>Does it work for any niche?</summary>
+          <div class="faq-body"><p>Yes. Tech, law, finance, health, education, marketing — any field with content online.</p></div>
+        </details>
+        <details class="faq-item reveal reveal-delay-2">
+          <summary>I have multiple clients. Will they mix?</summary>
+          <div class="faq-body"><p>No. Each workspace has its own memory and sources. Client A never bleeds into Client B.</p></div>
+        </details>
+        <details class="faq-item reveal reveal-delay-3">
+          <summary>Is my data safe?</summary>
+          <div class="faq-body"><p>Everything runs on your machine. Nothing leaves it. The code is open source and auditable.</p></div>
+        </details>
+        <details class="faq-item reveal reveal-delay-4">
+          <summary>Is it free?</summary>
+          <div class="faq-body"><p>Local mode is completely free. A Cloud tier (shared workspaces, team dashboard) is in development.</p></div>
+        </details>
+        <details class="faq-item reveal reveal-delay-4">
+          <summary>Do I need Claude Desktop?</summary>
+          <div class="faq-body"><p>Yes. Quillby is an MCP server for Claude Desktop. It extends Claude with content agent capabilities.</p></div>
+        </details>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- STATEMENT -->
-    <section class="statement-sec">
-      <blockquote class="statement-q">
-        "You already know what to say.<br />
-        <em>You just needed someone<br />to read the internet for you.</em>"
-      </blockquote>
-      <a href="#install" class="btn-primary" style="font-size:1rem; padding:1rem 2.5rem;">
-        Start posting in your voice →
-      </a>
-    </section>
+  <!-- ═══ FINAL CTA ═══ -->
+  <section class="cta-final" aria-labelledby="cta-heading">
+    <div class="container cta-final-inner">
+      <h2 class="cta-h2 reveal" id="cta-heading">
+        Stop reading feeds.<br /><em>Start shipping content.</em>
+      </h2>
+      <p class="cta-sub reveal reveal-delay-1">
+        Install in three minutes. Your first brief, right after.
+      </p>
+      <div class="reveal reveal-delay-2">
+        <a
+          href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg"
+          class="btn btn-primary btn-large"
+        >
+          Install Quillby free
+        </a>
+      </div>
+    </div>
+  </section>
 
-    <Footer />
+  <Footer />
+</BaseLayout>
 
-    <script>
-      document.querySelectorAll('.os-tab').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const os = (btn as HTMLElement).dataset.os!;
-          document.querySelectorAll('.os-tab').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          ['mac','win','linux','npm'].forEach(o => {
-            document.getElementById('os-' + o)?.classList.toggle('hidden', o !== os);
-          });
-        });
+<script>
+  // Reveal on scroll
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
       });
+    },
+    { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+  );
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-      document.querySelectorAll('.copy-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          navigator.clipboard.writeText((btn as HTMLElement).dataset.copy ?? '').catch(()=>{});
-          btn.textContent = 'copied!';
-          setTimeout(() => { btn.textContent = 'copy'; }, 1500);
-        });
-      });
+  // FAQ animated open/close
+  document.querySelectorAll('.faq-item').forEach(el => {
+    const details = el as HTMLDetailsElement;
+    const summary = details.querySelector('summary');
+    if (!summary) return;
 
-      const ro = new IntersectionObserver(
-        es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); ro.unobserve(e.target); } }),
-        { threshold: 0.08 }
-      );
-      document.querySelectorAll('[data-reveal]').forEach(el => ro.observe(el));
-    </script>
+    summary.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      if (details.open) {
+        // Close: add closing class, wait for transition, then remove [open]
+        details.classList.add('is-closing');
+        const body = details.querySelector('.faq-body') as HTMLElement;
+        body.addEventListener('transitionend', () => {
+          details.open = false;
+          details.classList.remove('is-closing');
+        }, { once: true });
+      } else {
+        // Open: set [open] first so content is visible, then transition in
+        details.open = true;
+      }
+    });
+  });
+</script>
 
 <style>
-  /* HERO */
-  .hero {
-    position: relative; z-index: 1;
-    min-height: calc(100vh - 60px);
-    display: flex; align-items: center;
-    padding: clamp(4rem, 10vh, 8rem) clamp(1.5rem, 5vw, 5rem);
-    gap: 4rem; max-width: 1340px; margin: 0 auto;
+  /* ─── Shared tokens ─── */
+  .container { max-width: 1440px; margin: 0 auto; padding: 0 clamp(0.75rem, 2vw, 1.5rem); }
+  .container.narrow { max-width: 960px; }
+
+  .section { padding: var(--sp-section) 0; }
+  .section-sm { padding: var(--sp-section-sm) 0; }
+
+  /* ─── Typography ─── */
+  .label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
   }
-  .hero-content { flex: 1 1 520px; display: flex; flex-direction: column; gap: 2rem; }
 
-  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.8)} }
-
-  .hero-headline {
+  .section-h2 {
     font-family: var(--serif);
-    font-size: clamp(3rem, 6vw, 5.5rem);
-    font-weight: 800; line-height: 1.0; letter-spacing: -0.025em; color: var(--text);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 500;
+    font-optical-sizing: auto;
+    font-variation-settings: "SOFT" 100;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 1.25rem;
   }
-  .hero-headline em { font-style: italic; font-weight: 300; color: var(--violet-3); }
-  .hero-sub { font-size: 1.075rem; color: var(--muted); max-width: 46ch; line-height: 1.75; }
-  .hero-sub strong { color: var(--text); font-weight: 600; }
-  .hero-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding-top: 0.5rem; }
+
+  .section-h2 em {
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  .section-p {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 60ch;
+    margin-bottom: 2.5rem;
+  }
+
+  /* ─── Buttons ─── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.5rem;
+    font-family: var(--serif);
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), border-color 0.3s var(--ease-out), transform 0.2s var(--ease-out);
+    white-space: nowrap;
+    will-change: transform;
+  }
+
+  .btn:active { transform: scale(0.97); }
 
   .btn-primary {
-    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-h); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+  .btn-large {
     padding: 0.85rem 2rem;
-    background: linear-gradient(135deg, var(--violet-2) 0%, #9333ea 100%);
-    color: #fff; font-family: var(--sans); font-size: 0.9375rem; font-weight: 700;
-    border-radius: 10px; text-decoration: none; border: none; cursor: pointer;
-    box-shadow: 0 0 28px rgba(124,58,237,0.45), 0 4px 20px rgba(124,58,237,0.3);
-    transition: box-shadow 0.2s, transform 0.15s; letter-spacing: 0.01em;
+    font-size: 0.9375rem;
+    border-radius: 10px;
   }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 44px rgba(124,58,237,0.65), 0 8px 32px rgba(124,58,237,0.45); }
 
-  .btn-secondary {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.85rem 1.75rem; background: var(--surface); color: var(--muted);
-    font-family: var(--sans); font-size: 0.9375rem; font-weight: 600;
-    border-radius: 10px; text-decoration: none; border: 1px solid var(--border); cursor: pointer;
-    transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+  /* ─── HERO ─── */
+  .hero {
+    min-height: calc(100svh - 56px);
+    display: flex;
+    align-items: center;
+    padding: 3rem 0 4rem;
   }
-  .btn-secondary:hover { background: var(--surface-h); color: var(--text); border-color: var(--border-h); transform: translateY(-1px); }
 
-  .hero-proof {
-    display: flex; align-items: center; gap: 0.75rem;
-    font-size: 0.8125rem; color: var(--faint); font-weight: 500;
+  .hero-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 clamp(0.75rem, 2vw, 1.5rem);
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 5rem;
+    align-items: center;
+    width: 100%;
   }
-  .hero-proof::before { content:''; width:28px; height:1px; background:var(--faint); flex-shrink:0; }
 
-  .hero-visual { flex: 1 1 420px; position: relative; display: flex; align-items: center; justify-content: center; min-height: 400px; }
-  .mascot-scene { position: relative; width: 380px; height: 380px; display: flex; align-items: center; justify-content: center; }
-  .mascot-img { width: 280px; height: 280px; object-fit: contain; }
+  .hero-eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+  }
 
-  .container { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 clamp(1.5rem,5vw,5rem); }
-  .eyebrow { display:inline-flex; align-items:center; gap:0.6rem; font-family:var(--mono); font-size:0.6875rem; letter-spacing:0.13em; text-transform:uppercase; color:var(--violet); margin-bottom:1.25rem; }
-  .eyebrow::before { content:''; width:18px; height:1px; background:var(--violet); opacity:0.6; }
-  .sec-title { font-family:var(--serif); font-size:clamp(2.4rem,4vw,3.75rem); font-weight:800; line-height:1.05; letter-spacing:-0.02em; color:var(--text); margin-bottom:1.25rem; }
-  .sec-title em { font-style:italic; font-weight:300; color:var(--violet-3); }
-  .sec-body { font-size:1.0625rem; color:var(--muted); max-width:52ch; line-height:1.75; }
+  .hero-h1 {
+    font-family: var(--serif);
+    font-size: clamp(3rem, 6vw, 5rem);
+    font-weight: 500;
+    font-optical-sizing: auto;
+    font-variation-settings: "SOFT" 100;
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
 
-  .mode-sec { padding:clamp(4rem,8vw,7rem) 0; border-bottom:1px solid var(--border); }
-  .mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3rem; }
-  .mode-card { background:linear-gradient(180deg, rgba(17,13,30,0.95), rgba(12,9,21,0.96)); border:1px solid var(--border); border-radius:16px; padding:2rem; display:flex; flex-direction:column; gap:1rem; min-height:280px; transition:border-color 0.25s, transform 0.2s, box-shadow 0.25s; }
-  .mode-card:hover { border-color:var(--border-h); transform:translateY(-3px); box-shadow:0 16px 50px rgba(0,0,0,0.3), 0 0 24px rgba(124,58,237,0.08); }
-  .mode-kicker { font-family:var(--mono); font-size:0.65rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--violet); opacity:0.8; }
-  .mode-name { font-family:var(--serif); font-size:1.45rem; font-weight:700; letter-spacing:-0.02em; color:var(--text); }
-  .mode-desc { font-size:0.9rem; color:var(--muted); line-height:1.7; flex:1; }
-  .mode-list { list-style:none; display:flex; flex-direction:column; gap:0.55rem; font-size:0.8rem; color:var(--faint); }
-  .mode-list li strong { color:var(--text); font-weight:600; }
-  .mode-link { display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none; color:var(--violet-3); font-weight:700; font-size:0.88rem; }
+  .hero-h1 em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--text-2);
+  }
 
-  .problem-sec { padding:clamp(5rem,9vw,9rem) 0; border-bottom:1px solid var(--border); }
-  .ps-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; margin-top:3.5rem; border-radius:16px; overflow:hidden; border:1px solid var(--border); }
-  .ps-col { background:var(--bg-1); padding:clamp(2rem,4vw,3.5rem); position:relative; }
-  .ps-col:first-child { border-right:1px solid var(--border); }
-  .ps-col::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; }
-  .ps-col.before::before { background:linear-gradient(90deg, rgba(239,68,68,0.5), transparent); }
-  .ps-col.after::before { background:linear-gradient(90deg, rgba(167,139,250,0.6), transparent); }
-  .ps-tag { font-family:var(--mono); font-size:0.625rem; letter-spacing:0.15em; text-transform:uppercase; padding:0.3rem 0.7rem; border-radius:4px; display:inline-block; margin-bottom:2rem; font-weight:500; }
-  .ps-tag.before { color:#fca5a5; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); }
-  .ps-tag.after { color:var(--violet-3); background:rgba(167,139,250,0.08); border:1px solid var(--border); }
-  .ps-list { list-style:none; display:flex; flex-direction:column; gap:1.1rem; }
-  .ps-list li { display:flex; gap:1rem; font-size:0.9375rem; color:var(--muted); line-height:1.6; }
-  .ps-icon { flex-shrink:0; font-size:0.875rem; margin-top:0.1rem; opacity:0.7; }
-  .ps-list li strong { color:var(--text); font-weight:600; }
+  .hero-sub {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 56ch;
+    margin-bottom: 2.25rem;
+  }
 
-  .how-sec { padding:clamp(5rem,9vw,9rem) 0; border-bottom:1px solid var(--border); }
-  .steps-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; margin-top:4rem; }
-  .step-card { background:var(--bg-1); border:1px solid var(--border); border-radius:14px; padding:2rem 1.75rem; position:relative; overflow:hidden; transition:border-color 0.25s, transform 0.2s, box-shadow 0.25s; }
-  .step-card::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at top left, rgba(124,58,237,0.07) 0%, transparent 60%); pointer-events:none; }
-  .step-card:hover { border-color:var(--border-h); transform:translateY(-4px); box-shadow:0 20px 60px rgba(0,0,0,0.35), 0 0 30px rgba(124,58,237,0.1); }
-  .step-num { font-family:var(--mono); font-size:0.625rem; letter-spacing:0.12em; color:var(--violet); opacity:0.6; margin-bottom:1.5rem; }
-  .step-glyph { font-size:1.75rem; margin-bottom:1rem; display:block; line-height:1; }
-  .step-title { font-family:var(--serif); font-size:1.15rem; font-weight:600; color:var(--text); margin-bottom:0.6rem; line-height:1.25; }
-  .step-desc { font-size:0.875rem; color:var(--muted); line-height:1.7; }
+  .hero-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
 
-  .feat-sec { padding:clamp(5rem,9vw,9rem) 0; border-bottom:1px solid var(--border); }
-  .feat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:4rem; }
-  .feat-card { background:var(--bg-1); border:1px solid var(--border); border-radius:14px; padding:2.25rem 2rem; transition:border-color 0.25s, transform 0.2s, box-shadow 0.25s; position:relative; overflow:hidden; }
-  .feat-card::after { content:''; position:absolute; bottom:0;left:0;right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(167,139,250,0.2), transparent); opacity:0; transition:opacity 0.25s; }
-  .feat-card:hover { border-color:var(--border-h); transform:translateY(-3px); box-shadow:0 16px 50px rgba(0,0,0,0.3), 0 0 24px rgba(124,58,237,0.08); }
-  .feat-card:hover::after { opacity:1; }
-  .feat-icon { width:44px; height:44px; border-radius:10px; background:rgba(124,58,237,0.15); border:1px solid rgba(167,139,250,0.2); display:flex; align-items:center; justify-content:center; font-size:1.25rem; margin-bottom:1.25rem; }
-  .feat-title { font-family:var(--serif); font-size:1.1rem; font-weight:600; color:var(--text); margin-bottom:0.6rem; }
-  .feat-desc { font-size:0.875rem; color:var(--muted); line-height:1.7; }
+  .hero-note {
+    font-size: 0.75rem;
+    color: var(--faint);
+    letter-spacing: 0.02em;
+  }
 
-  .install-sec { padding:clamp(5rem,9vw,9rem) 0; border-bottom:1px solid var(--border); }
-  .install-wrap { display:grid; grid-template-columns:1fr 1fr; gap:3rem; margin-top:4rem; align-items:start; }
-  .os-tabs-wrap { display:flex; gap:0; background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; width:fit-content; margin-bottom:1.5rem; }
-  .os-tab { padding:0.5rem 1.1rem; background:transparent; border:none; border-right:1px solid var(--border); color:var(--muted); font-family:var(--mono); font-size:0.75rem; letter-spacing:0.04em; cursor:pointer; transition:background 0.15s, color 0.15s; }
-  .os-tab:last-child { border-right:none; }
-  .os-tab.active { background:linear-gradient(135deg, rgba(124,58,237,0.35), rgba(124,58,237,0.15)); color:var(--violet-3); }
-  .code-block { background:var(--bg-2); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:1rem; }
-  .code-top { display:flex; align-items:center; justify-content:space-between; padding:0.6rem 1rem; border-bottom:1px solid rgba(167,139,250,0.07); }
-  .code-lang { font-family:var(--mono); font-size:0.625rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--faint); }
-  .copy-btn { font-family:var(--mono); font-size:0.6875rem; letter-spacing:0.05em; background:none; border:1px solid rgba(167,139,250,0.2); color:var(--muted); border-radius:4px; padding:0.2rem 0.65rem; cursor:pointer; transition:color 0.15s, border-color 0.15s; }
-  .copy-btn:hover { color:var(--violet-3); border-color:var(--border-h); }
-  .code-body { padding:1.1rem 1.25rem; font-family:var(--mono); font-size:0.8rem; color:rgba(240,234,250,0.75); overflow-x:auto; line-height:1.8; }
-  .dl-btn { display:flex; align-items:center; justify-content:center; gap:0.5rem; width:100%; padding:0.9rem 1.5rem; background:linear-gradient(135deg, var(--violet-2), #9333ea); color:#fff; font-family:var(--sans); font-size:0.9rem; font-weight:700; border-radius:10px; text-decoration:none; border:none; cursor:pointer; box-shadow:0 0 24px rgba(124,58,237,0.4); transition:box-shadow 0.2s, transform 0.15s; margin-bottom:0.75rem; }
-  .dl-btn:hover { transform:translateY(-2px); box-shadow:0 0 40px rgba(124,58,237,0.6); }
-  .install-note { font-size:0.75rem; color:var(--faint); line-height:1.6; }
-  .install-steps { display:flex; flex-direction:column; gap:2rem; }
-  .install-step { display:flex; gap:1.1rem; align-items:flex-start; }
-  .install-step-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:0.625rem; color:var(--violet); margin-top:0.15rem; }
-  .install-step-body h4 { font-size:0.9375rem; font-weight:600; color:var(--text); margin-bottom:0.35rem; }
-  .install-step-body p { font-size:0.8375rem; color:var(--muted); line-height:1.65; }
-  .prompt-callout { margin-top:2rem; padding:1.25rem 1.5rem; border:1px solid rgba(167,139,250,0.2); border-radius:10px; background:rgba(124,58,237,0.06); }
-  .prompt-callout-label { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--violet); margin-bottom:0.6rem; opacity:0.7; }
-  .prompt-callout-text { font-family:var(--serif); font-size:1.05rem; font-style:italic; color:var(--text); }
+  /* Hero visual */
+  .hero-visual {
+    display: flex;
+    justify-content: center;
+  }
 
-  .ind-sec { padding:clamp(5rem,9vw,9rem) 0; border-bottom:1px solid var(--border); }
-  .ind-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-top:3.5rem; }
-  .ind-card { background:var(--bg); padding:1.75rem 1.5rem; display:flex; flex-direction:column; gap:0.65rem; transition:background 0.2s; }
-  .ind-card:hover { background:var(--bg-1); }
-  .ind-g { display:block; margin-bottom:0.25rem; }
-  .ind-t { font-size:0.875rem; font-weight:600; color:var(--text); }
-  .ind-d { font-size:0.8rem; color:var(--muted); line-height:1.6; }
+  .mascot-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+  }
 
-  .statement-sec { position:relative; z-index:1; padding:clamp(6rem,12vw,11rem) clamp(1.5rem,5vw,5rem); text-align:center; overflow:hidden; }
-  .statement-sec::before { content:''; position:absolute; top:50%;left:50%; transform:translate(-50%,-50%); width:800px; height:400px; background:radial-gradient(ellipse, rgba(124,58,237,0.15) 0%, transparent 65%); filter:blur(50px); pointer-events:none; }
-  .statement-q { font-family:var(--serif); font-size:clamp(2.2rem,5vw,4.25rem); font-weight:800; line-height:1.1; letter-spacing:-0.02em; color:var(--text); max-width:22ch; margin:0 auto 2.5rem; position:relative; }
-  .statement-q em { font-style:italic; font-weight:300; color:var(--violet-3); }
+  .mascot-img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
 
-  .hidden { display: none; }
+  /* ─── STRIP ─── */
+  .strip {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 0.875rem 0;
+    overflow: hidden;
+  }
+
+  .strip-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 clamp(0.75rem, 2vw, 1.5rem);
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .strip-sep { color: var(--border-strong); }
+
+  /* ─── STATS ─── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 280px));
+    gap: 3rem;
+    padding-top: 0.5rem;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .stat-num {
+    font-family: var(--serif);
+    font-size: 2.75rem;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--text);
+    letter-spacing: -0.03em;
+  }
+
+  .stat-num small {
+    font-size: 1.25rem;
+    font-weight: 300;
+    letter-spacing: 0;
+  }
+
+  .stat-desc {
+    font-size: 0.8125rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* ─── STEPS ─── */
+  .steps {
+    margin-top: 3.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0 3rem;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .step-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .step-num {
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--faint);
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+
+  .step-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .step-h3 {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 500;
+    font-optical-sizing: auto;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .step-p {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+
+  /* Chat */
+  .chat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .chat-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .chat-who {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    padding: 0 0.75rem;
+  }
+
+  .chat-bubble {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    padding: 0.625rem 0.875rem;
+    border-radius: 10px;
+    max-width: 90%;
+  }
+
+  .chat-user .chat-bubble {
+    background: var(--bg-subtle);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 3px;
+    align-self: flex-start;
+  }
+
+  .chat-ai .chat-bubble {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 3px;
+    align-self: flex-start;
+  }
+
+  /* ─── PERSONAS ─── */
+  .personas {
+    margin-top: 3rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+
+  .persona {
+    padding: 2rem 2rem 2rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .personas .persona:not(:last-child) {
+    border-right: 1px solid var(--border);
+  }
+
+  .personas .persona:not(:first-child) {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .personas .persona:last-child {
+    padding-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .personas .persona:first-child {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .personas .persona:nth-child(2),
+  .personas .persona:nth-child(3) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .persona-name {
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    font-weight: 500;
+    font-optical-sizing: auto;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .persona-desc {
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  /* ─── PRIVACY BANNER ─── */
+  .privacy-banner {
+    padding: 2.5rem 0;
+    background: var(--bg-subtle);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .privacy-inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .privacy-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--accent);
+  }
+
+  .privacy-text {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .privacy-text strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* ─── INSTALL STEPS ─── */
+  .install-steps {
+    list-style: none;
+    margin: 2.5rem 0 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .install-steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .install-steps li:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .install-num {
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    color: var(--muted);
+    margin-top: 0.1rem;
+  }
+
+  .install-steps strong {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+
+  .install-detail {
+    font-size: 0.875rem;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .install-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.625rem;
+  }
+
+  .install-note {
+    font-size: 0.75rem;
+    color: var(--faint);
+    letter-spacing: 0.02em;
+  }
+
+  /* Other installs */
+  .other-installs {
+    margin-top: 1.5rem;
+  }
+
+  .other-installs > summary {
+    font-size: 0.8125rem;
+    color: var(--muted);
+    cursor: pointer;
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: color 0.15s;
+  }
+
+  .other-installs > summary:hover { color: var(--text); }
+
+  .other-installs > summary::after {
+    content: '↓';
+    font-size: 0.75rem;
+    transition: transform 0.15s;
+  }
+
+  .other-installs[open] > summary::after { transform: rotate(180deg); }
+
+  .other-installs-body {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .other-installs-body p {
+    font-size: 0.875rem;
+    color: var(--muted);
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .other-installs-body a {
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: opacity 0.15s;
+  }
+
+  .other-installs-body a:hover { opacity: 0.7; }
+
+  .other-installs-body code {
+    font-family: var(--mono);
+    font-size: 0.8125rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.1em 0.45em;
+    border-radius: 4px;
+    color: var(--text);
+  }
+
+  .platform-label {
+    font-weight: 500;
+    color: var(--text-2);
+    min-width: 5rem;
+    flex-shrink: 0;
+    font-size: 0.8125rem;
+  }
+
+  /* ─── FAQ ─── */
+  .faq-list {
+    margin-top: 2.5rem;
+  }
+
+  .faq-item {
+    border-top: 1px solid var(--border);
+  }
+
+  .faq-list .faq-item:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .faq-item > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    font-weight: 400;
+    color: var(--text);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: color 0.2s;
+  }
+
+  .faq-item > summary::-webkit-details-marker { display: none; }
+
+  .faq-item > summary:hover { color: var(--accent); }
+
+  .faq-item > summary::after {
+    content: '+';
+    font-family: var(--sans);
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--faint);
+    flex-shrink: 0;
+    line-height: 1;
+    transition: transform 0.35s var(--ease-out), color 0.2s;
+  }
+
+  .faq-item[open] > summary::after {
+    transform: rotate(45deg);
+    color: var(--accent);
+  }
+
+  /* Grid-trick animation for <details> content */
+  .faq-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.4s var(--ease-out);
+    overflow: hidden;
+  }
+
+  .faq-item[open] .faq-body,
+  .faq-item.is-opening .faq-body {
+    grid-template-rows: 1fr;
+  }
+
+  .faq-item.is-closing .faq-body {
+    grid-template-rows: 0fr;
+  }
+
+  .faq-body > p {
+    min-height: 0;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--muted);
+    padding-bottom: 1.375rem;
+    max-width: 72ch;
+  }
+
+  /* ─── FINAL CTA ─── */
+  .cta-final {
+    padding: var(--sp-section) 0;
+    background: var(--text);
+    color: var(--inverse);
+  }
+  .cta-final-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0;
+  }
+
+  .cta-h2 {
+    font-family: var(--serif);
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-weight: 500;
+    font-optical-sizing: auto;
+    font-variation-settings: "SOFT" 100;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--inverse);
+    margin-bottom: 1.25rem;
+  }
+
+  .cta-h2 em {
+    font-style: italic;
+  }
+
+  .cta-sub {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: rgba(250, 248, 245, 0.6);
+    max-width: 52ch;
+    margin-bottom: 2.5rem;
+  }
+
+  .cta-final .btn-primary {
+    background: var(--inverse);
+    color: var(--accent);
+  }
+
+  .cta-final .btn-primary:hover { opacity: 0.85; background: var(--inverse); }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 860px) {
+    .hero-inner {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+    .hero {
+      min-height: auto;
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+    .hero-visual {
+      order: -1;
+      justify-content: flex-start;
+    }
+    .mascot-wrap { max-width: 100%; }
+
+    .stats-grid { gap: 1.25rem; }
+
+    .steps {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .step {
+      padding: 1.75rem 0;
+      border-top: 1px solid var(--border);
+    }
+    .step:last-child { border-bottom: 1px solid var(--border); }
+
+    .personas {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .personas .persona:nth-child(odd) {
+      border-right: 1px solid var(--border);
+    }
+    .personas .persona:nth-child(even) {
+      border-right: none;
+    }
+    .personas .persona:nth-last-child(-n+2) {
+      border-bottom: 1px solid var(--border);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .personas {
+      grid-template-columns: 1fr;
+    }
+    .personas .persona {
+      padding: 1.5rem 0 !important;
+      border-right: none !important;
+    }
+    .personas .persona:last-child {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .strip-inner { gap: 0.75rem 1rem; }
+  }
+
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .hero-h1 { font-size: clamp(2.4rem, 8vw, 3.5rem); }
+  }
 </style>
-  </BaseLayout>

@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { getCollection, render } from 'astro:content';
+const entries = await getCollection('legal');
+const entry = entries.find(e => e.id === 'privacy');
+const { Content } = entry ? await render(entry) : { Content: undefined };
+const title = entry?.data.title ?? "Privacidade";
+---
+<BaseLayout title={title}>
+  <Nav />
+  <main class="legal-page">
+    <h1 class="legal-title">{title}</h1>
+    {Content && (
+      <article class="legal-article">
+        <Content />
+      </article>
+    )}
+    {!Content && <p class="legal-empty">Conteúdo não encontrado.</p>}
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .legal-page {
+    position: relative; z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3rem clamp(1.5rem, 5vw, 5rem);
+    min-height: calc(100vh - 200px);
+  }
+  .legal-title {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 2rem;
+    line-height: 1.1;
+  }
+  .legal-article {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--muted);
+  }
+  .legal-article h2 {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 2rem 0 0.75rem;
+  }
+  .legal-article h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 1.5rem 0 0.5rem;
+  }
+  .legal-article p { margin-bottom: 1rem; }
+  .legal-article ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+  .legal-article li { margin-bottom: 0.35rem; }
+</style>

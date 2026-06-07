@@ -1,6 +1,6 @@
 ---
-title: Installation
-description: Install Quillby on macOS, Windows, or Linux
+title: Instalação
+description: Instale o Quillby no macOS, Windows ou Linux
 order: 1
 ---
 

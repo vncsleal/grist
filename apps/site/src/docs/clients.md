@@ -1,6 +1,6 @@
 ---
-title: Client Configuration
-description: Configure Quillby for Claude Desktop, VS Code, Cursor, and Claude Code
+title: Clientes
+description: Configure o Quillby no Claude Desktop, VS Code, Cursor e Claude Code
 order: 2
 ---
 
