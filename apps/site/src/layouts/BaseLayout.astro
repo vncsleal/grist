@@ -26,3 +26,14 @@ const { title, description, ogImage } = Astro.props;
     <slot />
   </body>
 </html>
+
+<script>
+  (function() {
+    if (document.cookie.includes('quillby-lang=')) return;
+    const lang = navigator.language || '';
+    if (lang.startsWith('pt') && !window.location.pathname.startsWith('/pt-br')) {
+      document.cookie = 'quillby-lang=pt; path=/; max-age=' + (60 * 60 * 24 * 30);
+      window.location.replace('/pt-br/');
+    }
+  })();
+</script>

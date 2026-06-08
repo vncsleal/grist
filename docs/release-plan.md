@@ -102,6 +102,37 @@ jobs:
           path: quillby-mcp-${{ matrix.suffix }}
 ```
 
+### Installer Packaging
+
+Bare binaries are not user-friendly for non-technical users.
+Each platform needs a proper installer that validates prerequisites (Claude Desktop),
+writes `claude_desktop_config.json`, and provides post-install feedback.
+
+| Platform | Format | Tool | Owner |
+|----------|--------|------|-------|
+| macOS | `.dmg` (target) / `.pkg` (current) | `pkgbuild` + `productbuild` for `.pkg` today; target is `create-dmg` wrapping a native `.app` bundle | ✅ `.pkg` is built in CI today. **Target UX is `.dmg` drag-and-drop** with a native setup assistant on first launch — no wizard, just drag to Applications and go. |
+| Windows | `.exe` (Inno Setup) | [Inno Setup](https://jrsoftware.org/isinfo.php) or [NSIS](https://nsis.sourceforge.io/) | **Planned.** Wizard-based installer with Add/Remove Programs support. |
+| Linux | skip | Claude Desktop does not exist on Linux. No Linux package needed. |
+| Universal (any OS) | `npx` | `npx @vncsleal/quillby` | Zero install, works on any platform with Node.js. No CI matrix, no packaging. |
+
+**Build workflow (post-binary):**
+
+```yaml
+      # Current: builds .pkg from the binary
+      - name: Package macOS .pkg
+        if: matrix.suffix == 'macos-arm64'
+        run: |
+          ./scripts/package-macos.sh quillby-mcp-${{ matrix.suffix }} quillby-${{ matrix.suffix }}.pkg
+      # TODO: replace with .dmg (create-dmg + .app bundle) for drag-and-drop UX
+      - name: Package Windows .exe
+        if: matrix.suffix == 'windows-x64'
+        run: |
+          # Uses iscc (Inno Setup CLI) via wine on ubuntu-latest
+          wine iscc scripts/quillby-installer.iss /DMyAppBinary=quillby-mcp-${{ matrix.suffix }}
+```
+
+All installers are uploaded as release artifacts alongside the bare binaries.
+
 ## 4. MCP Registry Publishing
 
 Industry standard: [MCP Registry](https://registry.modelcontextprotocol.io/) via `mcp-publisher` CLI.

@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  # macOS: universal .pkg installer + raw arch binaries (for install.sh fallback)
+  # macOS: universal .pkg installer + .dmg + raw arch binaries
   build-macos:
     runs-on: macos-latest
     steps:
@@ -22,12 +22,13 @@ jobs:
           node-version: 22
           cache: pnpm
       - uses: oven-sh/setup-bun@v2
-      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Build arch binaries
         run: |
-          bun build --compile --target=bun-darwin-arm64 ./apps/mcp-server/src/mcp/server.ts --outfile quillby-mcp-macos-arm64
-          bun build --compile --target=bun-darwin-x64  ./apps/mcp-server/src/mcp/server.ts --outfile quillby-mcp-macos-x64
+          VERSION="${GITHUB_REF_NAME#v}"
+          bun build --compile --target=bun-darwin-arm64 --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-macos-arm64
+          bun build --compile --target=bun-darwin-x64  --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-macos-x64
 
       - name: Create universal binary via lipo
         run: lipo -create -output quillby-mcp quillby-mcp-macos-arm64 quillby-mcp-macos-x64
@@ -50,10 +51,17 @@ jobs:
             --version "${GITHUB_REF_NAME#v}" \
             quillby-macos.pkg
 
+      - name: Build .dmg installer
+        run: |
+          bash infra/installers/macos/package-dmg.sh quillby-mcp "${GITHUB_REF_NAME#v}"
+          cp Quillby-*.dmg quillby-macos.dmg
+
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             quillby-macos.pkg
+            quillby-macos.dmg
+            Quillby-*.dmg
             quillby-mcp-macos-arm64
             quillby-mcp-macos-x64
 
@@ -70,10 +78,14 @@ jobs:
           node-version: 22
           cache: pnpm
       - uses: oven-sh/setup-bun@v2
-      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Build binary
-        run: bun build --compile --target=bun-windows-x64 ./apps/mcp-server/src/mcp/server.ts --outfile quillby-mcp-windows-x64.exe
+        env:
+          QUILLBY_BUILD_VERSION: ${{ github.ref_name }}
+        run: |
+          $VERSION = "$env:QUILLBY_BUILD_VERSION" -replace "^v", ""
+          bun build --compile "--define:process.env.QUILLBY_VERSION=`"$VERSION`"" --target=bun-windows-x64 ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-windows-x64.exe
 
       - name: Install NSIS and build installer
         run: |
@@ -86,7 +98,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            infra\installers\windows\quillby-windows.exe
+            quillby-windows.exe
             quillby-mcp-windows-x64.exe
 
   # Linux: raw binary (install.sh handles config)
@@ -102,11 +114,42 @@ jobs:
           node-version: 22
           cache: pnpm
       - uses: oven-sh/setup-bun@v2
-      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Build binary
-        run: bun build --compile --target=bun-linux-x64 ./apps/mcp-server/src/mcp/server.ts --outfile quillby-mcp-linux-x64
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          bun build --compile --target=bun-linux-x64 --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-linux-x64
+
+      - name: Smoke test binary
+        run: |
+          echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke","version":"0.0.1"}}}' | timeout 10 ./quillby-mcp-linux-x64 | head -1 | grep -q '"jsonrpc":"2.0"'
+          echo "Binary smoke test passed"
 
       - uses: softprops/action-gh-release@v2
         with:
           files: quillby-mcp-linux-x64
+
+  # npm: publish package to npm registry
+  publish-npm:
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Publish to npm
+        run: pnpm --filter @vncsleal/quillby publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

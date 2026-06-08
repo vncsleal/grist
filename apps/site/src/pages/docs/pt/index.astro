@@ -1,29 +1,29 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import Nav from '../../components/Nav.astro';
-import Footer from '../../components/Footer.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Nav from '../../../components/Nav.astro';
+import Footer from '../../../components/Footer.astro';
 import { getCollection } from 'astro:content';
 const allDocs = await getCollection('docs');
-const enDocs = allDocs.filter(d => !d.id.startsWith('pt/')).sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
+const ptDocs = allDocs.filter(d => d.id.startsWith('pt/')).sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
 ---
-<BaseLayout title="Documentation — Quillby">
-  <Nav />
+<BaseLayout title="Documentação — Quillby">
+  <Nav lang="pt" />
   <div class="layout">
     <aside class="sidebar">
       <nav>
-        <a href="/docs" class="sidebar-header">Documentation</a>
+        <a href="/docs/pt" class="sidebar-header">Documentação</a>
         <ul class="sidebar-list">
-          {enDocs.map(doc => (
+          {ptDocs.map(doc => (
             <li><a href={`/docs/${doc.id}`} class="sidebar-item">{doc.data.title}</a></li>
           ))}
         </ul>
       </nav>
     </aside>
     <main class="content">
-      <h1 class="h1">Documentation</h1>
-      <p class="intro">Guides and reference for installing and using Quillby.</p>
+      <h1 class="h1">Documentação</h1>
+      <p class="intro">Guias e referência para instalar e usar o Quillby.</p>
       <div class="cards">
-        {enDocs.map(doc => (
+        {ptDocs.map(doc => (
           <a href={`/docs/${doc.id}`} class="card">
             <h3 class="card-title">{doc.data.title}</h3>
             <p class="card-desc">{doc.data.description}</p>

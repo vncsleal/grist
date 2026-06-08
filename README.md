@@ -17,53 +17,52 @@ No extra accounts. No API keys. Everything runs on your computer, inside Claude.
 
 ## Installation
 
-### macOS / Linux
+### macOS
 
-Paste this into your terminal. It installs Quillby and connects it to Claude Desktop automatically:
+[**Download the .dmg**](https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.dmg) — drag to Applications, double-click. No terminal.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/vncsleal/quillby/main/install.sh | bash
-```
+Or [download the .pkg installer](https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg) — classic package, double-click and follow the prompts.
+
+The installer validates that Claude Desktop is installed, writes the config, and shows you next steps.
 
 ### Windows
 
-Open PowerShell and run:
+[**Download the .exe installer**](https://github.com/vncsleal/quillby/releases/latest/download/quillby-windows.exe) — double-click, Next → Next → Install → Finish.
 
-```powershell
-irm https://raw.githubusercontent.com/vncsleal/quillby/main/install.ps1 | iex
+The installer sets up Quillby, registers it in Add/Remove Programs, and configures Claude Desktop automatically.
+
+### Linux
+
+Claude Desktop is not available on Linux. Use Quillby via npx with any MCP-compatible client:
+
+```bash
+npx -y @vncsleal/quillby quillby-mcp
 ```
 
-Both scripts handle everything: install Quillby, inject the Claude Desktop config with absolute paths, and print next steps.
+### npx (any platform, technical users)
 
-Then **fully quit Claude Desktop** (right-click the Dock/taskbar icon → Quit), reopen it, and in a new chat type:
+Add Quillby to any MCP client config using npx — no install needed:
+
+```json
+{
+  "mcpServers": {
+    "quillby": {
+      "command": "npx",
+      "args": ["-y", "@vncsleal/quillby", "quillby-mcp"]
+    }
+  }
+}
+```
+
+### After installing any platform
+
+**Fully quit Claude Desktop** (right-click the Dock/taskbar icon → Quit), reopen it, and start a new chat with:
 
 > Set me up with Quillby
 
-Claude will ask a few questions about your work, your audience, and what you publish. Answer naturally — that's how Quillby learns your voice.
+Claude asks a few questions about your work, your audience, and what you publish. Answer naturally — that's how Quillby learns your voice.
 
-### Manual install (any platform)
-
-1. Install the package:
-   ```
-   npm install -g @vncsleal/quillby
-   ```
-
-2. Open your Claude Desktop config file:
-   - **Mac:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
-
-3. Add the following inside the `mcpServers` block:
-   ```json
-   {
-     "mcpServers": {
-       "quillby": {
-         "command": "quillby-mcp"
-       }
-     }
-   }
-   ```
-
-4. Fully quit and reopen Claude Desktop, then say: *Set me up with Quillby*
+---
 
 ### VS Code
 

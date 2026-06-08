@@ -21,6 +21,10 @@
 | CI/CD | GitHub Actions | ✅ Already in use |
 | Container registry | GitHub Container Registry | ✅ Already in use |
 | Binary distribution | Bun compile → GitHub Releases | ✅ Already configured |
+| Local installer (macOS) | `.dmg` drag-and-drop (target)<br>`→` `.pkg` (current) | **Planned** (`.dmg`): `.app` bundle inside a drag-install disk image. User opens, drags to Applications, first launch runs a native setup assistant — no terminal, no wizard, just drag and go.<br><br>**Current** (`.pkg`): flat package built via `pkgbuild` + `productbuild` in CI. Works but requires clicking through a wizard — feels like a printer driver, not a modern Mac app. |
+| Local installer (Windows) | Inno Setup or NSIS → `.exe` | **Planned.** Wizard-based installer (Next → Install → Finish), appears in Add/Remove Programs, validates Claude Desktop, writes config. Raw `.exe` binary is not user-friendly for non‑technical users. |
+| Local installer (Linux) | skip | Claude Desktop does not exist on Linux (Anthropic has never released a Linux build). Packaging Quillby for an OS that can't run its primary integration target is wasted effort. Linux users should use `npx @vncsleal/quillby` through any MCP-compatible client. |
+| Universal (tech users, all platforms) | `npx @vncsleal/quillby` | Zero install, works everywhere Node.js runs. Add to any MCP client config: `{"command": "npx", "args": ["-y", "@vncsleal/quillby", "quillby-mcp"]}`. No CI, no packaging, no platform-specific artifacts. |
 
 ## Deferred
 

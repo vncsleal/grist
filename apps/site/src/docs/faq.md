@@ -1,37 +1,93 @@
 ---
 title: FAQ
-description: Perguntas frequentes sobre o Quillby
-order: 5
+description: Frequently asked questions about Quillby
+order: 4
 ---
 
-## Preciso de internet pra usar o Quillby?
+## General
 
-Parcialmente. O Quillby é um app local que roda no seu computador. Ele só precisa de internet para buscar artigos das suas fontes (RSS, Reddit, Medium). O processamento e a geração de rascunhos são feitos localmente.
+<details class="faq-q">
+<summary>Do I need to know how to code?</summary>
+No. If you can hold a conversation with Claude, you can use Quillby. Everything happens through natural language — you ask, it does.
+</details>
 
-## Funciona sem o Claude?
+<details class="faq-q">
+<summary>Does it work for any niche?</summary>
+Yes. Tech, marketing, law, finance, health, education, real estate, fashion — any field with content online. You tell Quillby your topics once, and it adapts from there.
+</details>
 
-Sim e não. O Quillby é um MCP server — ele funciona com qualquer cliente MCP compatível: Claude Desktop, VS Code, Cursor, Claude Code. Se você usa outro cliente de IA, verifique se ele suporta o protocolo MCP.
+<details class="faq-q">
+<summary>Is it free?</summary>
+Yes. Local mode is completely free and always will be. It runs on your machine with no account, no subscription, and no paid features. A cloud mode with team workspaces and a web dashboard is in development.
+</details>
 
-## Meus dados ficam seguros?
+<details class="faq-q">
+<summary>Is Quillby open source?</summary>
+Yes. MIT licensed. The full source code is on [GitHub](https://github.com/vncsleal/quillby). Anyone can inspect it, modify it, or contribute.
+</details>
 
-Sim. O Quillby roda **localmente** no seu computador. Seus workspaces, perfis, fontes e rascunhos ficam na pasta `~/.quillby/` no seu disco. Nenhum dado é enviado para servidores externos a menos que você configure explicitamente uma API de provedor (como ElevenLabs para geração de áudio).
+<details class="faq-q">
+<summary>How is this different from using Claude alone?</summary>
+Claude is a conversation partner. Quillby is a content agent that lives inside Claude. Instead of starting from scratch every time, Quillby:
 
-## Posso usar com mais de um cliente ou projeto?
+- Reads your sources every day and surfaces what's relevant
+- Writes in your established voice, not generic AI tone
+- Remembers your style per workspace (client, brand, newsletter)
+- Plans campaigns and tracks your content calendar
+</details>
 
-Sim. Crie um workspace pra cada cliente, projeto, newsletter ou marca pessoal. Cada workspace tem seu próprio perfil, memória, fontes e rascunhos — tudo separado.
+## Setup
 
-## Quanto custa?
+<details class="faq-q">
+<summary>What do I need to use Quillby?</summary>
+You need [Claude Desktop](https://claude.ai/download) (free). The macOS and Windows installers include everything else. For the npx install method, you'll also need [Node.js 20+](https://nodejs.org).
+</details>
 
-O Quillby é **gratuito** no modo Local. Sempre será. O Cloud mode (hospedado, com mais funcionalidades) terá planos pagos quando for lançado.
+<details class="faq-q">
+<summary>Do I need Claude Desktop?</summary>
+Yes. Quillby connects to Claude Desktop and gives it new abilities — scanning feeds, drafting posts, planning campaigns — all inside the chat you already use.
+</details>
 
-## Posso adicionar minhas próprias fontes?
+<details class="faq-q">
+<summary>How long does setup take?</summary>
+About three minutes. Download the installer, restart Claude, and answer two questions about your work. That's the entire setup.
+</details>
 
-Sim. O Quillby descobre fontes automaticamente baseado no seu perfil, mas você pode adicionar RSS feeds específicos a qualquer momento.
+## Daily Use
 
-## O Quillby funciona em Windows ou Linux?
+<details class="faq-q">
+<summary>Can I use it for multiple clients?</summary>
+Yes. Each client gets their own workspace with separate memory, sources, voice profile, and drafts. Nothing mixes between workspaces.
+</details>
 
-Sim. Além do macOS, o Quillby tem instaladores para Windows (.exe) e Linux (curl), além do pacote npm. Veja o guia de [instalação](/docs/instalar).
+<details class="faq-q">
+<summary>Does it learn my writing style?</summary>
+Yes. Every draft you save becomes a voice example. Over time Quillby adapts to your tone, vocabulary, and rhythm. Different workspaces can have completely different voices.
+</details>
 
-## E se eu quiser acessar de vários dispositivos?
+<details class="faq-q">
+<summary>Can I plan content ahead of time?</summary>
+Yes. Quillby has a campaign system for multi-stage content series, a task board to track progress, and a calendar to see what's publishing when — all inside Claude.
+</details>
 
-O modo Local é para um computador só. Se você precisa de acesso multi-dispositivo ou quer compartilhar workspaces com sua equipe, o [Cloud mode](/docs/cloud) está sendo preparado.
+<details class="faq-q">
+<summary>Can it generate images or audio?</summary>
+Quillby can generate images and audio if you connect a supported service like OpenAI or ElevenLabs. This is optional — the core brief-to-draft workflow needs nothing else to configure.
+</details>
+
+## Privacy
+
+<details class="faq-q">
+<summary>Is my data safe?</summary>
+Everything runs on your machine. Nothing leaves it unless you explicitly connect a third-party service. The code is open source and auditable.
+</details>
+
+<details class="faq-q">
+<summary>Does Quillby collect usage data?</summary>
+No. Quillby does not collect analytics, crash reports, telemetry, or any information about how you use it.
+</details>
+
+<details class="faq-q">
+<summary>Where is my data stored?</summary>
+All your workspace data lives at `~/.quillby/` on your local filesystem. You can back it up by copying that folder, sync it with Dropbox, or open it in any text editor.
+</details>

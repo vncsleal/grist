@@ -1,4 +1,5 @@
 ---
+const { lang = "en" } = Astro.props as { lang?: string };
 const links = [
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#capabilities", label: "Capabilities" },
@@ -6,6 +7,8 @@ const links = [
   { href: "/docs", label: "Docs" },
   { href: "https://github.com/vncsleal/quillby", label: "GitHub", external: true },
 ];
+const toggleHref = lang === "pt" ? "/" : "/pt-br/";
+const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
 ---
 <nav class="site-nav">
   <a href="/" class="nav-logo" aria-label="Quillby home">
@@ -14,7 +17,7 @@ const links = [
   </a>
   <ul class="nav-links" role="list">
     {links.map(l => (
-      <li>
+    <li>
         <a
           href={l.href}
           target={l.external ? "_blank" : undefined}
@@ -22,8 +25,11 @@ const links = [
         >
           {l.label}
         </a>
-      </li>
+    </li>
     ))}
+    <li>
+      <a href={toggleHref} class="nav-lang">{toggleLabel}</a>
+    </li>
     <li>
       <a href="/#install" class="nav-cta">Install free</a>
     </li>
@@ -132,6 +138,17 @@ const links = [
     color: #fff !important;
     opacity: 1 !important;
   }
+
+  .nav-lang {
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: var(--faint) !important;
+    padding: 0.35rem 0.5rem !important;
+  }
+
+  .nav-lang:hover { color: var(--text) !important; background: transparent !important; }
 
   /* Hamburger */
   .nav-toggle {

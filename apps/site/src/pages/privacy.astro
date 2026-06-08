@@ -2,10 +2,10 @@
 import ContentLayout from '../layouts/ContentLayout.astro';
 import { getCollection } from 'astro:content';
 const entries = await getCollection('legal');
-const entry = entries.find(e => e.id === 'termos' || e.id === 'terms');
+const entry = entries.find(e => e.id === 'privacy' || e.id === 'privacidade');
 
 if (!entry) {
-  throw new Error('Legal content not found: termos');
+  throw new Error('Legal content not found: privacy');
 }
 ---
 <ContentLayout title={entry.data.title} entry={entry} legal={true} />

@@ -8,11 +8,30 @@ import { buildDirectAdaptersFromConfig } from "../provider-config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const _pkgCandidates = [path.resolve(__dirname, "package.json"), path.resolve(__dirname, "../package.json"), path.resolve(__dirname, "../../package.json"), path.resolve(__dirname, "../../../package.json")];
-const _pkgPath = _pkgCandidates.find((p) => { try { return fs.statSync(p).isFile(); } catch { return false; } });
-if (!_pkgPath) throw new Error(`Cannot find package.json. Tried: ${_pkgCandidates.join(", ")}`);
 
-export const PKG = JSON.parse(fs.readFileSync(_pkgPath!, "utf-8")) as { version: string };
+function readVersion(): string {
+  if (process.env.QUILLBY_VERSION) return process.env.QUILLBY_VERSION;
+  if (process.env.npm_package_version) return process.env.npm_package_version;
+  const candidates = [
+    path.resolve(__dirname, "package.json"),
+    path.resolve(__dirname, "../package.json"),
+    path.resolve(__dirname, "../../package.json"),
+    path.resolve(__dirname, "../../../package.json"),
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.statSync(p).isFile()) {
+        return JSON.parse(fs.readFileSync(p, "utf-8")).version;
+      }
+    } catch (err) {
+      const e = err as NodeJS.ErrnoException;
+      if (e.code !== "ENOENT") throw err;
+    }
+  }
+  return "0.0.0";
+}
+
+export const PKG = { version: readVersion() };
 
 let _router: ProviderRouter | null = null;
 export function setProviderRouter(r: ProviderRouter): void { _router = r; }

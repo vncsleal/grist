@@ -1,0 +1,459 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<BaseLayout
+  title="Quillby — Seu Agente de Conteúdo AI"
+  description="O Quillby varre a internet pelo que importa pro seu nicho, entrega um resumo curado e escreve rascunhos prontos pra publicar na sua voz. Grátis. Roda localmente."
+>
+  <Nav lang="pt" />
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1 class="hero-h1 reveal reveal-delay-1" id="hero-heading">
+          Você lê o resumo.<br />
+          <em>Ele escreve o post.</em>
+        </h1>
+        <p class="hero-sub reveal reveal-delay-2">
+          O Quillby varre a internet pelo que importa pro seu nicho,
+          entrega um resumo diário e escreve rascunhos prontos pra publicar na sua voz.
+        </p>
+        <div class="hero-actions reveal reveal-delay-3">
+          <a href="#instalar" class="btn btn-primary">Instalar grátis</a>
+          <a href="#como-funciona" class="btn btn-ghost">Como funciona</a>
+        </div>
+        <p class="hero-note reveal reveal-delay-4">Grátis &middot; Local &middot; Funciona com Claude Desktop</p>
+      </div>
+      <div class="hero-visual reveal reveal-delay-2">
+        <div class="mascot-wrap">
+          <img src="/hero-mascot-alpha.webp" alt="" class="mascot-img" loading="eager" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STRIP -->
+  <div class="strip" aria-hidden="true">
+    <div class="strip-inner">
+      <span>Marketing</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Copywriting</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Criação de Conteúdo</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Freelancers</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Empreendedores</span>
+      <span class="strip-sep">&middot;</span>
+      <span>Especialistas de Nicho</span>
+    </div>
+  </div>
+
+  <!-- PROBLEM / BEFORE-AFTER -->
+  <section class="section" aria-labelledby="problem-heading">
+    <div class="container">
+      <h2 class="section-h2 reveal" id="problem-heading">
+        Criar conteúdo consistente é um<br /><em>trabalho em tempo integral que você não pediu.</em>
+      </h2>
+      <p class="section-p reveal reveal-delay-1">
+        Não é falta de ideia. É que encontrar, filtrar e escrever
+        toma horas que você não tem — todo santo dia.
+      </p>
+      <div class="compare-grid reveal reveal-delay-2">
+        <div class="compare-col compare-before">
+          <div class="compare-label">Antes do Quillby</div>
+          <div class="compare-item"><span class="compare-marker compare-marker--minus" aria-hidden="true"></span><div><strong>45 minutos</strong> vasculhando feeds, newsletters e Twitter pra achar um tópico.</div></div>
+          <div class="compare-item"><span class="compare-marker compare-marker--minus" aria-hidden="true"></span><div><strong>Paralisia da página em branco.</strong> Você sabe do assunto, mas não sabe por onde começar.</div></div>
+          <div class="compare-item"><span class="compare-marker compare-marker--minus" aria-hidden="true"></span><div><strong>Texto AI genérico.</strong> Você tenta o ChatGPT e parece um robô do LinkedIn.</div></div>
+          <div class="compare-item"><span class="compare-marker compare-marker--minus" aria-hidden="true"></span><div><strong>Publicação irregular</strong> porque "achar o que dizer" não faz parte do seu trabalho.</div></div>
+        </div>
+        <div class="compare-divider" aria-hidden="true"></div>
+        <div class="compare-col compare-after">
+          <div class="compare-label">Com o Quillby</div>
+          <div class="compare-item"><span class="compare-marker compare-marker--plus" aria-hidden="true"></span><div>Pergunte ao Claude <strong>"o que eu posto hoje?"</strong> e receba um resumo do que é relevante.</div></div>
+          <div class="compare-item"><span class="compare-marker compare-marker--plus" aria-hidden="true"></span><div><strong>Rascunhos prontos</strong> baseados em artigos reais, estruturados no seu estilo.</div></div>
+          <div class="compare-item"><span class="compare-marker compare-marker--plus" aria-hidden="true"></span><div><strong>Parece com você</strong> — não um template. O Quillby aprende sua voz com exemplos que você aprova.</div></div>
+          <div class="compare-item"><span class="compare-marker compare-marker--plus" aria-hidden="true"></span><div><strong>Publique consistentemente</strong> sem adicionar uma única ferramenta, aba ou fluxo novo ao seu dia.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="como-funciona" aria-labelledby="how-heading">
+    <div class="container">
+      <p class="label reveal">Como funciona</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="how-heading">Três conversas. Pronto.</h2>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="step-header"><span class="step-num">01</span><div class="step-line"></div></div>
+          <div class="step-body">
+            <h3 class="step-h3">Instale e configure</h3>
+            <p class="step-p">Clique duas vezes no instalador, reinicie o Claude. Ele pergunta seu nicho e seu tom. Você responde uma vez.</p>
+            <div class="chat">
+              <div class="chat-row chat-user"><span class="chat-who">Você</span><p class="chat-bubble">Me configura como criador de conteúdo de marketing.</p></div>
+              <div class="chat-row chat-ai"><span class="chat-who">Quillby</span><p class="chat-bubble">Entendi! Vou acompanhar notícias de marketing, tendências de anúncios e cases de marca. Em quais plataformas você posta?</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="step reveal reveal-delay-1">
+          <div class="step-header"><span class="step-num">02</span><div class="step-line"></div></div>
+          <div class="step-body">
+            <h3 class="step-h3">Resumo diário</h3>
+            <p class="step-p">Todo dia, um resumo do que saiu de relevante pro seu nicho. Você escaneia em 2 minutos.</p>
+            <div class="chat">
+              <div class="chat-row chat-user"><span class="chat-who">Você</span><p class="chat-bubble">Me dá o resumo de hoje.</p></div>
+              <div class="chat-row chat-ai"><span class="chat-who">Quillby</span><p class="chat-bubble">Aqui estão as tendências de hoje: LinkedIn atualizou o algoritmo favorecendo posts longos, um estudo grande sobre ROI de vídeo curto, e três campanhas de concorrentes que vale a pena comentar…</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="step reveal reveal-delay-2">
+          <div class="step-header"><span class="step-num">03</span><div class="step-line"></div></div>
+          <div class="step-body">
+            <h3 class="step-h3">Rascunho na hora</h3>
+            <p class="step-p">Escolheu um tópico? Peça o post. O Quillby escreve um rascunho na sua voz, baseado no artigo real.</p>
+            <div class="chat">
+              <div class="chat-row chat-user"><span class="chat-who">Você</span><p class="chat-bubble">Escreve um post sobre a atualização do LinkedIn.</p></div>
+              <div class="chat-row chat-ai"><span class="chat-who">Quillby</span><p class="chat-bubble">Rascunho pronto — 180 palavras, abertura com gancho, dicas práticas, termina com pergunta pra gerar comentários. Quer ajustar o tom?</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAPABILITIES GRID -->
+  <section class="section" id="capacidades" aria-labelledby="caps-heading">
+    <div class="container">
+      <p class="label reveal">Capacidades</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="caps-heading">De monitorar seu nicho a<br /><em>publicar na sua voz.</em></h2>
+      <div class="caps-grid reveal reveal-delay-2">
+        <div class="caps-card">
+          <div class="caps-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 9h9M9 4.5v9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+          <h3 class="caps-name">Monitore seu nicho</h3>
+          <p class="caps-desc">Descubra e siga feeds RSS, comunidades do Reddit e blogs especializados. Receba um resumo diário do que importa.</p>
+        </div>
+        <div class="caps-card">
+          <div class="caps-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 14l2-2 2 2 2-2 2 2 2-2 2 2V4H3v10z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 8.5l2 2 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3 class="caps-name">Rascunhe na sua voz</h3>
+          <p class="caps-desc">Gere posts prontos para LinkedIn, Twitter, blogs e newsletters. Cada rascunho combina com seu tom estabelecido.</p>
+        </div>
+        <div class="caps-card">
+          <div class="caps-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 9c0-3.314 1.343-6 3-6s3 2.686 3 6-1.343 6-3 6-3-2.686-3-6z" stroke="currentColor" stroke-width="1.3"/><path d="M10 9c0-3.314 1.343-6 3-6s3 2.686 3 6-1.343 6-3 6-3-2.686-3-6z" stroke="currentColor" stroke-width="1.3"/></svg></div>
+          <h3 class="caps-name">Aprenda seu estilo</h3>
+          <p class="caps-desc">Salve exemplos de voz, preferências de estilo e diretrizes de conteúdo por workspace. O Quillby se adapta a você com o tempo.</p>
+        </div>
+        <div class="caps-card">
+          <div class="caps-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="10" y="2" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="10" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="10" y="10" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/></svg></div>
+          <h3 class="caps-name">Organize por cliente</h3>
+          <p class="caps-desc">Workspaces separados por cliente ou marca. Cada um com sua própria memória, fontes, perfil de voz e fila de conteúdo.</p>
+        </div>
+        <div class="caps-card">
+          <div class="caps-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1v16M1 9h16" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.3"/></svg></div>
+          <h3 class="caps-name">Planeje com antecedência</h3>
+          <p class="caps-desc">Crie planos de conteúdo, acompanhe o progresso com um quadro de tarefas e execute campanhas de múltiplos estágios — tudo dentro do Claude.</p>
+        </div>
+        <div class="caps-card">
+          <div class="caps-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 14.5c0-2.761 1.567-5 3.5-5s3.5 2.239 3.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="5.5" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 16c0-2.761 1.567-5 3.5-5s3.5 2.239 3.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="14" cy="5.5" r="2" stroke="currentColor" stroke-width="1.3"/></svg></div>
+          <h3 class="caps-name">Pronto para equipe</h3>
+          <p class="caps-desc">Compartilhe workspaces com membros da equipe. Cada pessoa tem seu próprio papel, nível de acesso e configurações.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAMPAIGNS -->
+  <section class="section" id="campanhas" aria-labelledby="camp-heading">
+    <div class="container">
+      <p class="label reveal">Campanhas &amp; planejamento</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="camp-heading">Um post é fácil.<br /><em>Um mês deles precisa de um plano.</em></h2>
+      <div class="camp-grid reveal reveal-delay-2">
+        <div class="camp-col">
+          <h3 class="camp-h3">Campanhas</h3>
+          <p class="camp-p">Crie campanhas de múltiplos estágios com transições automáticas entre etapas. Salve e reutilize estruturas de sucesso como modelos. O Quillby avança por cada estágio — você revisa os resultados.</p>
+        </div>
+        <div class="camp-col">
+          <h3 class="camp-h3">Quadro de tarefas</h3>
+          <p class="camp-p">Veja o que está na fila, em andamento e concluído — tudo dentro do Claude. Cada estágio de campanha cria tarefas automaticamente.</p>
+        </div>
+        <div class="camp-col">
+          <h3 class="camp-h3">Calendário de conteúdo</h3>
+          <p class="camp-p">Uma visão semanal dos seus próximos posts, resumos e prazos. A fila do dia mostra o que precisa da sua atenção agora.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PERSONAS -->
+  <section class="section" id="para-quem" aria-labelledby="who-heading">
+    <div class="container">
+      <p class="label reveal">Para quem é</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="who-heading">Feito para quem cria conteúdo<br /><em>junto com tudo o mais.</em></h2>
+      <div class="personas">
+        <div class="persona reveal"><h3 class="persona-name">Copywriter Freelancer</h3><p class="persona-desc">Vários clientes, cada um com sua voz. Um workspace por cliente. Resumos separados, rascunhos no tom certo.</p></div>
+        <div class="persona reveal reveal-delay-1"><h3 class="persona-name">Empreendedor</h3><p class="persona-desc">Você entende do seu mercado, mas postar consistentemente? Nunca tem tempo. O Quillby mantém sua marca visível sem o esforço.</p></div>
+        <div class="persona reveal"><h3 class="persona-name">Profissional de Marketing</h3><p class="persona-desc">Monitore concorrentes, identifique tendências e transforme tudo em conteúdo que sua audiência realmente lê.</p></div>
+        <div class="persona reveal reveal-delay-1"><h3 class="persona-name">Especialista de Nicho</h3><p class="persona-desc">Direito, finanças, saúde, educação, tech. Qualquer área onde conteúdo consistente constrói autoridade — e o silêncio a derruba.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section class="section" id="instalar" aria-labelledby="install-heading">
+    <div class="container">
+      <p class="label reveal">Comece agora</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="install-heading">Três minutos até seu<br /><em>primeiro rascunho.</em></h2>
+      <div class="install-split reveal reveal-delay-2">
+        <div class="install-left" data-install-tabs>
+          <div class="install-tabs-side" role="tablist" aria-label="Plataforma">
+            <div class="install-tab is-active" role="tab" data-os="mac" aria-selected="true" tabindex="0">macOS</div>
+            <div class="install-tab" role="tab" data-os="windows" aria-selected="false" tabindex="-1">Windows</div>
+            <div class="install-tab" role="tab" data-os="npx" aria-selected="false" tabindex="-1">npx</div>
+          </div>
+          <div class="install-panels">
+            <div class="install-panel is-active" data-panel="mac">
+              <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.dmg" class="btn btn-primary">Baixar para Mac</a>
+              <p class="install-note">Arraste para Applications. Também disponível como <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg">instalador .pkg</a>.</p>
+            </div>
+            <div class="install-panel" data-panel="windows">
+              <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-windows.exe" class="btn btn-primary">Baixar para Windows</a>
+            </div>
+            <div class="install-panel" data-panel="npx">
+              <div class="install-code-block">
+                <code>npx -y @vncsleal/quillby quillby-mcp</code>
+                <button class="install-copy-btn" data-copy="npx -y @vncsleal/quillby quillby-mcp" aria-label="Copiar comando"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="4" y="4" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1 12V2.5A1.5 1.5 0 012.5 1H12" stroke="currentColor" stroke-width="1.2"/></svg></button>
+              </div>
+              <p class="install-note">Funciona em qualquer plataforma com <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer">Node.js</a>. Não precisa baixar — o npx executa diretamente.</p>
+              <p class="install-note">Precisa de ajuda? <a href="/docs/install">Leia o guia completo de instalação</a>.</p>
+            </div>
+          </div>
+        </div>
+        <div class="install-right">
+          <ol class="install-steps">
+            <li><span class="install-num">1</span><div><strong>Instale o Quillby</strong><span class="install-detail">Escolha sua plataforma ao lado. Sem cadastro.</span></div></li>
+            <li><span class="install-num">2</span><div><strong>Reinicie o Claude Desktop</strong><span class="install-detail">O Quillby aparece automaticamente na próxima vez que você abrir o Claude.</span></div></li>
+            <li><span class="install-num">3</span><div><strong>Configure seu nicho</strong><span class="install-detail">O Claude faz duas perguntas. Você responde uma vez — e está pronto.</span></div></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <div class="trust-line reveal">
+    <div class="container">
+      <div class="trust-line-inner">
+        <span class="trust-line-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Roda na sua máquina</span>
+        <span class="trust-line-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Sem cadastro</span>
+        <span class="trust-line-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Grátis e open source</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <section class="section section-sm" id="faq" aria-labelledby="faq-heading">
+    <div class="container">
+      <p class="label reveal">FAQ</p>
+      <h2 class="section-h2 reveal reveal-delay-1" id="faq-heading">Dúvidas comuns</h2>
+      <div class="faq-list">
+        <details class="faq-item reveal"><summary>Precisa saber programar?</summary><div class="faq-body"><p>Não. Se você sabe conversar com o Claude, você sabe usar o Quillby.</p></div></details>
+        <details class="faq-item reveal reveal-delay-1"><summary>Funciona com qualquer nicho?</summary><div class="faq-body"><p>Sim. Tech, direito, finanças, saúde, educação, marketing — qualquer área com conteúdo online.</p></div></details>
+        <details class="faq-item reveal reveal-delay-2"><summary>E se eu tiver mais de um cliente?</summary><div class="faq-body"><p>Não. Cada workspace tem sua própria memória e fontes. Cliente A não mistura com cliente B.</p></div></details>
+        <details class="faq-item reveal reveal-delay-3"><summary>Meus dados ficam seguros?</summary><div class="faq-body"><p>Tudo roda na sua máquina. Nada sai dela. O código é open source e auditável.</p></div></details>
+        <details class="faq-item reveal reveal-delay-4"><summary>É pago?</summary><div class="faq-body"><p>O modo local é completamente grátis. Sempre será.</p></div></details>
+        <details class="faq-item reveal reveal-delay-4"><summary>Precisa do Claude Desktop?</summary><div class="faq-body"><p>Sim. O Quillby se conecta ao Claude Desktop com um clique. Ele dá ao Claude novas habilidades — ler feeds, escrever posts, planejar campanhas — sem sair do chat.</p></div></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="cta-final" aria-labelledby="cta-heading">
+    <div class="container cta-final-inner">
+      <h2 class="cta-h2 reveal" id="cta-heading">Pare de rolar o feed.<br /><em>Comece a publicar conteúdo.</em></h2>
+      <p class="cta-sub reveal reveal-delay-1">Instale em três minutos. Seu primeiro resumo logo depois.</p>
+      <div class="reveal reveal-delay-2">
+        <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.dmg" class="btn btn-primary btn-large">Instalar Quillby grátis</a>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<script>
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+  );
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  document.querySelectorAll('.faq-item').forEach(el => {
+    const details = el as HTMLDetailsElement;
+    const summary = details.querySelector('summary');
+    if (!summary) return;
+    summary.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (details.open) {
+        details.classList.add('is-closing');
+        const body = details.querySelector('.faq-body') as HTMLElement;
+        body.addEventListener('transitionend', () => {
+          details.open = false;
+          details.classList.remove('is-closing');
+        }, { once: true });
+      } else { details.open = true; }
+    });
+  });
+</script>
+
+<style>
+  .hero { min-height: calc(100svh - 56px); display: flex; align-items: center; padding: 3rem 0 4rem; }
+  .hero-inner { max-width: 1440px; margin: 0 auto; padding: 0 clamp(0.75rem, 2vw, 1.5rem); display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 5rem; align-items: center; width: 100%; }
+  .hero-h1 { font-family: var(--serif); font-size: clamp(3rem, 6vw, 5rem); font-weight: 500; font-optical-sizing: auto; font-variation-settings: "SOFT" 100; line-height: 1.02; letter-spacing: -0.025em; color: var(--text); margin-bottom: 1.5rem; }
+  .hero-h1 em { font-style: italic; font-weight: 500; color: var(--text-2); }
+  .hero-sub { font-size: 1.0625rem; line-height: 1.7; color: var(--muted); max-width: 56ch; margin-bottom: 2.25rem; }
+  .hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .hero-note { font-size: 0.75rem; color: var(--faint); letter-spacing: 0.02em; }
+  .hero-visual { display: flex; justify-content: center; }
+  .mascot-wrap { position: relative; width: 100%; max-width: 420px; }
+  .mascot-img { width: 100%; height: auto; display: block; }
+  .compare-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 2rem; align-items: start; padding-top: 0.5rem; }
+  .compare-label { font-family: var(--serif); font-size: 1.125rem; font-weight: 500; color: var(--text); margin-bottom: 1.5rem; }
+  .compare-col { display: flex; flex-direction: column; gap: 1.25rem; }
+  .compare-item { display: flex; gap: 0.75rem; align-items: flex-start; font-size: 0.9375rem; line-height: 1.6; color: var(--text); }
+  .compare-item strong { font-weight: 500; }
+  .compare-before .compare-item { color: var(--muted); }
+  .compare-marker { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; margin-top: 0.2rem; }
+  .compare-marker--minus { background: var(--bg-subtle); border: 1px solid var(--border); color: var(--faint); }
+  .compare-marker--minus::after { content: '—'; }
+  .compare-marker--plus { background: var(--accent); color: #fff; }
+  .compare-marker--plus::after { content: '+'; }
+  .compare-divider { width: 1px; background: var(--border); align-self: stretch; }
+  .steps { margin-top: 3.5rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 3rem; }
+  .step { display: flex; flex-direction: column; }
+  .step-header { display: flex; flex-direction: row; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .step-num { font-family: var(--mono); font-size: 0.6875rem; font-weight: 500; color: var(--faint); letter-spacing: 0.05em; flex-shrink: 0; }
+  .step-line { flex: 1; height: 1px; background: var(--border); }
+  .step-h3 { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; font-optical-sizing: auto; color: var(--text); margin-bottom: 0.5rem; line-height: 1.3; }
+  .step-p { font-size: 0.9375rem; line-height: 1.65; color: var(--muted); margin-bottom: 1.5rem; }
+  .chat { display: flex; flex-direction: column; gap: 0.5rem; }
+  .chat-row { display: flex; flex-direction: column; gap: 0.2rem; }
+  .chat-who { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); padding: 0 0.75rem; }
+  .chat-bubble { font-size: 0.875rem; line-height: 1.55; padding: 0.625rem 0.875rem; border-radius: 10px; max-width: 90%; }
+  .chat-user .chat-bubble { background: var(--bg-subtle); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 3px; align-self: flex-start; }
+  .chat-ai .chat-bubble { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 3px; align-self: flex-start; }
+  .caps-grid { margin-top: 3rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .caps-card { padding: 1.75rem; border: 1px solid var(--border); border-radius: 10px; transition: border-color 0.3s var(--ease-out); }
+  .caps-card:hover { border-color: var(--accent); }
+  .caps-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); margin-bottom: 1rem; }
+  .caps-name { font-family: var(--serif); font-size: 1rem; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; line-height: 1.3; }
+  .caps-desc { font-size: 0.875rem; line-height: 1.6; color: var(--muted); }
+  .camp-grid { margin-top: 3rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+  .camp-h3 { font-family: var(--serif); font-size: 1.125rem; font-weight: 500; font-optical-sizing: auto; color: var(--text); margin-bottom: 0.75rem; line-height: 1.3; }
+  .camp-p { font-size: 0.9375rem; line-height: 1.65; color: var(--muted); }
+  .personas { margin-top: 3rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .persona { padding: 2rem 2rem 2rem 0; border-top: 1px solid var(--border); }
+  .personas .persona:not(:last-child) { border-right: 1px solid var(--border); }
+  .personas .persona:not(:first-child) { padding-left: 2rem; padding-right: 2rem; }
+  .personas .persona:last-child { padding-right: 0; border-bottom: 1px solid var(--border); }
+  .personas .persona:first-child { border-bottom: 1px solid var(--border); }
+  .personas .persona:nth-child(2), .personas .persona:nth-child(3) { border-bottom: 1px solid var(--border); }
+  .persona-name { font-family: var(--serif); font-size: 1.0625rem; font-weight: 500; font-optical-sizing: auto; color: var(--text); margin-bottom: 0.5rem; }
+  .persona-desc { font-size: 0.875rem; line-height: 1.65; color: var(--muted); }
+  .strip { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 0.875rem 0; overflow: hidden; }
+  .strip-inner { max-width: 1440px; margin: 0 auto; padding: 0 clamp(0.75rem, 2vw, 1.5rem); display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
+  .strip-sep { color: var(--border-strong); }
+  .trust-line { padding: 2rem 0; }
+  .trust-line-inner { display: flex; align-items: center; justify-content: center; gap: 2.5rem; flex-wrap: wrap; }
+  .trust-line-item { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--accent); }
+  .trust-line-item svg { flex-shrink: 0; color: var(--accent); }
+  .cta-final { padding: var(--sp-section) 0; background: var(--text); color: var(--inverse); }
+  .cta-final-inner { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0; }
+  .cta-h2 { font-family: var(--serif); font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 500; font-optical-sizing: auto; font-variation-settings: "SOFT" 100; line-height: 1.05; letter-spacing: -0.025em; color: var(--inverse); margin-bottom: 1.25rem; }
+  .cta-h2 em { font-style: italic; }
+  .cta-sub { font-size: 1rem; line-height: 1.65; color: rgba(250, 248, 245, 0.6); max-width: 52ch; margin-bottom: 2.5rem; }
+  .cta-final .btn-primary { background: var(--inverse); color: var(--accent); }
+  .cta-final .btn-primary:hover { opacity: 0.85; background: var(--inverse); }
+  .faq-list { margin-top: 2.5rem; }
+  .faq-item { border-top: 1px solid var(--border); }
+  .faq-list .faq-item:last-child { border-bottom: 1px solid var(--border); }
+  .faq-item > summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 0; font-family: var(--serif); font-size: 1.0625rem; font-weight: 400; color: var(--text); cursor: pointer; list-style: none; user-select: none; transition: color 0.2s; }
+  .faq-item > summary::-webkit-details-marker { display: none; }
+  .faq-item > summary:hover { color: var(--accent); }
+  .faq-item > summary::after { content: '+'; font-family: var(--sans); font-size: 1.25rem; font-weight: 300; color: var(--faint); flex-shrink: 0; line-height: 1; transition: transform 0.35s var(--ease-out), color 0.2s; }
+  .faq-item[open] > summary::after { transform: rotate(45deg); color: var(--accent); }
+  .faq-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s var(--ease-out); overflow: hidden; }
+  .faq-item[open] .faq-body, .faq-item.is-opening .faq-body { grid-template-rows: 1fr; }
+  .faq-item.is-closing .faq-body { grid-template-rows: 0fr; }
+  .faq-body > p { min-height: 0; font-size: 0.9375rem; line-height: 1.7; color: var(--muted); padding-bottom: 1.375rem; max-width: 72ch; }
+  .install-split { margin-top: 2.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+  .install-tabs-side { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .install-tab { padding: 0.4rem 0; font-size: 0.875rem; font-weight: 500; color: var(--muted); cursor: pointer; transition: color 0.15s; user-select: none; outline: none; position: relative; margin-right: 1.25rem; }
+  .install-tab::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: transparent; transition: background-color 0.2s; border-radius: 1px; }
+  .install-tab:hover { color: var(--text); }
+  .install-tab.is-active { color: var(--accent); }
+  .install-tab.is-active::after { background: var(--accent); }
+  .install-panel { display: none; }
+  .install-panel.is-active { display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; }
+  .install-code-block { display: flex; align-items: center; gap: 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem 1rem; width: 100%; max-width: 100%; }
+  .install-code-block code { font-family: var(--mono); font-size: 0.8125rem; color: var(--text); flex: 1; overflow-x: auto; white-space: pre; }
+  .install-copy-btn { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+  .install-copy-btn:hover { color: var(--text); border-color: var(--accent); }
+  .install-code-block code { font-family: var(--mono); font-size: 0.8125rem; color: var(--text); flex: 1; overflow-x: auto; white-space: pre; }
+  .install-note { font-size: 0.8125rem; color: var(--faint); line-height: 1.5; }
+  .install-note a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+  .install-note a:hover { color: var(--text); }
+  .install-right { display: flex; flex-direction: column; gap: 0; }
+  .install-steps { list-style: none; display: flex; flex-direction: column; gap: 0; }
+  .install-steps li { display: flex; align-items: flex-start; gap: 1.25rem; padding: 1.25rem 0; border-top: 1px solid var(--border); }
+  .install-steps li:first-child { border-top: none; }
+  .install-steps li:last-child { border-bottom: 1px solid var(--border); }
+  .install-num { flex-shrink: 0; width: 1.75rem; height: 1.75rem; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 50%; font-family: var(--mono); font-size: 0.6875rem; color: var(--muted); margin-top: 0.1rem; }
+  .install-steps strong { display: block; font-size: 0.9375rem; font-weight: 500; color: var(--text); margin-bottom: 0.2rem; }
+  .install-detail { font-size: 0.875rem; color: var(--muted); line-height: 1.55; }
+
+  @media (max-width: 860px) {
+    .hero-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+    .hero { min-height: auto; padding-top: 3rem; padding-bottom: 3rem; }
+    .hero-visual { order: -1; justify-content: flex-start; }
+    .mascot-wrap { max-width: 100%; }
+    .compare-grid { gap: 1.5rem; }
+    .steps { grid-template-columns: 1fr; gap: 0; }
+    .step { padding: 1.75rem 0; border-top: 1px solid var(--border); }
+    .step:last-child { border-bottom: 1px solid var(--border); }
+    .caps-grid { grid-template-columns: repeat(2, 1fr); }
+    .camp-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    .personas { grid-template-columns: repeat(2, 1fr); }
+    .personas .persona:nth-child(odd) { border-right: 1px solid var(--border); }
+    .personas .persona:nth-child(even) { border-right: none; }
+    .personas .persona:nth-last-child(-n+2) { border-bottom: 1px solid var(--border); }
+  }
+  @media (max-width: 720px) {
+    .compare-grid { grid-template-columns: 1fr; }
+    .compare-divider { display: none; }
+    .compare-before { padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .install-split { grid-template-columns: 1fr; gap: 2.5rem; }
+  }
+  @media (max-width: 640px) {
+    .personas { grid-template-columns: 1fr; }
+    .personas .persona { padding: 1.5rem 0 !important; border-right: none !important; }
+    .personas .persona:last-child { border-bottom: 1px solid var(--border); }
+    .strip-inner { gap: 0.75rem 1rem; }
+  }
+  @media (max-width: 520px) {
+    .caps-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .hero-h1 { font-size: clamp(2.4rem, 8vw, 3.5rem); }
+  }
+</style>
