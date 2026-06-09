@@ -37,7 +37,11 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
     }
 
     case "onboard": {
-      const caps = ctx.server.server.getClientCapabilities();
+      const srv = ctx.server.server as unknown as {
+        getClientCapabilities(): { elicitation?: { form?: unknown } };
+        elicitInput(params: Record<string, unknown>): Promise<{ action: string; content?: unknown }>;
+      };
+      const caps = srv.getClientCapabilities();
       if (!caps?.elicitation?.form) {
         return {
           content: [{ type: "text", text: ONBOARDING_PROMPT }],
@@ -45,7 +49,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
 
-      const s1 = await ctx.server.server.elicitInput({
+      const s1 = await srv.elicitInput({
         message: "Let's set up your Quillby profile. Step 1 of 3: who are you?",
         requestedSchema: {
           type: "object",
@@ -61,7 +65,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         return { content: [{ type: "text", text: "Onboarding cancelled." }], structuredContent: { cancelled: true, message: "Onboarding cancelled." } };
       }
 
-      const s2 = await ctx.server.server.elicitInput({
+      const s2 = await srv.elicitInput({
         message: "Step 2 of 3: what do you write about, and who reads it?",
         requestedSchema: {
           type: "object",
@@ -77,7 +81,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         return { content: [{ type: "text", text: "Onboarding cancelled." }], structuredContent: { cancelled: true, message: "Onboarding cancelled." } };
       }
 
-      const s3 = await ctx.server.server.elicitInput({
+      const s3 = await srv.elicitInput({
         message: "Step 3 of 3: how do you write, and where do you publish?",
         requestedSchema: {
           type: "object",

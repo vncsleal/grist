@@ -26,10 +26,13 @@ export const CAMPAIGN_TOOL_NAMES = new Set<string>([
   "campaign_list",
 ]);
 
+const _StageConfigArray = StageConfigSchema.array();
+type _StageConfigList = z.infer<typeof _StageConfigArray>;
+
 const CampaignCreateArgsSchema = z.object({
   name: z.string().min(1),
   blueprintId: z.string().optional(),
-  blueprint: StageConfigSchema.array().optional(),
+  blueprint: _StageConfigArray.optional() as z.ZodType<_StageConfigList | undefined>,
   workspaceId: z.string().optional(),
 });
 
@@ -68,10 +71,12 @@ const CampaignStageRetryArgsSchema = z.object({
   workspaceId: z.string().optional(),
 });
 
+type _CampaignStatus = z.infer<typeof CampaignStatusSchema>;
+
 const CampaignBlueprintCreateArgsSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  stages: z.array(StageConfigSchema).min(1),
+  stages: z.array(StageConfigSchema).min(1) as z.ZodType<_StageConfigList>,
   tags: z.array(z.string()).optional(),
   workspaceId: z.string().optional(),
 });
@@ -81,7 +86,7 @@ const CampaignBlueprintListArgsSchema = z.object({
 });
 
 const CampaignListArgsSchema = z.object({
-  status: CampaignStatusSchema.optional(),
+  status: CampaignStatusSchema.optional() as z.ZodType<_CampaignStatus | undefined>,
   workspaceId: z.string().optional(),
 });
 

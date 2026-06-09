@@ -27,10 +27,8 @@ export function extractTextFromHTML(html: string, url: string): string {
   try {
     const { document } = parseHTML(html);
     type ReadabilityDoc = ConstructorParameters<typeof Readability>[0];
-    // Pass the URL so Readability can resolve relative links
-    const article = new Readability(document as unknown as ReadabilityDoc, {
-      url,
-    }).parse();
+    // ARD: linkedom Document doesn't match Readability's expected type
+    const article = new Readability(document as unknown as ReadabilityDoc).parse();
     if (article?.textContent) {
       return article.textContent.replace(/\s+/g, " ").trim().slice(0, CONFIG.ENRICHMENT.MAX_CONTENT_LENGTH);
     }
