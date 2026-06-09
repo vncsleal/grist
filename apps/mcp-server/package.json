@@ -30,7 +30,7 @@
   "type": "module",
   "scripts": {
     "prebuild": "pnpm --filter @quillby/core --filter @quillby/config --filter @quillby/content --filter @quillby/auth --filter @quillby/workspace --filter @quillby/database --filter @quillby/billing --filter @quillby/storage-fs --filter @quillby/storage-db --filter @quillby/providers build",
-    "prepare": "pnpm run build",
+    "prepare": "true",
     "mcp": "node dist/local/main.js",
     "mcp:dev": "tsx src/main.ts",
     "mcp:start": "node dist/local/main.js",
