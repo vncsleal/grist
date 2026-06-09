@@ -359,6 +359,10 @@ export function appendTypedMemory(
   saveTypedMemory(workspaceId, typedMemoryPatch(memoryType, next));
 }
 
+// TypeScript cannot infer the return type from computed property keys with generics.
+// This cast is necessary because `{ [key]: value }` always evaluates to `{ [x: string]: T }`,
+// losing the specific key information. The type guard on `key` (K extends keyof TypedMemory)
+// and `value` (TypedMemory[K]) ensures runtime type safety.
 function typedMemoryPatch<K extends keyof TypedMemory>(key: K, value: TypedMemory[K]): Pick<TypedMemory, K> {
   return { [key]: value } as Pick<TypedMemory, K>;
 }

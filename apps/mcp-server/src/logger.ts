@@ -4,7 +4,7 @@ export type LogLevel = (typeof LOG_LEVELS)[number];
 const LEVELS: Record<LogLevel, number> = { info: 0, warn: 1, error: 2, fatal: 3 };
 
 const rawLevel = process.env.QUILLBY_LOG_LEVEL ?? "info";
-const MIN_LEVEL: LogLevel = LOG_LEVELS.includes(rawLevel as LogLevel) ? rawLevel as LogLevel : "info";
+const MIN_LEVEL: LogLevel = LOG_LEVELS.find((l) => l === rawLevel) ?? "info";
 
 export function slog(level: LogLevel, msg: string, extra?: Record<string, unknown>): void {
   if ((LEVELS[level] ?? -1) < LEVELS[MIN_LEVEL]) return;

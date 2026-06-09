@@ -112,7 +112,7 @@ function deriveKey(secret: string, salt?: Buffer): { keyBytes: Buffer; saltHex: 
 export function encryptSecret(secret: string, encryptionKey: string): string {
   const { keyBytes, saltHex } = deriveKey(encryptionKey);
   const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", keyBytes, iv);
+  const cipher = createCipheriv("aes-256-gcm", keyBytes, iv, { authTagLength: 16 });
   cipher.setAAD(Buffer.from("quillby-provider-config-v1", "utf8"));
   const ciphertext = Buffer.concat([cipher.update(secret, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
@@ -125,7 +125,7 @@ export function decryptSecret(payload: string, encryptionKey: string): string {
   if (parts.length === 4) {
     const [saltHex, ivRaw, ciphertextRaw, tagRaw] = parts;
     const { keyBytes } = deriveKey(encryptionKey, Buffer.from(saltHex, "hex"));
-    const decipher = createDecipheriv("aes-256-gcm", keyBytes, Buffer.from(ivRaw, "base64"));
+    const decipher = createDecipheriv("aes-256-gcm", keyBytes, Buffer.from(ivRaw, "base64"), { authTagLength: 16 });
     decipher.setAuthTag(Buffer.from(tagRaw, "base64"));
     decipher.setAAD(Buffer.from("quillby-provider-config-v1", "utf8"));
     return Buffer.concat([
@@ -136,7 +136,7 @@ export function decryptSecret(payload: string, encryptionKey: string): string {
 
   const [ivRaw, ciphertextRaw, tagRaw] = parts;
   const oldKey = createHash("sha256").update(encryptionKey).digest();
-  const decipher = createDecipheriv("aes-256-gcm", oldKey, Buffer.from(ivRaw, "base64"));
+  const decipher = createDecipheriv("aes-256-gcm", oldKey, Buffer.from(ivRaw, "base64"), { authTagLength: 16 });
   decipher.setAuthTag(Buffer.from(tagRaw, "base64"));
   return Buffer.concat([
     decipher.update(Buffer.from(ciphertextRaw, "base64")),

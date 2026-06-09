@@ -33,6 +33,7 @@ process.on("unhandledRejection", (reason) => {
     error: reason instanceof Error ? reason.message : String(reason),
     stack: reason instanceof Error ? reason.stack ?? undefined : undefined,
   });
+  setTimeout(() => process.exit(1), 5_000).unref();
 });
 
 export type SampleResult =

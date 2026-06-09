@@ -31,8 +31,6 @@ function getTransporter(): nodemailer.Transporter | null {
   return _transporter;
 }
 
-const FROM = process.env.QUILLBY_SMTP_FROM ?? "noreply@quillby.app";
-
 export async function sendVerificationEmail(user: EmailUser, url: string): Promise<void> {
   const transporter = getTransporter();
   if (!transporter) {
@@ -40,9 +38,12 @@ export async function sendVerificationEmail(user: EmailUser, url: string): Promi
     return;
   }
 
+  // getTransporter() already verified QUILLBY_SMTP_FROM is set
+  const from = process.env.QUILLBY_SMTP_FROM!;
+
   try {
     await transporter.sendMail({
-      from: FROM,
+      from,
       to: user.email,
       subject: "Verify your Quillby account",
       text: `Welcome to Quillby!\n\nClick the link below to verify your email address:\n${url}`,
@@ -61,9 +62,12 @@ export async function sendResetPasswordEmail(user: EmailUser, url: string): Prom
     return;
   }
 
+  // getTransporter() already verified QUILLBY_SMTP_FROM is set
+  const from = process.env.QUILLBY_SMTP_FROM!;
+
   try {
     await transporter.sendMail({
-      from: FROM,
+      from,
       to: user.email,
       subject: "Reset your Quillby password",
       text: `You requested a password reset.\n\nClick the link below to reset your password:\n${url}\n\nIf you didn't request this, you can safely ignore this email.`,

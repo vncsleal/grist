@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+export * from "./errors.js";
 export * from "./agents.js";
 
 // ─── User context (built during onboarding) ───────────────────────────────────
@@ -150,6 +151,10 @@ export type StructureCard = z.infer<typeof StructureCardSchema>;
 export const CurationStatusSchema = z.enum(["shortlisted", "skipped"]);
 export type CurationStatus = z.infer<typeof CurationStatusSchema>;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 export const HarvestBundleSchema = z.object({
   generatedAt: z.string(),
   dateLabel: z.string(),
@@ -157,9 +162,9 @@ export const HarvestBundleSchema = z.object({
   /** Map of cardId (as string) → curation status. Set by curate_card. */
   curationState: z.preprocess(
     (val) => {
-      if (typeof val !== "object" || val == null) return {};
+      if (!isRecord(val)) return {};
       return Object.fromEntries(
-        Object.entries(val as Record<string, unknown>).filter(
+        Object.entries(val).filter(
           ([, v]) => v === "shortlisted" || v === "skipped"
         )
       );
