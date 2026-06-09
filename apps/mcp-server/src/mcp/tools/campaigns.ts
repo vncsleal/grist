@@ -11,6 +11,8 @@ import {
   canRetryStage,
   type Campaign as CampaignType,
   type Blueprint as BlueprintType,
+  type CampaignStatus,
+  type StageConfig,
 } from "@quillby/content";
 
 export const CAMPAIGN_TOOL_NAMES = new Set<string>([
@@ -26,13 +28,10 @@ export const CAMPAIGN_TOOL_NAMES = new Set<string>([
   "campaign_list",
 ]);
 
-const _StageConfigArray = StageConfigSchema.array();
-type _StageConfigList = z.infer<typeof _StageConfigArray>;
-
 const CampaignCreateArgsSchema = z.object({
   name: z.string().min(1),
   blueprintId: z.string().optional(),
-  blueprint: _StageConfigArray.optional() as z.ZodType<_StageConfigList | undefined>,
+  blueprint: z.array(StageConfigSchema).optional() as z.ZodType<StageConfig[] | undefined>,
   workspaceId: z.string().optional(),
 });
 
@@ -71,12 +70,10 @@ const CampaignStageRetryArgsSchema = z.object({
   workspaceId: z.string().optional(),
 });
 
-type _CampaignStatus = z.infer<typeof CampaignStatusSchema>;
-
 const CampaignBlueprintCreateArgsSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  stages: z.array(StageConfigSchema).min(1) as z.ZodType<_StageConfigList>,
+  stages: z.array(StageConfigSchema).min(1) as z.ZodType<StageConfig[]>,
   tags: z.array(z.string()).optional(),
   workspaceId: z.string().optional(),
 });
@@ -86,7 +83,7 @@ const CampaignBlueprintListArgsSchema = z.object({
 });
 
 const CampaignListArgsSchema = z.object({
-  status: CampaignStatusSchema.optional() as z.ZodType<_CampaignStatus | undefined>,
+  status: CampaignStatusSchema.optional() as z.ZodType<CampaignStatus | undefined>,
   workspaceId: z.string().optional(),
 });
 

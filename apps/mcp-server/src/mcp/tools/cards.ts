@@ -5,14 +5,13 @@ import { CardInputSchema } from "../../types.js";
 import { PLATFORM_GUIDES } from "../../agents/compose.js";
 import { contextToPromptText } from "../../agents/onboard.js";
 
-const CardsSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("save"), cards: z.array(CardInputSchema), workspaceId: z.string().optional() }),
-  z.object({ action: z.literal("list"), workspaceId: z.string().optional(), limit: z.number().optional(), minScore: z.number().optional() }),
-  z.object({ action: z.literal("get"), cardId: z.number(), workspaceId: z.string().optional() }),
-  z.object({ action: z.literal("curate"), cardId: z.number(), status: z.enum(["shortlist", "skip", "clear"]), workspaceId: z.string().optional() }),
-  z.object({ action: z.literal("generate_post"), cardId: z.number().optional(), platform: z.string().optional(), angle: z.string().optional() }),
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-] as unknown as z.ZodDiscriminatedUnion<"action", any>);
+const CardsSaveSchema = z.object({ action: z.literal("save"), cards: z.array(CardInputSchema), workspaceId: z.string().optional() });
+const CardsListSchema = z.object({ action: z.literal("list"), workspaceId: z.string().optional(), limit: z.number().optional(), minScore: z.number().optional() });
+const CardsGetSchema = z.object({ action: z.literal("get"), cardId: z.number(), workspaceId: z.string().optional() });
+const CardsCurateSchema = z.object({ action: z.literal("curate"), cardId: z.number(), status: z.enum(["shortlist", "skip", "clear"]), workspaceId: z.string().optional() });
+const CardsGenerateSchema = z.object({ action: z.literal("generate_post"), cardId: z.number().optional(), platform: z.string().optional(), angle: z.string().optional() });
+
+const CardsSchema = z.discriminatedUnion("action", [CardsSaveSchema, CardsListSchema, CardsGetSchema, CardsCurateSchema, CardsGenerateSchema]);
 
 export const tool = {
   name: "cards" as const,

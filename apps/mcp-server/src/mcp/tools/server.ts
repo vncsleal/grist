@@ -102,21 +102,25 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         return { content: [{ type: "text", text: "Onboarding cancelled." }], structuredContent: { cancelled: true, message: "Onboarding cancelled." } };
       }
 
+      const s1c = (s1.content ?? {}) as Record<string, unknown>;
+      const s2c = (s2.content ?? {}) as Record<string, unknown>;
+      const s3c = (s3.content ?? {}) as Record<string, unknown>;
+
       const splitCSV = (v: unknown): string[] =>
         typeof v === "string" ? v.split(",").map((s) => s.trim()).filter(Boolean) : [];
       const toStrArr = (v: unknown): string[] =>
         Array.isArray(v) ? (v as unknown[]).filter((x): x is string => typeof x === "string") : splitCSV(v);
 
       const onboardCtx = UserContextSchema.parse({
-        name: s1.content.name || undefined,
-        role: s1.content.role,
-        industry: s1.content.industry,
-        topics: splitCSV(s2.content.topics),
-        audienceDescription: s2.content.audienceDescription,
-        contentGoals: splitCSV(s2.content.contentGoals),
-        voice: s3.content.voice,
-        platforms: toStrArr(s3.content.platforms),
-        excludeTopics: s3.content.excludeTopics ? splitCSV(s3.content.excludeTopics) : [],
+        name: s1c.name ?? undefined,
+        role: s1c.role,
+        industry: s1c.industry,
+        topics: splitCSV(s2c.topics),
+        audienceDescription: s2c.audienceDescription,
+        contentGoals: splitCSV(s2c.contentGoals),
+        voice: s3c.voice,
+        platforms: toStrArr(s3c.platforms),
+        excludeTopics: s3c.excludeTopics ? splitCSV(s3c.excludeTopics) : [],
       });
       await ctx.storage.saveContext(onboardCtx);
 
