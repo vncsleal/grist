@@ -142,7 +142,7 @@ export async function getStripeSubscriptionDetails(
 
   const row = rows[0];
   return {
-    plan: row.plan,
+    plan: row.plan as "free" | "pro",
     stripeCustomerId: row.stripeCustomerId ?? null,
     stripeSubscriptionId: row.stripeSubscriptionId ?? null,
     subscriptionStatus: row.subscriptionStatus ?? null,
