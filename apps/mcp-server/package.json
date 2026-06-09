@@ -42,7 +42,7 @@
     "build:selfhosted": "tsc -p tsconfig.selfhosted.json",
     "lint": "eslint .",
     "build:binaries": "bun build --compile --target=bun-darwin-arm64 ./src/main-local.ts --outfile quillby-mcp-macos-arm64 && bun build --compile --target=bun-darwin-x64 ./src/main-local.ts --outfile quillby-mcp-macos-x64 && bun build --compile --target=bun-linux-x64 ./src/main-local.ts --outfile quillby-mcp-linux-x64 && bun build --compile --target=bun-windows-x64 ./src/main-local.ts --outfile quillby-mcp-windows-x64.exe",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.local.json",
     "test": "vitest run tests/unit",
     "test:unit": "vitest run tests/unit",
     "test:integration": "pnpm run build && vitest run tests/integration",
