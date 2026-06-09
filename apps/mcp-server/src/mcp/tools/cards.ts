@@ -11,6 +11,7 @@ const CardsSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("get"), cardId: z.number(), workspaceId: z.string().optional() }),
   z.object({ action: z.literal("curate"), cardId: z.number(), status: z.enum(["shortlist", "skip", "clear"]), workspaceId: z.string().optional() }),
   z.object({ action: z.literal("generate_post"), cardId: z.number().optional(), platform: z.string().optional(), angle: z.string().optional() }),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ] as unknown as z.ZodDiscriminatedUnion<"action", any>);
 
 export const tool = {

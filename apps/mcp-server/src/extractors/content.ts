@@ -23,7 +23,7 @@ async function fetchURL(url: string): Promise<string> {
  * Extract readable text from HTML using Mozilla Readability.
  * Falls back to basic tag stripping if Readability cannot parse the page.
  */
-export function extractTextFromHTML(html: string, url: string): string {
+export function extractTextFromHTML(html: string, _url: string): string {
   try {
     const { document } = parseHTML(html);
     type ReadabilityDoc = ConstructorParameters<typeof Readability>[0];
