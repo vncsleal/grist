@@ -1,49 +1,26 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+
+const faqItems = Array.from({ length: 10 }, (_, i) => ({
+  q: t(`faq.q-${i + 1}` as const),
+  a: t(`faq.a-${i + 1}` as const),
+}));
+---
 <section class="section section-sm" id="faq" aria-labelledby="faq-heading">
   <div class="container">
-    <p class="label reveal">FAQ</p>
-    <h2 class="section-h2 reveal reveal-delay-1" id="faq-heading">Common questions</h2>
+    <p class="label reveal">{t('faq.label')}</p>
+    <h2 class="section-h2 reveal reveal-delay-1" id="faq-heading">{t('faq.heading')}</h2>
 
     <div class="faq-list">
-      <details class="faq-item reveal">
-        <summary>Do I need to know how to code?</summary>
-        <div class="faq-body"><p>No. If you can have a conversation with Claude, you can use Quillby.</p></div>
-      </details>
-      <details class="faq-item reveal reveal-delay-1">
-        <summary>Does it work for any niche?</summary>
-        <div class="faq-body"><p>Yes. Tech, law, finance, health, education, marketing — any field with content online.</p></div>
-      </details>
-      <details class="faq-item reveal reveal-delay-2">
-        <summary>I have multiple clients. Will they mix?</summary>
-        <div class="faq-body"><p>No. Each workspace has its own memory and sources. Client A never bleeds into Client B.</p></div>
-      </details>
-      <details class="faq-item reveal reveal-delay-3">
-        <summary>Is my data safe?</summary>
-        <div class="faq-body"><p>Everything runs on your machine. Nothing leaves it. The code is open source and auditable.</p></div>
-      </details>
-      <details class="faq-item reveal reveal-delay-4">
-        <summary>Is it free?</summary>
-        <div class="faq-body"><p>Local mode is completely free. Always will be. A Cloud mode with shared workspaces and a team dashboard is in development.</p></div>
-      </details>
-      <details class="faq-item reveal reveal-delay-4">
-        <summary>Do I need Claude Desktop?</summary>
-        <div class="faq-body"><p>Yes. Quillby connects to Claude Desktop with one click. It gives Claude new abilities — scanning feeds, drafting posts, planning campaigns — without leaving the chat.</p></div>
-      </details>
-      <details class="faq-item reveal reveal-delay-4">
-        <summary>Does it learn my writing style?</summary>
-        <div class="faq-body"><p>Yes. Every draft you save becomes a voice example. Over time Quillby adapts to your tone, vocabulary, and sentence rhythm. Different workspaces can have different voices.</p></div>
-      </details>
-      <details class="faq-item reveal reveal-delay-4">
-        <summary>Can I plan content ahead of time?</summary>
-        <div class="faq-body"><p>Yes. Quillby has a campaign system for multi-stage content series, a task board to track progress, and a calendar to see what's publishing when. All inside Claude.</p></div>
-      </details>
-      <details class="faq-item reveal reveal-delay-4">
-        <summary>Can it generate images or audio?</summary>
-        <div class="faq-body"><p>Quillby can generate images and audio if you connect a supported service like OpenAI or ElevenLabs. This is an optional add-on — the core brief-to-draft workflow works with nothing else to configure.</p></div>
-      </details>
-      <details class="faq-item reveal reveal-delay-4">
-        <summary>Is Quillby open source?</summary>
-        <div class="faq-body"><p>Yes. MIT licensed. The full source is on <a href="https://github.com/vncsleal/quillby" target="_blank" rel="noopener noreferrer" class="faq-link">GitHub</a>. You can inspect it, fork it, or contribute.</p></div>
-      </details>
+      {faqItems.map((item, i) => (
+        <details class="faq-item reveal" data-delay={i}>
+          <summary>{item.q}</summary>
+          <div class="faq-body"><p set:html={item.a} /></div>
+        </details>
+      ))}
     </div>
   </div>
 </section>

@@ -1,22 +1,12 @@
-import { defineCollection } from "astro:content";
-import { glob } from "astro/loaders";
-import { z } from "astro/zod";
+import { defineCollection, z } from 'astro:content';
 
-const docs = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/docs" }),
+const legalCollection = defineCollection({
   schema: z.object({
     title: z.string(),
-    description: z.string().optional(),
-    order: z.number().optional(),
+    updated: z.string(),
   }),
 });
 
-const legal = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/legal" }),
-  schema: z.object({
-    title: z.string(),
-    updated_at: z.string().optional(),
-  }),
-});
-
-export const collections = { docs, legal };
+export const collections = {
+  legal: legalCollection,
+};

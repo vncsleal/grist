@@ -83,6 +83,7 @@ export class KlingAdapter implements ProviderAdapter {
       throw new Error(`fal.ai Kling submit ${submitRes.status}: ${await submitRes.text()}`);
     }
 
+    // ARD: External HTTP API JSON response typing
     const queued = await submitRes.json() as FalQueueResponse;
     const pollUrl =
       queued.status_url ??

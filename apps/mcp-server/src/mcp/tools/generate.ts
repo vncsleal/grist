@@ -109,15 +109,10 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       };
 
       const genStorage: FullStorage = genWsId
-        ? await ctx.storage.withWorkspace(genWsId) as FullStorage
+        ? await ctx.storage.withWorkspace(genWsId)
         : ctx.storage;
-      const genWs = await genStorage.getCurrentWorkspace() as Record<string, unknown> & {
-        cloneConsentGranted?: boolean;
-        voiceReferenceAudioUrl?: string;
-        faceReferenceImageUrl?: string;
-        id?: string;
-      };
-      const memory = await genStorage.loadTypedMemory() as TypedMemory;
+      const genWs = await genStorage.getCurrentWorkspace();
+      const memory = await genStorage.loadTypedMemory();
 
       if (modality === "audio" && cloneVoice) {
         if (!genWs.cloneConsentGranted) {
@@ -158,7 +153,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         const b = await import("../../billing.js");
         if (b.isPlanEnforcementEnabled()) {
           const plan = await ctx.storage.getPlan();
-          const limits = b.getPlanLimits(plan as import("../../billing.js").HostedPlan);
+          const limits = b.getPlanLimits(plan);
           const limitKey = `${modality}CreditsPerMonth` as keyof typeof limits;
           const limit = limits[limitKey as keyof typeof limits];
           if (limit !== null && limit >= 0) {
@@ -203,7 +198,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
 
-      void runGenerationJob(genStorage, jobId, modality, prompt, memory, genWs as WorkspaceMetadata, ctx.providerRouter, {
+      void runGenerationJob(genStorage, jobId, modality, prompt, memory, genWs, ctx.providerRouter, {
         aspectRatio,
         cloneVoice,
         cloneAvatar,
@@ -219,7 +214,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
     case "get_job": {
       const { jobId, workspaceId: gjWsId } = parsed;
       const gjStorage: FullStorage = gjWsId
-        ? await ctx.storage.withWorkspace(gjWsId) as FullStorage
+        ? await ctx.storage.withWorkspace(gjWsId)
         : ctx.storage;
       const job = await gjStorage.loadJob(jobId);
       if (!job) {
@@ -238,11 +233,11 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
     case "list_jobs": {
       const { modality: ljModality, workspaceId: ljWsId } = parsed;
       const ljStorage: FullStorage = ljWsId
-        ? await ctx.storage.withWorkspace(ljWsId) as FullStorage
+        ? await ctx.storage.withWorkspace(ljWsId)
         : ctx.storage;
       const jobs = await ljStorage.listJobs(ljModality);
       return {
-        content: [{ type: "text", text: `${jobs.length} generation job(s).${(jobs as Array<Record<string, unknown>>).slice(0, 5).map(j => `\n  [${j.modality}] ${j.id}: ${j.status}`).join("")}${jobs.length > 5 ? `\n  ... +${jobs.length - 5} more` : ""}` }],
+        content: [{ type: "text", text: `${jobs.length} generation job(s).${jobs.slice(0, 5).map(j => `\n  [${j.modality}] ${j.id}: ${j.status}`).join("")}${jobs.length > 5 ? `\n  ... +${jobs.length - 5} more` : ""}` }],
         structuredContent: { jobs, count: jobs.length },
       };
     }
@@ -251,7 +246,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       refreshProviderRouter();
       const report = getProviderPolicyReport(ctx.deploymentMode, ctx.providerRouter);
       return {
-        content: [{ type: "text", text: `Provider capabilities: ${(report as Record<string, unknown>).capabilities ? ((report as Record<string, unknown>).capabilities as Array<{ modality: string; available: boolean; message?: string }>).map((c: { modality: string; available: boolean; message?: string }) => `${c.modality}: ${c.available ? "available" : c.message ?? "unavailable"}`).join(", ") : "none"}. Configured providers: ${Object.keys(getStoredProviderConfigSummary()).join(", ") || "none"}.` }],
+        content: [{ type: "text", text: `Provider capabilities: ${report.capabilities ? report.capabilities.map((c: { modality: string; available: boolean; message?: string }) => `${c.modality}: ${c.available ? "available" : c.message ?? "unavailable"}`).join(", ") : "none"}. Configured providers: ${Object.keys(getStoredProviderConfigSummary()).join(", ") || "none"}.` }],
         structuredContent: { ...report, configured: getStoredProviderConfigSummary() },
       };
     }

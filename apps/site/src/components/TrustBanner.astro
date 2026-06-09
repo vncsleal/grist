@@ -1,3 +1,9 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+---
 <div class="trust-line reveal">
   <div class="container">
     <div class="trust-line-inner">
@@ -5,19 +11,19 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Runs on your machine
+        {t('trust.runs-local')}
       </span>
       <span class="trust-line-item">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        No account needed
+        {t('trust.no-account')}
       </span>
       <span class="trust-line-item">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Free and open source
+        {t('trust.free-open-source')}
       </span>
     </div>
   </div>

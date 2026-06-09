@@ -5,7 +5,7 @@ WORKDIR /app
 RUN corepack enable
 
 FROM base AS deps
-COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY pnpm-lock.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps/mcp-server/package.json ./apps/mcp-server/package.json
 COPY apps/app/package.json ./apps/app/package.json
 COPY packages/auth/package.json ./packages/auth/package.json
@@ -30,7 +30,7 @@ COPY packages/workspace/package.json ./packages/workspace/package.json
 COPY packages/workspace/tsconfig.json ./packages/workspace/tsconfig.json
 COPY tooling/scripts ./tooling/scripts
 COPY tooling/tsconfig ./tooling/tsconfig
-RUN pnpm install --filter @vncsleal/quillby... --no-frozen-lockfile --ignore-scripts
+RUN pnpm install --filter @vncsleal/quillby... --frozen-lockfile --ignore-scripts
 
 FROM deps AS build
 COPY . .
@@ -38,10 +38,10 @@ RUN pnpm --filter @vncsleal/quillby build
 
 # ─── App (SPA) build ─────────────────────────────────────────────────────────────────
 FROM base AS build-app
-COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY pnpm-lock.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps/app/package.json ./apps/app/package.json
 COPY tooling/tsconfig ./tooling/tsconfig
-RUN pnpm install --filter @quillby/app --no-frozen-lockfile
+RUN pnpm install --filter @quillby/app --frozen-lockfile
 COPY apps/app ./apps/app
 ARG VITE_QUILLBY_DEPLOYMENT_MODE=self-hosted
 ARG VITE_QUILLBY_API_BASE_URL=/

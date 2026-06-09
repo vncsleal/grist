@@ -120,7 +120,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       const summary = `Workspace: ${onboardWs.name}\n\nRole: ${onboardCtx.role} in ${onboardCtx.industry}\nTopics: ${onboardCtx.topics.join(", ")}\nPlatforms: ${onboardCtx.platforms.join(", ")}\nVoice: ${onboardCtx.voice}\n\nNext: call discover_feeds to set up your RSS sources.`;
       return {
         content: [{ type: "text", text: summary }],
-        structuredContent: { saved: true, profile: onboardCtx as Record<string, unknown> },
+        structuredContent: { saved: true, profile: onboardCtx },
       };
     }
 
@@ -130,9 +130,9 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         return { content: [{ type: "text", text: "Plan management is only available in cloud mode." }], structuredContent: { error: "not_cloud_mode" } };
       }
       const plan = await ctx.storage.getPlan();
-      const limits = billing.getPlanLimits(plan as import("../../billing.js").HostedPlan);
+      const limits = billing.getPlanLimits(plan);
       return {
-        content: [{ type: "text", text: `Plan: ${plan as string}. Limits: ${limits ? Object.entries(limits as Record<string, unknown>).map(([k, v]) => `${k}: ${v as string}`).join(", ") : "N/A"}. Enforcement: ${billing.isPlanEnforcementEnabled() ? "enabled" : "disabled"}.` }],
+        content: [{ type: "text", text: `Plan: ${plan}. Limits: ${limits ? Object.entries(limits).map(([k, v]) => `${k}: ${v}`).join(", ") : "N/A"}. Enforcement: ${billing.isPlanEnforcementEnabled() ? "enabled" : "disabled"}.` }],
         structuredContent: { plan, limits, enforcementEnabled: billing.isPlanEnforcementEnabled() },
       };
     }
@@ -147,7 +147,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         { name: "pro", price: "$29/mo", description: "Unlimited workspaces, drafts, and AI generation credits", limits: billing.getPlanLimits("pro") },
       ];
       return {
-        content: [{ type: "text", text: `Available plans:\n${(plans as Array<Record<string, unknown>>).map(p => `  ${p.name as string}: ${p.price as string} — ${p.description as string}`).join("\n")}` }],
+        content: [{ type: "text", text: `Available plans:\n${plans.map(p => `  ${p.name}: ${p.price} — ${p.description}`).join("\n")}` }],
         structuredContent: { plans },
       };
     }
@@ -158,7 +158,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         return { content: [{ type: "text", text: "Billing is only available in cloud mode." }], structuredContent: { error: "not_cloud_mode" } };
       }
       const currentPlan = await ctx.storage.getPlan();
-      const url = billing.getBillingActionUrl(parsed.billingAction, currentPlan as import("../../billing.js").HostedPlan);
+      const url = billing.getBillingActionUrl(parsed.billingAction, currentPlan);
       if (!url) {
         return {
           content: [{ type: "text", text: `Billing action "${parsed.billingAction}" is not configured. Ensure Stripe environment variables are set.` }],
@@ -167,7 +167,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
       return {
-        content: [{ type: "text", text: `Billing action "${parsed.billingAction}" for plan "${currentPlan as string}". URL: ${url}.` }],
+        content: [{ type: "text", text: `Billing action "${parsed.billingAction}" for plan "${currentPlan}". URL: ${url}.` }],
         structuredContent: { action: parsed.billingAction, url, plan: currentPlan },
       };
     }

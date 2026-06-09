@@ -1,5 +1,6 @@
 import type { ProviderAdapter, GenerationRequest, GenerationResult } from "./router.js";
 import type { GenerationModality } from "@quillby/core";
+import { QuillbyError } from "@quillby/core";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -63,44 +64,46 @@ export class McpSamplingAdapter implements ProviderAdapter {
     modality: GenerationModality,
     outputDir: string
   ): Promise<string> {
-    if (!content) throw new Error("MCP Sampling returned empty content.");
+    if (!content) throw new QuillbyError("SAMPLING_EMPTY", "MCP Sampling returned empty content.");
 
     const items: unknown[] = Array.isArray(content) ? content : [content];
 
     for (const item of items) {
       if (typeof item !== "object" || item === null) continue;
-      const c = item as Record<string, unknown>;
+      const c = item as { type?: string; data?: string; mimeType?: string; text?: string };
 
       // Image: { type: "image", data: "<base64>", mimeType: "image/..." }
-      if (modality === "image" && c["type"] === "image" && typeof c["data"] === "string") {
-        const ext = String(c["mimeType"] ?? "image/png").split("/").pop() ?? "png";
+      if (modality === "image" && c.type === "image" && typeof c.data === "string") {
+        const ext = String(c.mimeType ?? "image/png").split("/").pop() ?? "png";
         const filename = `${randomUUID()}.${ext}`;
         const filePath = path.join(outputDir, filename);
         fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(filePath, Buffer.from(c["data"] as string, "base64"));
+        fs.writeFileSync(filePath, Buffer.from(c.data, "base64"));
         return filePath;
       }
 
       // Audio: { type: "audio", data: "<base64>", mimeType: "audio/..." }
-      if (modality === "audio" && c["type"] === "audio" && typeof c["data"] === "string") {
-        const ext = String(c["mimeType"] ?? "audio/mpeg").split("/").pop() ?? "mp3";
+      if (modality === "audio" && c.type === "audio" && typeof c.data === "string") {
+        const ext = String(c.mimeType ?? "audio/mpeg").split("/").pop() ?? "mp3";
         const filename = `${randomUUID()}.${ext}`;
         const filePath = path.join(outputDir, filename);
         fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(filePath, Buffer.from(c["data"] as string, "base64"));
+        fs.writeFileSync(filePath, Buffer.from(c.data, "base64"));
         return filePath;
       }
 
       // Text fallback: sampling didn't produce a binary asset but returned a URL
-      if (typeof c["text"] === "string") {
-        const text = c["text"].trim();
+      if (typeof c.text === "string") {
+        const text = c.text.trim();
         if (text.startsWith("http://") || text.startsWith("https://")) return text;
       }
     }
 
-    throw new Error(
+    throw new QuillbyError(
+      "SAMPLING_NO_ASSET",
       `MCP Sampling response did not contain a ${modality} asset. ` +
-      `The connected AI client may not support ${modality} generation via sampling.`
+      `The connected AI client may not support ${modality} generation via sampling.`,
+      { modality }
     );
   }
 }

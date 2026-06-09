@@ -16,7 +16,7 @@ export const tool = {
 
 export async function handleTool(raw: unknown, ctx: ToolContext) {
   const parsed = SessionSchema.parse(raw);
-  const args = { ...parsed, workspaceId: parsed.workspaceId } as Record<string, unknown>;
+  const args: Record<string, unknown> = { ...parsed, workspaceId: parsed.workspaceId };
 
   switch (parsed.action) {
     case "start": return handleSessionStart(ctx.storage, ctx.storage, args);

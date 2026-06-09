@@ -28,11 +28,11 @@ export async function handleTool(raw: unknown, ctx: ToolContext) {
   }
 
   if (parsed.action === "get") {
-    const typedMemory = (await storage.loadTypedMemory()) ?? {} as Record<string, string[]>;
+    const typedMemory = await storage.loadTypedMemory();
     const ws = await storage.getCurrentWorkspace();
-    if (!parsed.memoryType) return { content: [{ type: "text" as const, text: `Memory for workspace "${ws.name}": ${Object.entries(typedMemory ?? {}).map(([key, entries]) => `${key}: ${(entries as string[]).length} item(s)`).join(", ")}.` }], structuredContent: { workspace: ws, memory: typedMemory } };
+    if (!parsed.memoryType) return { content: [{ type: "text" as const, text: `Memory for workspace "${ws.name}": ${Object.entries(typedMemory ?? {}).map(([key, entries]) => `${key}: ${entries.length} item(s)`).join(", ")}.` }], structuredContent: { workspace: ws, memory: typedMemory } };
     const bucket = MEMORY_MAP[parsed.memoryType] ?? "voiceExamples";
-    return { content: [{ type: "text" as const, text: `Memory "${parsed.memoryType}" for workspace "${ws.name}": ${(typedMemory[bucket as keyof typeof typedMemory] as string[] ?? []).length} item(s).` }], structuredContent: { workspace: ws, memoryType: parsed.memoryType, entries: typedMemory[bucket as keyof typeof typedMemory] } };
+    return { content: [{ type: "text" as const, text: `Memory "${parsed.memoryType}" for workspace "${ws.name}": ${(typedMemory[bucket] ?? []).length} item(s).` }], structuredContent: { workspace: ws, memoryType: parsed.memoryType, entries: typedMemory[bucket] } };
   }
   return { content: [{ type: "text" as const, text: "Unknown action" }], isError: true };
 }

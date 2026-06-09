@@ -1,8 +1,14 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+---
 <section class="section" id="capabilities" aria-labelledby="caps-heading">
   <div class="container">
-    <p class="label reveal">Capabilities</p>
+    <p class="label reveal">{t('caps.label')}</p>
     <h2 class="section-h2 reveal reveal-delay-1" id="caps-heading">
-      From monitoring your niche to<br /><em>publishing in your voice.</em>
+      {t('caps.heading')}<br /><em>{t('caps.heading-em')}</em>
     </h2>
 
     <div class="caps-grid reveal reveal-delay-2">
@@ -13,8 +19,8 @@
             <path d="M4.5 9h9M9 4.5v9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
           </svg>
         </div>
-        <h3 class="caps-name">Monitor your niche</h3>
-        <p class="caps-desc">Discover and follow RSS feeds, Reddit communities, and niche blogs. Get a daily brief of what matters.</p>
+        <h3 class="caps-name">{t('caps.monitor-title')}</h3>
+        <p class="caps-desc">{t('caps.monitor-desc')}</p>
       </div>
 
       <div class="caps-card">
@@ -24,8 +30,8 @@
             <path d="M5 8.5l2 2 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <h3 class="caps-name">Draft in your voice</h3>
-        <p class="caps-desc">Generate publish-ready posts for LinkedIn, Twitter, blogs, and newsletters. Every draft matches your established tone.</p>
+        <h3 class="caps-name">{t('caps.draft-title')}</h3>
+        <p class="caps-desc">{t('caps.draft-desc')}</p>
       </div>
 
       <div class="caps-card">
@@ -35,8 +41,8 @@
             <path d="M10 9c0-3.314 1.343-6 3-6s3 2.686 3 6-1.343 6-3 6-3-2.686-3-6z" stroke="currentColor" stroke-width="1.3"/>
           </svg>
         </div>
-        <h3 class="caps-name">Learn your style</h3>
-        <p class="caps-desc">        Save voice examples, style preferences, and content guidelines per workspace. Quillby adapts to you over time.</p>
+        <h3 class="caps-name">{t('caps.voice-title')}</h3>
+        <p class="caps-desc">{t('caps.voice-desc')}</p>
       </div>
 
       <div class="caps-card">
@@ -48,8 +54,8 @@
             <rect x="10" y="10" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/>
           </svg>
         </div>
-        <h3 class="caps-name">Organize by client</h3>
-        <p class="caps-desc">Separate workspaces per client or brand. Each has its own memory, sources, voice profile, and content queue.</p>
+        <h3 class="caps-name">{t('caps.workspace-title')}</h3>
+        <p class="caps-desc">{t('caps.workspace-desc')}</p>
       </div>
 
       <div class="caps-card">
@@ -59,8 +65,8 @@
             <circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.3"/>
           </svg>
         </div>
-        <h3 class="caps-name">Plan ahead</h3>
-        <p class="caps-desc">Create content plans, track progress with a task board, and run multi-stage campaigns — all inside Claude.</p>
+        <h3 class="caps-name">{t('caps.plan-title')}</h3>
+        <p class="caps-desc">{t('caps.plan-desc')}</p>
       </div>
 
       <div class="caps-card">
@@ -72,8 +78,8 @@
             <circle cx="14" cy="5.5" r="2" stroke="currentColor" stroke-width="1.3"/>
           </svg>
         </div>
-        <h3 class="caps-name">Team-ready</h3>
-        <p class="caps-desc">        Share workspaces with team members. Each person gets their own role, access level, and workspace settings.</p>
+        <h3 class="caps-name">{t('caps.team-title')}</h3>
+        <p class="caps-desc">{t('caps.team-desc')}</p>
       </div>
     </div>
   </div>

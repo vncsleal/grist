@@ -79,6 +79,7 @@ export class VeoAdapter implements ProviderAdapter {
       throw new Error(`Veo 3 submit ${submitRes.status}: ${await submitRes.text()}`);
     }
 
+    // ARD: External HTTP API JSON response typing
     const op = await submitRes.json() as GenerateVideoOp;
     const opName = op.name;
     if (!opName) throw new Error("Veo 3 did not return an operation name.");

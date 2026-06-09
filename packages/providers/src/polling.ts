@@ -28,18 +28,20 @@ export async function pollForCompletion<T>(options: PollOptions<T>): Promise<{ o
       throw new Error(`Poll request failed (${response.status}): ${await response.text().catch(() => "unknown")}`);
     }
 
-    const body = (await response.json()) as T;
+    const body = await response.json();
+    if (!body || typeof body !== "object") throw new Error("Invalid polling response");
 
-    if (isComplete(body)) {
-      return extractResult(body);
+    // ARD: Generic polling callback uses user-supplied typed check
+    if (isComplete(body as T)) {
+      // ARD: Generic polling callback uses user-supplied typed check
+      return extractResult(body as T);
     }
 
-    if (typeof body === "object" && body !== null) {
-      const b = body as Record<string, unknown>;
-      const status = typeof b.status === "string" ? b.status.toLowerCase() : "";
-      if (status === "failed" || status === "error") {
-        throw new Error(`Poll returned status: ${status}${b.error ? `: ${b.error}` : ""}`);
-      }
+    // ARD: Generic check response field access
+    const b = body as Record<string, unknown>;
+    const status = typeof b.status === "string" ? b.status.toLowerCase() : "";
+    if (status === "failed" || status === "error") {
+      throw new Error(`Poll returned status: ${status}${b.error ? `: ${b.error}` : ""}`);
     }
 
     await wait(intervalMs);

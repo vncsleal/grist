@@ -1,44 +1,49 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+---
 <section class="section" id="install" aria-labelledby="install-heading">
   <div class="container">
-    <p class="label reveal">Get started</p>
+    <p class="label reveal">{t('install.label')}</p>
     <h2 class="section-h2 reveal reveal-delay-1" id="install-heading">
-      Three minutes to your<br /><em>first draft.</em>
+      {t('install.heading')}<br /><em>{t('install.heading-em')}</em>
     </h2>
 
     <div class="install-split reveal reveal-delay-2">
       <div class="install-left" data-install-tabs>
         <div class="install-tabs-side" role="tablist" aria-label="Platform">
-          <div class="install-tab is-active" role="tab" data-os="mac" aria-selected="true" tabindex="0">macOS</div>
-          <div class="install-tab" role="tab" data-os="windows" aria-selected="false" tabindex="-1">Windows</div>
-          <div class="install-tab" role="tab" data-os="npx" aria-selected="false" tabindex="-1">npx</div>
+          <div class="install-tab is-active" role="tab" data-os="mac" aria-selected="true" tabindex="0">{t('install.macos-tab')}</div>
+          <div class="install-tab" role="tab" data-os="windows" aria-selected="false" tabindex="-1">{t('install.windows-tab')}</div>
+          <div class="install-tab" role="tab" data-os="npx" aria-selected="false" tabindex="-1">{t('install.npx-tab')}</div>
         </div>
 
         <div class="install-panels">
           <div class="install-panel is-active" data-panel="mac">
             <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.dmg" class="btn btn-primary">
-              Download for Mac
+              {t('install.macos-cta')}
             </a>
-            <p class="install-note">Drag to Applications. Also available as <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg">.pkg installer</a>.</p>
+            <p class="install-note" set:html={t('install.macos-note')} />
           </div>
 
           <div class="install-panel" data-panel="windows">
             <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-windows.exe" class="btn btn-primary">
-              Download for Windows
+              {t('install.windows-cta')}
             </a>
           </div>
 
           <div class="install-panel" data-panel="npx">
             <div class="install-code-block">
-              <code>npx -y @vncsleal/quillby quillby-mcp</code>
-              <button class="install-copy-btn" data-copy="npx -y @vncsleal/quillby quillby-mcp" aria-label="Copy command">
+              <code>{t('install.npx-command')}</code>
+              <button class="install-copy-btn" data-copy={t('install.npx-command')} data-copied-label={t('install.copied-label')} aria-label={t('install.copy-command')}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <rect x="4" y="4" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
                   <path d="M1 12V2.5A1.5 1.5 0 012.5 1H12" stroke="currentColor" stroke-width="1.2"/>
                 </svg>
               </button>
             </div>
-            <p class="install-note">Works on any platform with <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer">Node.js</a> installed. No download needed — npx runs it directly.</p>
-            <p class="install-guide-link">Need step-by-step? <a href="/docs/install">Read the full installation guide</a> — it covers macOS, Windows, Linux, and manual setup.</p>
+            <p class="install-note" set:html={t('install.npx-note')} />
           </div>
         </div>
       </div>
@@ -48,22 +53,22 @@
           <li>
             <span class="install-num">1</span>
             <div>
-              <strong>Install Quillby</strong>
-              <span class="install-detail">Choose your platform on the left. No account needed.</span>
+              <strong>{t('install.step-1-title')}</strong>
+              <span class="install-detail">{t('install.step-1-detail')}</span>
             </div>
           </li>
           <li>
             <span class="install-num">2</span>
             <div>
-              <strong>Restart Claude Desktop</strong>
-              <span class="install-detail">Quillby appears automatically the next time you open Claude.</span>
+              <strong>{t('install.step-2-title')}</strong>
+              <span class="install-detail">{t('install.step-2-detail')}</span>
             </div>
           </li>
           <li>
             <span class="install-num">3</span>
             <div>
-              <strong>Configure your niche</strong>
-              <span class="install-detail">Claude asks two questions. Answer once — that's the setup.</span>
+              <strong>{t('install.step-3-title')}</strong>
+              <span class="install-detail">{t('install.step-3-detail')}</span>
             </div>
           </li>
         </ol>
@@ -117,7 +122,8 @@
         try {
           await navigator.clipboard.writeText((btn as HTMLElement).dataset.copy ?? '');
           const orig = btn.innerHTML;
-          btn.innerHTML = '<span style="color: var(--green); font-size:0.75rem;">Copied!</span>';
+          const label = (btn as HTMLElement).dataset.copiedLabel ?? 'Copied!';
+          btn.innerHTML = '<span style="color: var(--green); font-size:0.75rem;">' + label + '</span>';
           setTimeout(() => { btn.innerHTML = orig; }, 1500);
         } catch { /* clipboard not available */ }
       });
@@ -222,21 +228,6 @@
   }
 
   .install-note strong { color: var(--text); font-weight: 500; }
-
-  .install-guide-link {
-    font-size: 0.8125rem;
-    color: var(--faint);
-    line-height: 1.5;
-  }
-
-  .install-guide-link a {
-    color: var(--muted);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    transition: color 0.15s;
-  }
-
-  .install-guide-link a:hover { color: var(--text); }
 
   .install-right {
     display: flex;

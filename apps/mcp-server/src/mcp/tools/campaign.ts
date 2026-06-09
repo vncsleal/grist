@@ -29,7 +29,7 @@ export const tool = { name: "campaign" as const, description: "Manage content ca
 export async function handleTool(raw: unknown, ctx: ToolContext) {
   const parsed = CampaignSchema.parse(raw);
   const oldName = actionToOldName[parsed.action];
-  const { workspaceId: ws, ...rest } = parsed as Record<string, unknown>;
-  const args = ws ? { ...rest, workspaceId: ws } : rest;
-  return handleCampaignTool(oldName, args as Record<string, unknown>, ctx);
+  const { workspaceId: ws, ...rest } = parsed;
+  const args: Record<string, unknown> = ws ? { ...rest, workspaceId: ws } : rest;
+  return handleCampaignTool(oldName, args, ctx);
 }

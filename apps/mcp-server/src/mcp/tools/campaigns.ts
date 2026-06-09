@@ -86,12 +86,11 @@ const CampaignListArgsSchema = z.object({
 });
 
 async function resolveStore(ctx: ToolContext, workspaceId?: string): Promise<FullStorage> {
-  const storage = workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
-  const full = storage as FullStorage;
-  if (typeof full.createCampaign !== "function") {
+  const store = workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
+  if (typeof store.createCampaign !== "function") {
     throw new Error("Campaign operations not supported by this storage backend");
   }
-  return full;
+  return store;
 }
 
 export const campaignToolDefinitions: Tool[] = [

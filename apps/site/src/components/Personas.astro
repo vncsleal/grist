@@ -1,38 +1,32 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+---
 <section class="section" id="who-its-for" aria-labelledby="who-heading">
   <div class="container">
-    <p class="label reveal">Who it's for</p>
+    <p class="label reveal">{t('personas.label')}</p>
     <h2 class="section-h2 reveal reveal-delay-1" id="who-heading">
-      Built for people who create content<br /><em>alongside everything else.</em>
+      {t('personas.heading')}<br /><em>{t('personas.heading-em')}</em>
     </h2>
 
     <div class="personas">
       <div class="persona reveal">
-        <h3 class="persona-name">Freelance Copywriter</h3>
-        <p class="persona-desc">
-          Multiple clients, each with their own voice. One workspace per client.
-          Separate briefs, drafts in the right tone.
-        </p>
+        <h3 class="persona-name">{t('personas.copywriter-name')}</h3>
+        <p class="persona-desc">{t('personas.copywriter-desc')}</p>
       </div>
       <div class="persona reveal reveal-delay-1">
-        <h3 class="persona-name">Business Owner</h3>
-        <p class="persona-desc">
-          You know your market cold, but posting consistently? There's never time.
-          Quillby keeps your brand visible without the grind.
-        </p>
+        <h3 class="persona-name">{t('personas.entrepreneur-name')}</h3>
+        <p class="persona-desc">{t('personas.entrepreneur-desc')}</p>
       </div>
       <div class="persona reveal">
-        <h3 class="persona-name">Marketing Professional</h3>
-        <p class="persona-desc">
-          Track competitors, surface trends, spot case studies.
-          Turn all of it into content your audience actually reads.
-        </p>
+        <h3 class="persona-name">{t('personas.marketer-name')}</h3>
+        <p class="persona-desc">{t('personas.marketer-desc')}</p>
       </div>
       <div class="persona reveal reveal-delay-1">
-        <h3 class="persona-name">Niche Specialist</h3>
-        <p class="persona-desc">
-          Law, finance, health, education, tech. Any field where
-          consistent content builds authority — and silence erodes it.
-        </p>
+        <h3 class="persona-name">{t('personas.niche-name')}</h3>
+        <p class="persona-desc">{t('personas.niche-desc')}</p>
       </div>
     </div>
   </div>

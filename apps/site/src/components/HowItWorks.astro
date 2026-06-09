@@ -1,7 +1,13 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+---
 <section class="section" id="how-it-works" aria-labelledby="how-heading">
   <div class="container">
-    <p class="label reveal">How it works</p>
-    <h2 class="section-h2 reveal reveal-delay-1" id="how-heading">Three conversations. Done.</h2>
+    <p class="label reveal">{t('how.label')}</p>
+    <h2 class="section-h2 reveal reveal-delay-1" id="how-heading">{t('how.heading')}</h2>
 
     <div class="steps">
       <div class="step reveal">
@@ -10,19 +16,16 @@
           <div class="step-line"></div>
         </div>
         <div class="step-body">
-          <h3 class="step-h3">Install &amp; configure</h3>
-          <p class="step-p">
-            Double-click the installer, restart Claude. It asks about your niche
-            and tone. You answer once.
-          </p>
+          <h3 class="step-h3">{t('how.step-1-title')}</h3>
+          <p class="step-p">{t('how.step-1-desc')}</p>
           <div class="chat">
             <div class="chat-row chat-user">
-              <span class="chat-who">You</span>
-              <p class="chat-bubble">Set me up as a content creator for the marketing space.</p>
+              <span class="chat-who">{t('how.step-1-user')}</span>
+              <p class="chat-bubble">{t('how.step-1-user-text')}</p>
             </div>
             <div class="chat-row chat-ai">
               <span class="chat-who">Quillby</span>
-              <p class="chat-bubble">Got it. I'll track marketing news, ad trends, and brand case studies. What platforms do you post on?</p>
+              <p class="chat-bubble">{t('how.step-1-ai-text')}</p>
             </div>
           </div>
         </div>
@@ -34,19 +37,16 @@
           <div class="step-line"></div>
         </div>
         <div class="step-body">
-          <h3 class="step-h3">Get your daily brief</h3>
-          <p class="step-p">
-            Every morning, a curated summary of what's relevant to your niche.
-            Scan it in two minutes.
-          </p>
+          <h3 class="step-h3">{t('how.step-2-title')}</h3>
+          <p class="step-p">{t('how.step-2-desc')}</p>
           <div class="chat">
             <div class="chat-row chat-user">
-              <span class="chat-who">You</span>
-              <p class="chat-bubble">Give me today's brief.</p>
+              <span class="chat-who">{t('how.step-2-user')}</span>
+              <p class="chat-bubble">{t('how.step-2-user-text')}</p>
             </div>
             <div class="chat-row chat-ai">
               <span class="chat-who">Quillby</span>
-              <p class="chat-bubble">Here's what's trending in marketing today: LinkedIn's algorithm update favors long-form posts, a major brand study on short-form video ROI, and three competitor campaigns worth noting…</p>
+              <p class="chat-bubble">{t('how.step-2-ai-text')}</p>
             </div>
           </div>
         </div>
@@ -58,19 +58,16 @@
           <div class="step-line"></div>
         </div>
         <div class="step-body">
-          <h3 class="step-h3">Draft in your voice</h3>
-          <p class="step-p">
-            Pick a story, ask for the post. Quillby writes a publish-ready draft
-            based on the real article, in your established voice.
-          </p>
+          <h3 class="step-h3">{t('how.step-3-title')}</h3>
+          <p class="step-p">{t('how.step-3-desc')}</p>
           <div class="chat">
             <div class="chat-row chat-user">
-              <span class="chat-who">You</span>
-              <p class="chat-bubble">Write a LinkedIn post about the algorithm update.</p>
+              <span class="chat-who">{t('how.step-3-user')}</span>
+              <p class="chat-bubble">{t('how.step-3-user-text')}</p>
             </div>
             <div class="chat-row chat-ai">
               <span class="chat-who">Quillby</span>
-              <p class="chat-bubble">Draft ready &mdash; 180 words, strong opening hook, practical advice, ends with a question to drive comments. Want me to adjust the tone?</p>
+              <p class="chat-bubble">{t('how.step-3-ai-text')}</p>
             </div>
           </div>
         </div>

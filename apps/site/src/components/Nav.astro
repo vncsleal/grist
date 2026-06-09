@@ -1,17 +1,24 @@
 ---
-const { lang = "en" } = Astro.props as { lang?: string };
+import { useTranslations, getLangFromUrl } from '../i18n/utils';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { type Lang, languages, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+
 const links = [
-  { href: "/#how-it-works", label: "How it works" },
-  { href: "/#capabilities", label: "Capabilities" },
-  { href: "/#who-its-for", label: "Who it's for" },
-  { href: "/docs", label: "Docs" },
-  { href: "https://github.com/vncsleal/quillby", label: "GitHub", external: true },
+  { href: getRelativeLocaleUrl(lang, '#how-it-works'), label: t('nav.how-it-works') },
+  { href: getRelativeLocaleUrl(lang, '#capabilities'), label: t('nav.capabilities') },
+  { href: getRelativeLocaleUrl(lang, '#who-its-for'), label: t('nav.who-its-for') },
+  { href: 'https://github.com/vncsleal/quillby', label: t('nav.github'), external: true },
 ];
-const toggleHref = lang === "pt" ? "/" : "/pt-br/";
-const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
+
+const otherLangs = Object.keys(languages).filter(l => l !== lang);
+const otherLang = otherLangs[0] ?? defaultLang;
+const toggleHref = getRelativeLocaleUrl(otherLang, '');
+const toggleLabel = t('nav.lang-label');
 ---
 <nav class="site-nav">
-  <a href="/" class="nav-logo" aria-label="Quillby home">
+  <a href={getRelativeLocaleUrl(lang, '')} class="nav-logo" aria-label="Quillby home">
     <img src="/favicon.png" alt="" class="nav-logo-icon" />
     <span class="nav-logo-name">Quillby</span>
   </a>
@@ -31,11 +38,11 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
       <a href={toggleHref} class="nav-lang">{toggleLabel}</a>
     </li>
     <li>
-      <a href="/#install" class="nav-cta">Install free</a>
+      <a href={getRelativeLocaleUrl(lang, '#install')} class="nav-cta">{t('nav.install-free')}</a>
     </li>
   </ul>
-  <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" data-nav-toggle>
-    <span class="sr-only">Menu</span>
+  <button class="nav-toggle" aria-label={t('nav.menu-toggle')} aria-expanded="false" data-nav-toggle>
+    <span class="sr-only">{t('nav.menu-label')}</span>
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <rect y="4" width="20" height="1.5" rx="0.75" fill="currentColor"/>
       <rect y="9.25" width="20" height="1.5" rx="0.75" fill="currentColor"/>
@@ -43,8 +50,6 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
     </svg>
   </button>
 </nav>
-
-
 
 <style>
   .sr-only {
@@ -62,7 +67,6 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
     display: flex;
     align-items: center;
     justify-content: space-between;
-    isolation: isolate;
   }
 
   .site-nav::after {
@@ -72,11 +76,9 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
     background: rgba(249, 247, 244, 0.85);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid transparent;
     z-index: -1;
   }
 
-  /* Logo */
   .nav-logo {
     display: flex;
     align-items: center;
@@ -97,7 +99,6 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
     letter-spacing: -0.01em;
   }
 
-  /* Links */
   .nav-links {
     display: flex;
     align-items: center;
@@ -123,7 +124,6 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
     background: var(--bg-subtle);
   }
 
-  /* CTA pill */
   .nav-cta {
     background: var(--accent) !important;
     color: #fff !important;
@@ -150,7 +150,6 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
 
   .nav-lang:hover { color: var(--text) !important; background: transparent !important; }
 
-  /* Hamburger */
   .nav-toggle {
     display: none;
     background: none;
@@ -163,7 +162,6 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
   }
   .nav-toggle:hover { background: var(--bg-subtle); }
 
-  /* Mobile */
   @media (max-width: 680px) {
     .nav-links {
       display: none;
@@ -206,7 +204,6 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
 </style>
 
 <script>
-  // Mobile toggle
   const toggle = document.querySelector('[data-nav-toggle]') as HTMLButtonElement | null;
   const nav = document.querySelector('.site-nav');
   if (toggle && nav) {
@@ -220,19 +217,5 @@ const toggleLabel = lang === "pt" ? "EN" : "PT-BR";
         toggle.setAttribute('aria-expanded', 'false');
       }
     });
-  }
-
-  // Scroll border reveal
-  if (nav) {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        nav.classList.toggle('scrolled', !entry.isIntersecting);
-      },
-      { rootMargin: '-56px 0px 0px 0px' }
-    );
-    const sentinel = document.createElement('div');
-    sentinel.style.cssText = 'position:absolute;top:0;height:1px;width:1px;pointer-events:none';
-    document.body.prepend(sentinel);
-    observer.observe(sentinel);
   }
 </script>

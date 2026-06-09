@@ -24,8 +24,10 @@ function readVersion(): string {
         return JSON.parse(fs.readFileSync(p, "utf-8")).version;
       }
     } catch (err) {
-      const e = err as NodeJS.ErrnoException;
-      if (e.code !== "ENOENT") throw err;
+      if (err instanceof Error && "code" in err) {
+        const e = err as Error & { code?: string };
+        if (e.code !== "ENOENT") throw err;
+      }
     }
   }
   return "0.0.0";

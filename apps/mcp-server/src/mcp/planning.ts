@@ -41,7 +41,7 @@ export async function handlePlanList(
   const parsed = PlanListArgsSchema.parse(args);
   const plans = await storage.listPlans(parsed.status);
   return {
-    content: [{ type: "text" as const, text: `${plans.length} plan(s).${(plans as Array<Record<string, unknown>>).slice(0, 5).map(p => `\n  ${p.id}: ${p.name} [${p.status}]`).join("")}${plans.length > 5 ? `\n  ... +${plans.length - 5} more` : ""}` }],
+    content: [{ type: "text" as const, text: `${plans.length} plan(s).${plans.slice(0, 5).map(p => `\n  ${p.id}: ${p.name} [${p.status}]`).join("")}${plans.length > 5 ? `\n  ... +${plans.length - 5} more` : ""}` }],
     structuredContent: { count: plans.length, plans },
   };
 }
@@ -52,7 +52,7 @@ export async function handlePlanToday(
 ) {
   const tasks = await storage.getTodayQueue();
   return {
-    content: [{ type: "text" as const, text: `${tasks.length} task(s) for today.${(tasks as Array<Record<string, unknown>>).slice(0, 5).map(t => `\n  [${t.priority ?? "?"}] ${t.title} (${t.status ?? "?"})${t.platform ? ` — ${t.platform}` : ""}`).join("")}${tasks.length > 5 ? `\n  ... +${tasks.length - 5} more` : ""}` }],
+    content: [{ type: "text" as const, text: `${tasks.length} task(s) for today.${tasks.slice(0, 5).map(t => `\n  [${t.priority ?? "?"}] ${t.title} (${t.status ?? "?"})${t.platform ? ` — ${t.platform}` : ""}`).join("")}${tasks.length > 5 ? `\n  ... +${tasks.length - 5} more` : ""}` }],
     structuredContent: { count: tasks.length, tasks },
   };
 }
@@ -93,7 +93,7 @@ export async function handleTaskMove(
   await storage.updateTask(parsed.taskId, { status: parsed.status });
   const task = await storage.loadTask(parsed.taskId);
   return {
-    content: [{ type: "text" as const, text: `Task ${parsed.taskId} moved to "${parsed.status}". Title: ${(task as Record<string, unknown>).title ?? "unknown"}.` }],
+    content: [{ type: "text" as const, text: `Task ${parsed.taskId} moved to "${parsed.status}". Title: ${task?.title ?? "unknown"}.` }],
     structuredContent: { taskId: parsed.taskId, status: parsed.status, task },
   };
 }
@@ -117,7 +117,7 @@ export async function handleCalendar(
   const parsed = CalendarArgsSchema.parse(args);
   const entries = (await storage.getCalendar(parsed.dateStart, parsed.dateEnd)) ?? [];
   return {
-    content: [{ type: "text" as const, text: `Calendar from ${parsed.dateStart} to ${parsed.dateEnd}: ${entries.length} entr${entries.length === 1 ? "y" : "ies"}.${(entries as Array<Record<string, unknown>>).slice(0, 10).map(e => `\n  ${e.date ?? "?"}: ${e.title ?? "?"}`).join("")}${entries.length > 10 ? `\n  ... +${entries.length - 10} more` : ""}` }],
+    content: [{ type: "text" as const, text: `Calendar from ${parsed.dateStart} to ${parsed.dateEnd}: ${entries.length} entr${entries.length === 1 ? "y" : "ies"}.${entries.slice(0, 10).map(e => `\n  ${e.date ?? "?"}: ${e.tasks.map(t => t.taskId).join(", ") || "?"}`).join("")}${entries.length > 10 ? `\n  ... +${entries.length - 10} more` : ""}` }],
     structuredContent: { dateStart: parsed.dateStart, dateEnd: parsed.dateEnd, entries },
   };
 }

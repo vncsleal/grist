@@ -1,19 +1,25 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+---
 <section class="hero" aria-labelledby="hero-heading">
   <div class="hero-inner">
     <div class="hero-text">
       <h1 class="hero-h1 reveal reveal-delay-1" id="hero-heading">
-        You read the brief.<br />
-        <em>It writes the post.</em>
+        {t('hero.title')}<br />
+        <em>{t('hero.title-em')}</em>
       </h1>
       <p class="hero-sub reveal reveal-delay-2">
-        Quillby scans the internet for what matters in your niche,
-        delivers a daily brief, and writes publish-ready drafts in your voice.
+        {t('hero.sub')}
       </p>
       <div class="hero-actions reveal reveal-delay-3">
-        <a href="#install" class="btn btn-primary">Install free</a>
-        <a href="#how-it-works" class="btn btn-ghost">See how it works</a>
+        <a href={getRelativeLocaleUrl(lang, '#install')} class="btn btn-primary">{t('hero.cta')}</a>
+        <a href={getRelativeLocaleUrl(lang, '#how-it-works')} class="btn btn-ghost">{t('hero.ghost')}</a>
       </div>
-      <p class="hero-note reveal reveal-delay-4">Free &middot; Local &middot; Works with Claude Desktop</p>
+      <p class="hero-note reveal reveal-delay-4">{t('hero.note')}</p>
     </div>
 
     <div class="hero-visual reveal reveal-delay-2">

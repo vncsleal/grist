@@ -43,11 +43,10 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
   if (!handler) {
     return { content: [{ type: "text", text: `Unknown planning action: ${action}` }], isError: true };
   }
-  const storage = await resolvePlanStorage(ctx, (parsed as Record<string, unknown>).workspaceId as string | undefined);
-  return handler(storage, parsed as Record<string, unknown>);
+  const storage = await resolvePlanStorage(ctx, parsed.workspaceId);
+  return handler(storage, parsed);
 }
 
 async function resolvePlanStorage(ctx: ToolContext, workspaceId?: string): Promise<FullStorage> {
-  const storage = workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
-  return storage as FullStorage;
+  return workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
 }

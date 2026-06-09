@@ -1,34 +1,28 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+---
 <section class="section" id="campaigns" aria-labelledby="camp-heading">
   <div class="container">
-    <p class="label reveal">Campaigns &amp; planning</p>
+    <p class="label reveal">{t('camp.label')}</p>
     <h2 class="section-h2 reveal reveal-delay-1" id="camp-heading">
-      One post is easy.<br /><em>A month of them needs a plan.</em>
+      {t('camp.heading')}<br /><em>{t('camp.heading-em')}</em>
     </h2>
 
     <div class="camp-grid reveal reveal-delay-2">
       <div class="camp-col">
-        <h3 class="camp-h3">Campaigns</h3>
-        <p class="camp-p">
-          Design multi-stage campaigns with automatic handoffs between stages.
-          Save and reuse successful campaign structures as templates.
-          Quillby moves through each stage automatically — you review the results.
-        </p>
+        <h3 class="camp-h3">{t('camp.campaigns-title')}</h3>
+        <p class="camp-p">{t('camp.campaigns-desc')}</p>
       </div>
       <div class="camp-col">
-        <h3 class="camp-h3">Task board</h3>
-        <p class="camp-p">
-          See what's queued, in progress, and completed — all inside Claude.
-          Every campaign stage creates tasks automatically.
-          Drag and drop to reprioritize.
-        </p>
+        <h3 class="camp-h3">{t('camp.board-title')}</h3>
+        <p class="camp-p">{t('camp.board-desc')}</p>
       </div>
       <div class="camp-col">
-        <h3 class="camp-h3">Content calendar</h3>
-        <p class="camp-p">
-          A weekly view of your upcoming posts, briefs, and deadlines.
-          The today queue shows what needs your attention right now.
-          Never lose track of what's publishing next.
-        </p>
+        <h3 class="camp-h3">{t('camp.calendar-title')}</h3>
+        <p class="camp-p">{t('camp.calendar-desc')}</p>
       </div>
     </div>
   </div>

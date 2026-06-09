@@ -9,7 +9,7 @@ export type { SampleResult };
 export type FullStorage = WorkspaceStorage & JobStorage & PlanStorage & SessionStore & CampaignStore;
 
 export function resolveWorkspaceStorage(storage: FullStorage, args: { workspaceId?: string }): Promise<FullStorage> {
-  return args.workspaceId ? storage.withWorkspace(args.workspaceId) as Promise<FullStorage> : Promise.resolve(storage);
+  return args.workspaceId ? storage.withWorkspace(args.workspaceId) : Promise.resolve(storage);
 }
 
 export interface ToolContext {

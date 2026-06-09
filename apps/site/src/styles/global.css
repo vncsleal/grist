@@ -31,7 +31,7 @@
   --faint:     #b5a89a;
   --inverse:   #faf8f5;
 
-  /* Type */
+  /* Type aliases (consumed as var(--sans/--serif/--mono) across components) */
   --serif: 'Fraunces Variable', ui-serif, Georgia, serif;
   --sans:  'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --mono:  'JetBrains Mono', 'SF Mono', monospace;

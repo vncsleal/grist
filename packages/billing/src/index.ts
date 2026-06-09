@@ -197,12 +197,14 @@ export async function applyStripeWebhookEvent(db: QuillbyDb, rawBody: string, si
     event.type === "customer.subscription.updated"
   ) {
     const eventObj = "object" in event.data ? event.data.object : undefined;
-    const obj = eventObj as unknown as Record<string, unknown> | undefined;
+    // ARD: Stripe webhook event type lacks index signature
+    const obj = eventObj as Record<string, unknown> | undefined;
     if (obj && typeof obj.subscription === "string") {
       const subscription = await getStripeClient().subscriptions.retrieve(obj.subscription);
       plan = resolvePlanFromSubscription(subscription);
       subscriptionMetadata = extractSubscriptionMetadata(subscription);
     } else if (obj && "items" in obj) {
+      // ARD: Stripe Event.data.object is untyped
       const sub = obj as unknown as Parameters<typeof resolvePlanFromSubscription>[0];
       plan = resolvePlanFromSubscription(sub);
       subscriptionMetadata = extractSubscriptionMetadata(sub);
