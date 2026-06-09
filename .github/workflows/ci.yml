@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_OPTIONS: --max-old-space-size=6144
+  NODE_OPTIONS: --max-old-space-size=7168
 
 permissions:
   contents: read
