@@ -11,7 +11,7 @@ No extra accounts. No API keys. Everything runs on your computer, inside Claude.
 ## What you need
 
 - **[Claude Desktop](https://claude.ai/download)** — the free desktop app from Anthropic (free tier works)
-- **[Node.js 20+](https://nodejs.org)** — a free one-time install (click the large **LTS** button on their site)
+- **[Node.js 22.12+](https://nodejs.org)** — a free one-time install (click the large **LTS** button on their site)
 
 ---
 
