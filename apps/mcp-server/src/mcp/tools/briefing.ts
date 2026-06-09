@@ -1,6 +1,9 @@
 import { z } from "zod";
 import type { ToolContext, ToolResult } from "./index.js";
-import type { UserContext, TypedMemory } from "@quillby/core";
+import type {
+  UserContext,
+  StructureCard,
+} from "@quillby/core";
 import { CardInputSchema } from "../../types.js";
 import { fetchArticles, preScoreArticles } from "../../agents/harvest.js";
 import { enrichArticle } from "../../extractors/content.js";
@@ -36,7 +39,8 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
           structuredContent: { error: "no_context" },
         };
       }
-      const userCtx = (await ctx.storage.loadContext()) as Record<string, unknown>;
+      // ARD: Non-null after contextExists() check
+      const userCtx = await ctx.storage.loadContext() as UserContext;
       const sources = await ctx.storage.loadSources();
       if (sources.length === 0) {
         return {
@@ -65,13 +69,13 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       const headlineList = slimArticles
         .map((a, i) => `${i}: ${a.title} — ${a.snippet ?? ""}`)
         .join("\n");
-      const topics = userCtx.topics as string[] | undefined;
-      const scorePrompt = `You are scoring news headlines for a ${userCtx.role as string} in ${(userCtx.industry as string) ?? "their industry"}.
+      const topics = userCtx.topics;
+      const scorePrompt = `You are scoring news headlines for a ${userCtx.role} in ${userCtx.industry ?? "their industry"}.
 
 User topics: ${topics?.join(", ") ?? ""}
-Audience: ${(userCtx.audienceDescription as string) ?? "general"}
-Goals: ${((userCtx.contentGoals as string[]) ?? []).join(", ")}
-Avoid: ${((userCtx.excludeTopics as string[]) ?? []).length ? ((userCtx.excludeTopics as string[]) ?? []).join(", ") : "nothing specified"}
+Audience: ${userCtx.audienceDescription ?? "general"}
+Goals: ${userCtx.contentGoals.join(", ")}
+Avoid: ${userCtx.excludeTopics.length ? userCtx.excludeTopics.join(", ") : "nothing specified"}
 
 Headlines (index: title — snippet):
 ${headlineList}
@@ -127,22 +131,18 @@ Return ONLY a JSON array of integers — the indices of the top ${topN} most rel
       log("Generating content cards via Sampling...");
       const typedMemory = await ctx.storage.loadTypedMemory();
       const voiceBlock =
-        typedMemory && (typedMemory as Record<string, unknown>).voiceExamples
-          ? `\n\nVoice examples — match this style, amplify the strongest quirks:\n${(
-              (typedMemory as Record<string, string[]>).voiceExamples ?? []
-            )
-              .map((e, i) => `[${i + 1}]\n${e}`)
-              .join("\n\n")}`
-          : `\n\nVoice: ${(userCtx.voice as string) ?? "direct and authentic"}`;
+        typedMemory.voiceExamples.length > 0
+          ? `\n\nVoice examples — match this style, amplify the strongest quirks:\n${typedMemory.voiceExamples.map((e, i) => `[${i + 1}]\n${e}`).join("\n\n")}`
+          : `\n\nVoice: ${userCtx.voice ?? "direct and authentic"}`;
       const articleBlobs = enriched
         .map(
           (a, i) =>
             `## Article ${i + 1}: ${a.title}\nURL: ${a.link}\n\n${a.content ?? a.snippet}`,
         )
         .join("\n\n---\n\n");
-      const cardPrompt = `You are a content strategist. Analyze these articles for a ${userCtx.role as string} in ${(userCtx.industry as string) ?? "their industry"}.
+      const cardPrompt = `You are a content strategist. Analyze these articles for a ${userCtx.role} in ${userCtx.industry ?? "their industry"}.
 
-${contextToPromptText(userCtx as UserContext, typedMemory as TypedMemory)}${voiceBlock}
+${contextToPromptText(userCtx, typedMemory)}${voiceBlock}
 
 ${articleBlobs}
 
@@ -196,7 +196,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
       try {
         const match = cardResult.text.match(/\[[\s\S]*\]/);
         if (!match) throw new Error("No JSON array in response");
-        rawBriefCards = JSON.parse(match[0]) as unknown[];
+        rawBriefCards = JSON.parse(match[0]);
       } catch {
         return {
           content: [
@@ -211,8 +211,8 @@ Return ONLY a valid JSON array of these objects, no prose.`;
 
       const briefCards = rawBriefCards.map((c) => CardInputSchema.parse(c));
       await ctx.storage.saveHarvestOutput(briefCards, seenUrls);
-      const savedBundle = (await ctx.storage.loadLatestHarvest()) as Record<string, unknown> | null;
-      const savedCards = (savedBundle?.cards ?? briefCards) as Array<Record<string, unknown>>;
+      const savedBundle = await ctx.storage.loadLatestHarvest();
+      const savedCards = savedBundle.cards;
       const briefResult = {
         date: new Date().toISOString().split("T")[0],
         feedsChecked: sources.length,
@@ -220,20 +220,20 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         deepRead: enriched.length,
         cardsGenerated: savedCards.length,
         brief: savedCards
-          .sort((a, b) => ((b.relevanceScore as number) ?? 0) - ((a.relevanceScore as number) ?? 0))
+          .sort((a, b) => b.relevanceScore - a.relevanceScore)
           .map((c) => ({
             id: c.id,
             score: c.relevanceScore,
             title: c.title,
             thesis: c.thesis,
-            topAngle: (c.angleOptions as string[] | undefined)?.[0] ?? null,
-            topHook: (c.hookOptions as string[] | undefined)?.[0] ?? null,
+            topAngle: c.angleOptions[0] ?? null,
+            topHook: c.hookOptions[0] ?? null,
             trendTags: c.trendTags,
           })),
       };
       return {
         content: [{ type: "text", text: `Briefing generated for ${briefResult.date}. Checked ${briefResult.feedsChecked} feed(s), ${briefResult.headlinesSeen} headline(s) seen, ${briefResult.deepRead} article(s) deep-read, ${briefResult.cardsGenerated} card(s) generated. Top card: "${briefResult.brief[0]?.title ?? "N/A"}" (score ${briefResult.brief[0]?.score ?? "N/A"}).` }],
-        structuredContent: briefResult as Record<string, unknown>,
+        structuredContent: briefResult,
       };
     }
 
@@ -264,21 +264,20 @@ Return ONLY a valid JSON array of these objects, no prose.`;
         storage.loadLatestHarvest(),
         storage.loadContext(),
       ]);
-      const bundleData = bundle as Record<string, unknown>;
-      const curation = (bundleData.curationState ?? {}) as Record<string, string>;
-      const cards = (bundleData.cards ?? []) as Array<Record<string, unknown>>;
+      const curation = bundle.curationState ?? {};
+      const cards = bundle.cards;
       const sorted = [...cards].sort(
-        (a, b) => ((b.relevanceScore as number) ?? 0) - ((a.relevanceScore as number) ?? 0),
+        (a, b) => b.relevanceScore - a.relevanceScore,
       );
 
-      const mapCard = (c: Record<string, unknown>) => ({
+      const mapCard = (c: StructureCard) => ({
         id: c.id,
         score: c.relevanceScore,
         title: c.title,
         source: c.source,
         thesis: c.thesis,
-        topAngle: (c.angleOptions as string[] | undefined)?.[0] ?? null,
-        topHook: (c.hookOptions as string[] | undefined)?.[0] ?? null,
+        topAngle: c.angleOptions[0] ?? null,
+        topHook: c.hookOptions[0] ?? null,
         trendTags: c.trendTags,
         curationStatus: curation[String(c.id)] ?? null,
       });
@@ -290,13 +289,13 @@ Return ONLY a valid JSON array of these objects, no prose.`;
       const briefing = {
         workspace: workspace.name,
         workspaceId: workspace.id,
-        generatedAt: bundleData.generatedAt,
+        generatedAt: bundle.generatedAt,
         totalCards: cards.length,
         profile: userCtx
           ? {
-              role: (userCtx as Record<string, unknown>).role,
-              industry: (userCtx as Record<string, unknown>).industry,
-              topics: (userCtx as Record<string, unknown>).topics,
+              role: userCtx.role,
+              industry: userCtx.industry,
+              topics: userCtx.topics,
             }
           : null,
         curationSummary: {
@@ -310,7 +309,7 @@ Return ONLY a valid JSON array of these objects, no prose.`;
       };
       return {
         content: [{ type: "text", text: `Briefing for "${briefing.workspace}" from ${briefing.generatedAt}: ${briefing.totalCards} card(s) total, ${briefing.curationSummary.shortlisted} shortlisted, ${briefing.curationSummary.skipped} skipped, ${briefing.curationSummary.uncurated} uncurated.` }],
-        structuredContent: briefing as Record<string, unknown>,
+        structuredContent: briefing,
       };
     }
   }

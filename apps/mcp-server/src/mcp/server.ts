@@ -1,6 +1,8 @@
 import "dotenv/config";
-import { slog, logInfo, logWarn, logError, logFatal } from "../logger.js";
+import { slog, logInfo, logWarn, logError } from "../logger.js";
+import { ConfigError } from "@quillby/core";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { getDeploymentMode } from "../config.js";
@@ -61,7 +63,7 @@ const SERVER_INFO = { name: "quillby-mcp", version: PKG.version } as const;
 
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
-  if (!value) { logFatal(`Missing required env: ${name}`); process.exit(1); }
+  if (!value) { throw new ConfigError(`Missing required env: ${name}`, { envName: name }); }
   return value;
 }
 
@@ -70,7 +72,7 @@ function validateEnv(): void {
   if (mode === "self-hosted" || mode === "cloud") {
     requireEnv("BETTER_AUTH_SECRET");
     const dbUrl = process.env.QUILLBY_AUTH_DB_URL?.trim() ?? "file:./quillby-auth.db";
-    if (!dbUrl.startsWith("file:") && !dbUrl.startsWith("libsql://")) { logFatal(`QUILLBY_AUTH_DB_URL must start with 'file:' or 'libsql://'`); process.exit(1); }
+    if (!dbUrl.startsWith("file:") && !dbUrl.startsWith("libsql://")) { throw new ConfigError(`QUILLBY_AUTH_DB_URL must start with 'file:' or 'libsql://'`, { dbUrl }); }
   }
 }
 
@@ -167,7 +169,7 @@ function registerMcpHandlers(server: McpServer, storage: FullStorage, isCloudMod
     tools: TOOLS.map(t => ({
       name: t.name,
       description: t.description,
-      inputSchema: zodToJsonSchema(t.inputSchema as never) as Record<string, unknown>,
+      inputSchema: zodToJsonSchema(t.inputSchema as z.ZodTypeAny) as Record<string, unknown>,
     })),
   }));
   server.server.setRequestHandler(CallToolRequestSchema, async (req) => handleToolCall(server, storage, req.params.name, (req.params.arguments ?? {}) as Record<string, unknown>));

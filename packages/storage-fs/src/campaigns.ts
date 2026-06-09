@@ -8,6 +8,8 @@ import {
   type CampaignStatus,
 } from "@quillby/content";
 import { getCurrentWorkspaceId, getWorkspacePaths } from "@quillby/workspace";
+import { NotFoundError } from "@quillby/core";
+import { logWarn } from "./log.js";
 
 function campaignsDir(workspaceId?: string): string {
   const wsId = workspaceId ?? getCurrentWorkspaceId();
@@ -31,6 +33,7 @@ function readCampaigns(workspaceId?: string): Campaign[] {
       try {
         return CampaignSchema.parse(JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")));
       } catch {
+        logWarn("Corrupted campaign file, skipping", { file: f });
         return null;
       }
     })
@@ -63,6 +66,7 @@ export function loadCampaign(campaignId: string, workspaceId?: string): Campaign
   try {
     return CampaignSchema.parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
+    logWarn("Corrupted campaign file, returning null", { campaignId });
     return null;
   }
 }
@@ -74,7 +78,7 @@ export function listCampaigns(status?: CampaignStatus, workspaceId?: string): Ca
 
 export function updateCampaign(campaignId: string, patch: Partial<Campaign>, workspaceId?: string): void {
   const existing = loadCampaign(campaignId, workspaceId);
-  if (!existing) throw new Error(`Campaign "${campaignId}" not found.`);
+  if (!existing) throw new NotFoundError(`Campaign "${campaignId}" not found.`, { campaignId });
   const updated = CampaignSchema.parse({
     ...existing,
     ...patch,
@@ -99,6 +103,7 @@ export function loadBlueprint(blueprintId: string, workspaceId?: string): Bluepr
   try {
     return BlueprintSchema.parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
+    logWarn("Corrupted blueprint file, returning null", { blueprintId });
     return null;
   }
 }

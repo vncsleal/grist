@@ -5,6 +5,7 @@ import {
   WorkspaceMetadataSchema,
   CardInputSchema,
   GenerationJobSchema,
+  QuillbyError,
   type UserContext,
   type TypedMemory,
   type HarvestBundle,
@@ -24,6 +25,9 @@ import {
   type ContentTask,
   type CalendarEntry,
   type Session,
+  type Campaign,
+  type CampaignStatus,
+  type Blueprint,
 } from "@quillby/content";
 import {
   DEFAULT_WORKSPACE_ID,
@@ -34,6 +38,7 @@ import {
   type JobStorage,
   type PlanStorage,
   type SessionStore,
+  type CampaignStore,
 } from "@quillby/workspace";
 import { db as defaultDb, createDb, type QuillbyDb } from "@quillby/database";
 import {
@@ -107,7 +112,7 @@ function decryptPiiValue(encrypted: string): string | null {
 // All data is partitioned by userId — each user's workspaces, context, memory,
 // sources, harvests, and drafts are completely isolated in the shared DB.
 
-export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, PlanStorage, SessionStore {
+export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, PlanStorage, SessionStore, CampaignStore {
   private initPromise: Promise<void> | null = null;
   /** Set by withWorkspace() to override the active workspace without mutating DB state. */
   _workspaceIdOverride?: string;
@@ -511,7 +516,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
       .where(and(eq(hostedWorkspaceSources.userId, this._effectiveUserId), eq(hostedWorkspaceSources.workspaceId, currentId)))
       .limit(1);
     if (rows.length === 0) return [];
-    try { return JSON.parse(rows[0].urls) as string[]; } catch (e) {
+    try { const raw = JSON.parse(rows[0].urls); return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string") : []; } catch (e) {
       process.stderr.write(`[quillby] Corrupt stored data in hostedWorkspaceSources: ${e}\n`);
       return [];
     }
@@ -573,7 +578,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
       .where(and(eq(hostedWorkspaceSeenUrls.userId, this._effectiveUserId), eq(hostedWorkspaceSeenUrls.workspaceId, currentId)))
       .limit(1);
     if (rows.length === 0) return new Set();
-    try { return new Set(JSON.parse(rows[0].urls) as string[]); } catch (e) {
+    try { const raw = JSON.parse(rows[0].urls); return new Set(Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string") : []); } catch (e) {
       process.stderr.write(`[quillby] Corrupt stored data in hostedWorkspaceSeenUrls: ${e}\n`);
       return new Set();
     }
@@ -789,6 +794,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
       .where(and(eq(hostedWorkspaceJob.id, jobId), eq(hostedWorkspaceJob.userId, this._effectiveUserId)))
       .limit(1);
     if (rows.length === 0) return null;
+    // ARD: Circular type reference prevents direct typing
     return this.rowToJob(rows[0] as Parameters<typeof this.rowToJob>[0]);
   }
 
@@ -805,6 +811,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
       .from(hostedWorkspaceJob)
       .where(and(...conditions))
       .orderBy(desc(hostedWorkspaceJob.createdAt));
+    // ARD: Circular type reference prevents direct typing
     return rows.map((r) => this.rowToJob(r as Parameters<typeof this.rowToJob>[0]));
   }
 
@@ -843,7 +850,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
     return rows[0]?.count ?? 0;
   }
 
-  async withWorkspace(id: string): Promise<WorkspaceStorage> {
+  async withWorkspace(id: string): Promise<WorkspaceStorage & JobStorage & PlanStorage & SessionStore & CampaignStore> {
     await this.ensureInit();
     const owned = await this.workspaceExists(id);
     if (owned) {
@@ -925,7 +932,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
 
   private rowToPlan(r: typeof hostedPlan.$inferSelect): ContentPlan {
     let tags: string[] = [];
-    try { tags = JSON.parse(r.tags) as string[]; } catch { tags = []; /* Corrupted tags JSON — fall back to empty */ }
+    try { const raw = JSON.parse(r.tags); tags = Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string") : []; } catch { tags = []; /* Corrupted tags JSON — fall back to empty */ }
     return ContentPlanSchema.parse({
       id: r.id,
       name: r.name,
@@ -1301,6 +1308,36 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
         lt(hostedSession.lastActivityAt, cutoff),
       ));
     return rows.map((r) => this.rowToSession(r));
+  }
+
+  // ── CampaignStore stubs (campaigns not yet available in hosted mode) ─────
+
+  async createCampaign(_campaign: Campaign): Promise<void> {
+    throw new QuillbyError("HOSTED_ONLY", "Campaigns require local mode.");
+  }
+  async loadCampaign(_campaignId: string): Promise<Campaign | null> {
+    throw new QuillbyError("HOSTED_ONLY", "Campaigns require local mode.");
+  }
+  async listCampaigns(_status?: CampaignStatus): Promise<Campaign[]> {
+    throw new QuillbyError("HOSTED_ONLY", "Campaigns require local mode.");
+  }
+  async updateCampaign(_campaignId: string, _patch: Partial<Campaign>): Promise<void> {
+    throw new QuillbyError("HOSTED_ONLY", "Campaigns require local mode.");
+  }
+  async deleteCampaign(_campaignId: string): Promise<void> {
+    throw new QuillbyError("HOSTED_ONLY", "Campaigns require local mode.");
+  }
+  async saveBlueprint(_blueprint: Blueprint): Promise<void> {
+    throw new QuillbyError("HOSTED_ONLY", "Blueprints require local mode.");
+  }
+  async loadBlueprint(_blueprintId: string): Promise<Blueprint | null> {
+    throw new QuillbyError("HOSTED_ONLY", "Blueprints require local mode.");
+  }
+  async listBlueprints(): Promise<Blueprint[]> {
+    throw new QuillbyError("HOSTED_ONLY", "Blueprints require local mode.");
+  }
+  async deleteBlueprint(_blueprintId: string): Promise<void> {
+    throw new QuillbyError("HOSTED_ONLY", "Blueprints require local mode.");
   }
 }
 

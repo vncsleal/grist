@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ToolContext, ToolResult } from "./index.js";
-import type { UserContext, TypedMemory } from "@quillby/core";
+import type { UserContext, StructureCard, CurationStatus } from "@quillby/core";
 import { CardInputSchema } from "../../types.js";
 import { PLATFORM_GUIDES } from "../../agents/compose.js";
 import { contextToPromptText } from "../../agents/onboard.js";
@@ -49,12 +49,13 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
           structuredContent: { error: "no_harvest" },
         };
       }
-      const bundle = (await storage.loadLatestHarvest()) as Record<string, unknown>;
-      const cards = (bundle.cards ?? []) as Array<Record<string, unknown>>;
-      const curation = (bundle.curationState ?? {}) as Record<string, string>;
+      const bundle = await storage.loadLatestHarvest();
+      const cards = bundle.cards;
+      const curation = bundle.curationState ?? {};
       let filtered = cards;
-      if (parsed.minScore != null) {
-        filtered = filtered.filter((c) => (c.relevanceScore as number) >= parsed.minScore!);
+      const minScore = parsed.minScore;
+      if (minScore != null) {
+        filtered = filtered.filter((c) => c.relevanceScore >= minScore);
       }
       if (parsed.limit) filtered = filtered.slice(0, parsed.limit);
       const result = {
@@ -73,7 +74,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       };
       return {
         content: [{ type: "text", text: `Showing ${result.showing} of ${result.total} card(s) from ${result.generatedAt}.${result.cards.slice(0, 5).map(c => `\n  [${c.id}] ${c.title} (score ${c.relevanceScore})${c.curationStatus ? ` [${c.curationStatus}]` : ""}`).join("")}${result.cards.length > 5 ? `\n  ... +${result.cards.length - 5} more` : ""}` }],
-        structuredContent: result as Record<string, unknown>,
+        structuredContent: result,
       };
     }
 
@@ -87,8 +88,8 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
           structuredContent: { error: "no_harvest" },
         };
       }
-      const bundle = (await storage.loadLatestHarvest()) as Record<string, unknown>;
-      const cards = (bundle.cards ?? []) as Array<Record<string, unknown>>;
+      const bundle = await storage.loadLatestHarvest();
+      const cards = bundle.cards;
       const card = cards.find((c) => c.id === parsed.cardId);
       if (!card) {
         return {
@@ -102,8 +103,8 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
       return {
-        content: [{ type: "text", text: `Card #${(card as Record<string, unknown>).id}: "${(card as Record<string, unknown>).title}". Source: ${(card as Record<string, unknown>).source}. Score: ${(card as Record<string, unknown>).relevanceScore}. Thesis: ${(card as Record<string, unknown>).thesis}. Tags: ${((card as Record<string, unknown>).trendTags as string[] ?? []).join(", ")}.` }],
-        structuredContent: card as Record<string, unknown>,
+        content: [{ type: "text", text: `Card #${card.id}: "${card.title}". Source: ${card.source}. Score: ${card.relevanceScore}. Thesis: ${card.thesis}. Tags: ${card.trendTags.join(", ")}.` }],
+        structuredContent: card,
       };
     }
 
@@ -117,8 +118,8 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
           structuredContent: { error: "no_harvest" },
         };
       }
-      const bundle = (await storage.loadLatestHarvest()) as Record<string, unknown>;
-      const cards = (bundle.cards ?? []) as Array<Record<string, unknown>>;
+      const bundle = await storage.loadLatestHarvest();
+      const cards = bundle.cards;
       const card = cards.find((c) => c.id === parsed.cardId);
       if (!card) {
         return {
@@ -133,9 +134,10 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       }
       const key = String(parsed.cardId);
       if (parsed.status === "clear") {
-        const cleared = { ...((bundle.curationState ?? {}) as Record<string, string>) };
+        const cleared: Partial<Record<string, CurationStatus>> = { ...bundle.curationState };
         delete cleared[key];
-        await storage.saveCurationState(cleared as Record<string, "shortlisted" | "skipped">);
+        // ARD: Clear operation deletes a key from partial state
+        await storage.saveCurationState(cleared as Record<string, CurationStatus>);
       } else {
         const statusMap: Record<"shortlist" | "skip", "shortlisted" | "skipped"> = {
           shortlist: "shortlisted",
@@ -153,7 +155,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         content: [
           {
             type: "text",
-            text: `Card #${parsed.cardId} "${card.title as string}" — status set to ${newStatus}.`,
+            text: `Card #${parsed.cardId} "${card.title}" — status set to ${newStatus}.`,
           },
         ],
         structuredContent: { cardId: parsed.cardId, title: card.title, status: newStatus },
@@ -174,17 +176,18 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
       const samplingAvailable = !!(ctx.server.server.getClientCapabilities()?.sampling);
-      const bundle = (await ctx.storage.loadLatestHarvest()) as Record<string, unknown>;
-      const cards = (bundle.cards ?? []) as Array<Record<string, unknown>>;
-      const userCtx = (await ctx.storage.loadContext()) as Record<string, unknown>;
-      const platforms = (userCtx.platforms as string[] | undefined) ?? [];
+      const bundle = await ctx.storage.loadLatestHarvest();
+      const cards = bundle.cards;
+      // ARD: Non-null after contextExists() check
+      const userCtx = await ctx.storage.loadContext() as UserContext;
+      const platforms = userCtx.platforms;
       const genPlatform = parsed.platform ?? platforms[0] ?? "linkedin";
 
       let genCardId = parsed.cardId;
       if (genCardId == null) {
-        const curation = (bundle.curationState ?? {}) as Record<string, string>;
+        const curation = bundle.curationState ?? {};
         const sorted = [...cards].sort(
-          (a, b) => ((b.relevanceScore as number) ?? 0) - ((a.relevanceScore as number) ?? 0),
+          (a, b) => b.relevanceScore - a.relevanceScore,
         );
         const shortlisted = sorted.find((c) => curation[String(c.id)] === "shortlisted");
         const picked = shortlisted ?? sorted[0];
@@ -194,10 +197,10 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
             structuredContent: { error: "no_cards" },
           };
         }
-        genCardId = picked.id as number;
+        genCardId = picked.id;
       }
 
-      const genCard = cards.find((c) => c.id === genCardId);
+      const genCard = cards.find((c: StructureCard) => c.id === genCardId);
       if (!genCard) {
         return {
           content: [
@@ -224,16 +227,16 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
 
-      const chosenAngle = parsed.angle ?? (genCard.angleOptions as string[] | undefined)?.[0] ?? (genCard.thesis as string);
-      const voiceExamples = (typedMemory as Record<string, string[]> | null)?.voiceExamples ?? [];
+      const chosenAngle = parsed.angle ?? genCard.angleOptions[0] ?? genCard.thesis;
+      const voiceExamples = typedMemory.voiceExamples;
       const voiceBlock = voiceExamples.length
         ? `Voice examples — read these carefully. Match the register, rhythm, and vocabulary exactly. Oversteer on the strongest quirks:\n${voiceExamples.map((e, i) => `[${i + 1}]\n${e}`).join("\n\n")}`
-        : `Voice description: ${(userCtx.voice as string) ?? "direct and authentic"}`;
+        : `Voice description: ${userCtx.voice ?? "direct and authentic"}`;
 
-      const generatePrompt = `You are writing a ${genPlatform} post for ${(userCtx.name as string) ?? "a content creator"} — a ${userCtx.role as string} in ${(userCtx.industry as string) ?? "their industry"}.
+      const generatePrompt = `You are writing a ${genPlatform} post for ${userCtx.name ?? "a content creator"} — a ${userCtx.role} in ${userCtx.industry ?? "their industry"}.
 
 ## User profile
-${contextToPromptText(userCtx as UserContext, typedMemory as TypedMemory)
+${contextToPromptText(userCtx, typedMemory)
   .split("\n")
   .map((line) => `- ${line}`)
   .join("\n")}
@@ -241,13 +244,13 @@ ${contextToPromptText(userCtx as UserContext, typedMemory as TypedMemory)
 ## ${voiceBlock}
 
 ## Source card
-Title: ${genCard.title as string}
-Thesis: ${genCard.thesis as string}
+Title: ${genCard.title}
+Thesis: ${genCard.thesis}
 Angle to use: ${chosenAngle}
-Key insights: ${((genCard.keyInsights as string[]) ?? []).join(" | ")}
-Trend tags: ${((genCard.trendTags as string[]) ?? []).join(", ")}
-Transposability hint: ${(genCard.transposabilityHint as string) ?? ""}
-Hook options (pick the best or write a stronger one): ${((genCard.hookOptions as string[]) ?? []).join(" | ")}
+Key insights: ${genCard.keyInsights.join(" | ")}
+Trend tags: ${genCard.trendTags.join(", ")}
+Transposability hint: ${genCard.transposabilityHint ?? ""}
+Hook options (pick the best or write a stronger one): ${genCard.hookOptions.join(" | ")}
 
 ## Platform guide
 ${guide}

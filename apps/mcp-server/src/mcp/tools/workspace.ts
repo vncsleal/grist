@@ -1,9 +1,10 @@
 import { z } from "zod";
-import type { ToolContext, ToolResult, FullStorage } from "./index.js";
+import type { ToolContext, ToolResult } from "./index.js";
 import { UserContextSchema } from "../../types.js";
 import { SetCloneIdentityArgsSchema, CloneVoiceArgsSchema } from "../schemas.js";
 import { validateUrl, ElevenLabsAdapter } from "@quillby/providers";
 import { resolveElevenLabsApiKey } from "../../provider-config.js";
+import { ValidationError } from "@quillby/core";
 import { logWarn } from "../../logger.js";
 
 const Schema = z.discriminatedUnion("action", [
@@ -40,8 +41,8 @@ async function resolveStorage(parsed: z.infer<typeof Schema>, storage: ToolConte
   const workspaceId = "workspaceId" in parsed && typeof parsed.workspaceId === "string"
     ? parsed.workspaceId
     : undefined;
-  if (!workspaceId) return storage as FullStorage;
-  return storage.withWorkspace(workspaceId) as Promise<FullStorage>;
+  if (!workspaceId) return storage;
+  return storage.withWorkspace(workspaceId);
 }
 
 export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolResult> {
@@ -91,7 +92,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         activeStorage.loadSources(),
       ]);
       return {
-        content: [{ type: "text" as const, text: `Workspace: ${workspace.name} (${workspace.id}). Feeds: ${sources.length}. Memory: ${mem ? `${Object.keys(mem).length} type(s)` : "none"}. Context role: ${(ctxData as Record<string, unknown>)?.role ?? "not set"}, topics: ${((ctxData as Record<string, unknown>)?.topics as string[] ?? []).join(", ")}.` }],
+        content: [{ type: "text" as const, text: `Workspace: ${workspace.name} (${workspace.id}). Feeds: ${sources.length}. Memory: ${mem ? `${Object.keys(mem).length} type(s)` : "none"}. Context role: ${ctxData?.role ?? "not set"}, topics: ${(ctxData?.topics ?? []).join(", ")}.` }],
         structuredContent: { workspace, current: true, context: ctxData, memory: mem, feedCount: sources.length },
       };
     }
@@ -112,10 +113,10 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       if (!await activeStorage.contextExists()) {
         return { content: [{ type: "text" as const, text: "No context saved for this workspace yet. Start by setting up Quillby for it." }], structuredContent: { error: "no_context" } };
       }
-      const ctxData = (await activeStorage.loadContext()) as Record<string, unknown>;
+      const ctxData = (await activeStorage.loadContext())!;
       const getCtxWs = await activeStorage.getCurrentWorkspace();
       return {
-        content: [{ type: "text" as const, text: `Profile for workspace "${getCtxWs.name}": role=${(ctxData as Record<string, unknown>).role}, topics=${((ctxData as Record<string, unknown>).topics as string[]).join(", ")}, platforms=${((ctxData as Record<string, unknown>).platforms as string[]).join(", ")}.` }],
+        content: [{ type: "text" as const, text: `Profile for workspace "${getCtxWs.name}": role=${ctxData.role}, topics=${ctxData.topics.join(", ")}, platforms=${ctxData.platforms.join(", ")}.` }],
         structuredContent: { workspace: getCtxWs, context: ctxData },
       };
     }
@@ -128,14 +129,20 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         try {
           await validateUrl(faceReferenceImageUrl);
         } catch (err) {
-          throw new Error(`faceReferenceImageUrl validation failed: ${err instanceof Error ? err.message : "invalid URL"}`);
+          throw new ValidationError("faceReferenceImageUrl validation failed.", {
+            url: faceReferenceImageUrl,
+            cause: err instanceof Error ? err.message : String(err),
+          });
         }
       }
       if (voiceReferenceAudioUrl !== undefined) {
         try {
           await validateUrl(voiceReferenceAudioUrl);
         } catch (err) {
-          throw new Error(`voiceReferenceAudioUrl validation failed: ${err instanceof Error ? err.message : "invalid URL"}`);
+          throw new ValidationError("voiceReferenceAudioUrl validation failed.", {
+            url: voiceReferenceAudioUrl,
+            cause: err instanceof Error ? err.message : String(err),
+          });
         }
       }
 
@@ -161,12 +168,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
     case "clone_voice": {
       const activeStorage = await resolveStorage(parsed, storage);
       const { name: voiceName, overwrite } = parsed;
-      const workspace = await activeStorage.getCurrentWorkspace() as Record<string, unknown> & {
-        cloneConsentGranted?: boolean;
-        voiceReferenceAudioUrl?: string;
-        elevenlabsClonedVoiceId?: string;
-        name?: string;
-      };
+      const workspace = await activeStorage.getCurrentWorkspace();
 
       if (!workspace.cloneConsentGranted) {
         throw new Error("Clone consent must be granted before creating a voice clone. Call set_clone_identity first.");
@@ -212,10 +214,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
 
     case "delete_clone": {
       const activeStorage = await resolveStorage(parsed, storage);
-      const workspace = await activeStorage.getCurrentWorkspace() as Record<string, unknown> & {
-        elevenlabsClonedVoiceId?: string;
-        id?: string;
-      };
+      const workspace = await activeStorage.getCurrentWorkspace();
 
       if (!workspace.elevenlabsClonedVoiceId) {
         return {

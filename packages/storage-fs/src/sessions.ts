@@ -5,6 +5,8 @@ import {
   type Session,
 } from "@quillby/content";
 import { getCurrentWorkspaceId, getWorkspacePaths } from "@quillby/workspace";
+import { NotFoundError } from "@quillby/core";
+import { logWarn } from "./log.js";
 
 function sessionsDir(workspaceId?: string): string {
   const wsId = workspaceId ?? getCurrentWorkspaceId();
@@ -24,7 +26,7 @@ function readSessions(workspaceId?: string): Session[] {
       try {
         return SessionSchema.parse(JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")));
       } catch {
-        // Corrupted session file — skip it
+        logWarn("Corrupted session file, skipping", { file: f });
         return null;
       }
     })
@@ -53,7 +55,7 @@ export function listSessions(workspaceId?: string): Session[] {
 
 export function updateSession(sessionId: string, patch: Partial<Session>, workspaceId?: string): void {
   const existing = loadSession(sessionId, workspaceId);
-  if (!existing) throw new Error(`Session "${sessionId}" not found.`);
+  if (!existing) throw new NotFoundError(`Session "${sessionId}" not found.`, { sessionId });
   const updated = SessionSchema.parse({
     ...existing,
     ...patch,
@@ -64,7 +66,7 @@ export function updateSession(sessionId: string, patch: Partial<Session>, worksp
 
 export function closeSession(sessionId: string, workspaceId?: string): void {
   const existing = loadSession(sessionId, workspaceId);
-  if (!existing) throw new Error(`Session "${sessionId}" not found.`);
+  if (!existing) throw new NotFoundError(`Session "${sessionId}" not found.`, { sessionId });
   const now = new Date().toISOString();
   const closed = SessionSchema.parse({
     ...existing,
