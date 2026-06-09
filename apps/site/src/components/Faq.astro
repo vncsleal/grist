@@ -1,12 +1,12 @@
 ---
 import { useTranslations } from '../i18n/utils';
-import { type Lang, defaultLang } from '../i18n/ui';
+import { type Lang, defaultLang, ui } from '../i18n/ui';
 const { lang = defaultLang } = Astro.props as { lang?: Lang };
 const t = useTranslations(lang);
 
-const faqItems = Array.from({ length: 10 }, (_, i) => ({
-  q: t(`faq.q-${i + 1}` as const),
-  a: t(`faq.a-${i + 1}` as const),
+const faqItems: Array<{ q: string; a: string }> = Array.from({ length: 10 }, (_, i) => ({
+  q: t(`faq.q-${i + 1}` as string as keyof typeof ui[typeof defaultLang]),
+  a: t(`faq.a-${i + 1}` as string as keyof typeof ui[typeof defaultLang]),
 }));
 ---
 <section class="section section-sm" id="faq" aria-labelledby="faq-heading">

@@ -4,6 +4,11 @@ import Nav from '../../../components/Nav.astro';
 import Footer from '../../../components/Footer.astro';
 import { type Lang } from '../../../i18n/ui';
 
+type LegalEntry = {
+  frontmatter: { title: string; updated: string };
+  Content: (props?: Record<string, never>) => any;
+};
+
 export async function getStaticPaths() {
   const entries = Object.entries(import.meta.glob('/src/content/legal/*/*.md', { eager: true }));
   return entries.map(([path, mod]) => {
@@ -12,13 +17,13 @@ export async function getStaticPaths() {
     const slug = segments[1].replace('.md', '');
     return {
       params: { lang, slug },
-      props: { entry: mod as Record<string, unknown>, lang, slug },
+      props: { entry: mod as unknown as Record<string, unknown>, lang, slug },
     };
   });
 }
 
-const { entry, lang } = Astro.props as {
-  entry: { frontmatter: { title: string; updated: string }; Content: unknown };
+const { entry, lang } = Astro.props as unknown as {
+  entry: LegalEntry;
   lang: Lang;
 };
 const { Content } = entry;
