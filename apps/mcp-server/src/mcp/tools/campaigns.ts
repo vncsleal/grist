@@ -4,16 +4,26 @@ import type { ToolContext, ToolResult, FullStorage } from "./index.js";
 import {
   CampaignSchema,
   BlueprintSchema,
-  CampaignStatusSchema,
   StageConfigSchema,
   initialExecutionLogs,
   transitionStage,
   canRetryStage,
   type Campaign as CampaignType,
   type Blueprint as BlueprintType,
-  type CampaignStatus,
   type StageConfig,
 } from "@quillby/content";
+
+const CampaignStatusArgSchema = z.enum(["planning", "active", "paused", "completed", "failed"]);
+
+const StageConfigArgSchema = z.object({
+  name: z.string().min(1),
+  tool: z.string().min(1),
+  params: z.record(z.string(), z.unknown()).optional(),
+  dependsOn: z.array(z.string()).optional(),
+  condition: z.string().optional(),
+  retryCount: z.number().int().min(0).optional(),
+  timeout: z.number().int().optional(),
+});
 
 export const CAMPAIGN_TOOL_NAMES = new Set<string>([
   "campaign_create",
@@ -31,7 +41,7 @@ export const CAMPAIGN_TOOL_NAMES = new Set<string>([
 const CampaignCreateArgsSchema = z.object({
   name: z.string().min(1),
   blueprintId: z.string().optional(),
-  blueprint: z.array(StageConfigSchema).optional() as z.ZodType<StageConfig[] | undefined>,
+  blueprint: z.array(StageConfigArgSchema).optional(),
   workspaceId: z.string().optional(),
 });
 
@@ -73,7 +83,7 @@ const CampaignStageRetryArgsSchema = z.object({
 const CampaignBlueprintCreateArgsSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  stages: z.array(StageConfigSchema).min(1) as z.ZodType<StageConfig[]>,
+  stages: z.array(StageConfigArgSchema).min(1),
   tags: z.array(z.string()).optional(),
   workspaceId: z.string().optional(),
 });
@@ -83,9 +93,13 @@ const CampaignBlueprintListArgsSchema = z.object({
 });
 
 const CampaignListArgsSchema = z.object({
-  status: CampaignStatusSchema.optional() as z.ZodType<CampaignStatus | undefined>,
+  status: CampaignStatusArgSchema.optional(),
   workspaceId: z.string().optional(),
 });
+
+function parseStageConfigs(stages: z.infer<typeof StageConfigArgSchema>[]): StageConfig[] {
+  return stages.map((stage) => StageConfigSchema.parse(stage));
+}
 
 async function resolveStore(ctx: ToolContext, workspaceId?: string): Promise<FullStorage> {
   const store = workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
@@ -287,7 +301,7 @@ async function handleCreate(args: Record<string, unknown>, ctx: ToolContext): Pr
   const now = new Date().toISOString();
   const wsId = inputWorkspaceId || (await ctx.storage.getCurrentWorkspaceId());
 
-  let stages = blueprint;
+  let stages = blueprint ? parseStageConfigs(blueprint) : undefined;
   if (blueprintId) {
     const saved = await store.loadBlueprint(blueprintId);
     if (!saved) {
@@ -549,9 +563,10 @@ async function handleBlueprintCreate(args: Record<string, unknown>, ctx: ToolCon
     return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
   }
 
-  const { name, description, stages, tags, workspaceId } = parsed.data;
+  const { name, description, stages: stageInputs, tags, workspaceId } = parsed.data;
   const store = await resolveStore(ctx, workspaceId);
   const now = new Date().toISOString();
+  const stages = parseStageConfigs(stageInputs);
 
   const blueprint: BlueprintType = {
     id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,

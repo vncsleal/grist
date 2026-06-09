@@ -1,7 +1,7 @@
 /**
  * Integration tests for the MCP protocol layer (apps/mcp-server/src/mcp/server.ts).
  *
- * These tests spawn the compiled server binary over stdio and verify
+ * These tests spawn the compiled local server entrypoint over stdio and verify
  * that JSON-RPC requests return correct, spec-compliant responses.
  *
  * Prerequisites: `pnpm --filter @vncsleal/quillby build` must have been run before this suite.
@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../..");
-const SERVER_BIN = path.join(ROOT, "dist/mcp/server.js");
+const SERVER_BIN = path.join(ROOT, "dist/local/main.js");
 
 // ─── JSON-RPC client helper ────────────────────────────────────────────────────
 
@@ -158,8 +158,20 @@ describe("MCP tools/list", () => {
     tools = (res.result as { tools: typeof tools }).tools;
   });
 
-  it("returns more than 30 tools", () => {
-    expect(tools.length).toBeGreaterThan(30);
+  it("returns the consolidated local tools", () => {
+    expect(tools.map((tool) => tool.name)).toEqual([
+      "session",
+      "drafts",
+      "memory",
+      "feeds",
+      "workspace",
+      "briefing",
+      "cards",
+      "campaign",
+      "planning",
+      "generate",
+      "server",
+    ]);
   });
 
   it("every tool has a non-empty description", () => {

@@ -23,8 +23,8 @@
 
 import "dotenv/config";
 import { AuthApi, parseRateLimit, listApiKeysFromDb, deleteApiKeyFromDb } from "@quillby/auth";
-import { auth } from "../src/auth.js";
-import { db, apikey as apikeyTable } from "../src/db.js";
+import { auth } from "../../apps/mcp-server/src/auth.js";
+import { db, apikey as apikeyTable } from "../../apps/mcp-server/src/db.js";
 
 const authApi = new AuthApi(auth);
 

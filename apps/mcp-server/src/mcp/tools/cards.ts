@@ -1,17 +1,38 @@
 import { z } from "zod";
 import type { ToolContext, ToolResult } from "./index.js";
-import type { UserContext, StructureCard, CurationStatus } from "@quillby/core";
+import type { UserContext, StructureCard, CurationStatus, CardInput } from "@quillby/core";
 import { CardInputSchema } from "../../types.js";
 import { PLATFORM_GUIDES } from "../../agents/compose.js";
 import { contextToPromptText } from "../../agents/onboard.js";
 
-const CardsSaveSchema = z.object({ action: z.literal("save"), cards: z.array(CardInputSchema), workspaceId: z.string().optional() });
+const CardInputArgSchema = z.object({
+  title: z.string(),
+  source: z.string(),
+  link: z.string(),
+  thesis: z.string(),
+  relevanceScore: z.number().min(0).max(10).optional(),
+  relevanceReason: z.string().optional(),
+  keyInsights: z.array(z.string()).optional(),
+  insightOptions: z.array(z.string()).optional(),
+  takeOptions: z.array(z.string()).optional(),
+  angleOptions: z.array(z.string()).optional(),
+  hookOptions: z.array(z.string()).optional(),
+  wireframeOptions: z.array(z.string()).optional(),
+  trendTags: z.array(z.string()).optional(),
+  transposabilityHint: z.string().optional(),
+});
+
+const CardsSaveSchema = z.object({ action: z.literal("save"), cards: z.array(CardInputArgSchema), workspaceId: z.string().optional() });
 const CardsListSchema = z.object({ action: z.literal("list"), workspaceId: z.string().optional(), limit: z.number().optional(), minScore: z.number().optional() });
 const CardsGetSchema = z.object({ action: z.literal("get"), cardId: z.number(), workspaceId: z.string().optional() });
 const CardsCurateSchema = z.object({ action: z.literal("curate"), cardId: z.number(), status: z.enum(["shortlist", "skip", "clear"]), workspaceId: z.string().optional() });
 const CardsGenerateSchema = z.object({ action: z.literal("generate_post"), cardId: z.number().optional(), platform: z.string().optional(), angle: z.string().optional() });
 
 const CardsSchema = z.discriminatedUnion("action", [CardsSaveSchema, CardsListSchema, CardsGetSchema, CardsCurateSchema, CardsGenerateSchema]);
+
+function parseCardInputs(cards: z.infer<typeof CardInputArgSchema>[]): CardInput[] {
+  return cards.map((card) => CardInputSchema.parse(card));
+}
 
 export const tool = {
   name: "cards" as const,
@@ -28,7 +49,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       const storage = parsed.workspaceId
         ? await ctx.storage.withWorkspace(parsed.workspaceId)
         : ctx.storage;
-      const cards = parsed.cards.map((c) => CardInputSchema.parse(c));
+      const cards = parseCardInputs(parsed.cards);
       if (cards.length === 0) {
         return { content: [{ type: "text", text: "No cards provided." }], structuredContent: { saved: 0 } };
       }

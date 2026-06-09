@@ -45,12 +45,12 @@
     "typecheck": "tsc --noEmit -p tsconfig.local.json",
     "test": "vitest run tests/unit",
     "test:unit": "vitest run tests/unit",
-    "test:integration": "pnpm run build && vitest run tests/integration",
-    "test:all": "pnpm run build && vitest run",
+    "test:integration": "pnpm run build && vitest run tests/integration/mcp-protocol.test.ts tests/integration/mcp-v2-smoke.test.ts",
+    "test:all": "pnpm run test:unit && pnpm run test:integration",
     "db:push": "drizzle-kit push --config drizzle.config.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config drizzle.config.ts",
-    "keys": "tsx ../../tooling/scripts/manage-keys.ts",
+    "keys": "tsx src/cli/keys.ts",
     "migrate": "tsx ../../tooling/scripts/migrate-local-to-hosted.ts"
   },
   "dependencies": {
@@ -82,7 +82,7 @@
     "nanostores": "1.1.0",
     "nodemailer": "8.0.9",
     "rss-parser": "3.13.0",
-    "zod": "3.24.0",
+    "zod": "3.25.76",
     "zod-to-json-schema": "3.25.1"
   },
   "devDependencies": {
