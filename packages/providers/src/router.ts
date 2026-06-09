@@ -69,24 +69,21 @@ export type ProviderRouterOptions = {
 };
 
 export class ProviderRouter {
-  constructor(private readonly opts: ProviderRouterOptions = {}) {}
+  constructor(private opts: ProviderRouterOptions = {}) {}
 
   /** Wire the Tier 1 MCP Sampling adapter after the client connection is established. */
   setTier1(adapter: ProviderAdapter): void {
-    // ARD: Private readonly opts field mutation in setter
-    (this.opts as ProviderRouterOptions).tier1 = adapter;
+    this.opts.tier1 = adapter;
   }
 
   /** Wire Tier 2 cloud adapters (typically called at startup in cloud mode). */
   setTier2(adapters: Partial<Record<GenerationModality, ProviderAdapter>>): void {
-    // ARD: Private readonly opts field mutation in setter
-    (this.opts as ProviderRouterOptions).tier2 = adapters;
+    this.opts.tier2 = adapters;
   }
 
   /** Wire Tier 3 direct adapters (local/self-hosted environment configuration). */
   setTier3(adapters: Partial<Record<GenerationModality, ProviderAdapter>>): void {
-    // ARD: Private readonly opts field mutation in setter
-    (this.opts as ProviderRouterOptions).tier3 = adapters;
+    this.opts.tier3 = adapters;
   }
 
   /**

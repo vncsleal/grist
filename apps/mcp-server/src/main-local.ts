@@ -7,6 +7,7 @@ import { storage } from "@quillby/storage-fs";
 import { CONFIG } from "@quillby/config";
 import { slog, logInfo, logWarn } from "./logger.js";
 import { createMcpServer, registerMcpHandlers, recoverOrphanedJobs, runScheduledHarvest, scheduleDaily, validateEnv, providerRouter } from "./mcp/server.js";
+import { seedActiveJobCounts } from "./mcp/tools/generate.js";
 
 async function main(): Promise<void> {
   validateEnv();
@@ -23,6 +24,12 @@ async function main(): Promise<void> {
   }
   const recovered = await recoverOrphanedJobs(storage);
   if (recovered > 0) logInfo("Recovered orphaned jobs", { count: recovered });
+
+  // Seed activeJobCounts from remaining running/queued jobs so recovered
+  // orphans count against the concurrency limit instead of bypassing it.
+  const jobs = await storage.listJobs();
+  seedActiveJobCounts(jobs);
+
   process.on("SIGTERM", () => { slog("info", "stdio_shutdown", { signal: "SIGTERM" }); server.close().catch((e) => logWarn("stdio_server_close_error", { error: String(e) })); });
   process.on("SIGINT", () => { slog("info", "stdio_shutdown", { signal: "SIGINT" }); server.close().catch((e) => logWarn("stdio_server_close_error", { error: String(e) })); });
   const sched = process.env.QUILLBY_SCHEDULE;

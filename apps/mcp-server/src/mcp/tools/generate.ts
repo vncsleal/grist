@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { ToolContext, ToolResult, FullStorage } from "./index.js";
-import type { GenerationModality, TypedMemory, WorkspaceMetadata } from "@quillby/core";
+import type { GenerationModality, GenerationJob, TypedMemory, WorkspaceMetadata } from "@quillby/core";
 import type { ProviderRouter } from "@quillby/providers";
 import { validateUrl, getProviderPolicyReport } from "@quillby/providers";
 import { refreshProviderRouter } from "../shared.js";
 import { getStoredProviderConfigSummary, saveProviderConfig, clearProviderConfig } from "../../provider-config.js";
-import { logWarn } from "../../logger.js";
+import { logWarn, logError } from "../../logger.js";
 
 const JOB_CONCURRENCY_LIMITS = {
   image: safeParseInt(process.env.QUILLBY_MAX_CONCURRENT_IMAGE, 5),
@@ -21,6 +21,23 @@ function safeParseInt(raw: string | undefined, fallback: number): number {
 }
 
 const activeJobCounts: Record<string, number> = {};
+
+/**
+ * Seed active job counts from persisted jobs (e.g. after server restart).
+ * Called after recoverOrphanedJobs to ensure recovered orphans count against
+ * the concurrency limit.
+ */
+export function seedActiveJobCounts(jobs: GenerationJob[]): void {
+  const counts: Record<string, number> = {};
+  for (const job of jobs) {
+    if (job.status === "running" || job.status === "queued") {
+      counts[job.modality] = (counts[job.modality] ?? 0) + 1;
+    }
+  }
+  for (const [modality, count] of Object.entries(counts)) {
+    activeJobCounts[modality] = count;
+  }
+}
 
 function guessMimeType(modality: GenerationModality, outputRef: string, meta?: string): string {
   try {
@@ -198,11 +215,23 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
 
+      // Fire-and-forget: run the generation job asynchronously.
+      // Errors are caught by the internal try/catch in runGenerationJob.
+      // The .catch() is a safety net for any unexpected synchronous errors
+      // that may escape before the try block (e.g. from property access).
       void runGenerationJob(genStorage, jobId, modality, prompt, memory, genWs, ctx.providerRouter, {
         aspectRatio,
         cloneVoice,
         cloneAvatar,
         drivingAudioUrl,
+      }).catch(async (err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        logError("Generation job failed unexpectedly", { jobId, error: msg });
+        try {
+          await genStorage.updateJob(jobId, { status: "failed", error: msg });
+        } catch {
+          // storage error is secondary to the original failure
+        }
       });
 
       return {
@@ -288,8 +317,11 @@ async function runGenerationJob(
     drivingAudioUrl?: string;
   }
 ): Promise<void> {
-  await jobStorage.updateJob(jobId, { status: "running" });
   try {
+    // Mark the job as running. If this throws, the catch block
+    // marks it as failed and the .catch() on the call site handles it.
+    // This ensures activeJobCounts is decremented in the finally block.
+    await jobStorage.updateJob(jobId, { status: "running" });
     const cloneVoice = options?.cloneVoice === true;
     const cloneAvatar = options?.cloneAvatar === true;
     const req = {

@@ -1,57 +1,22 @@
-import * as https from "https";
-import * as http from "http";
 import { Readability } from "@mozilla/readability";
 import { parseHTML } from "linkedom";
+import { safeFetch } from "@quillby/providers";
 import { CONFIG } from "../config.js";
 
 /**
- * Fetch HTML from a URL with redirect handling
+ * Fetch HTML from a URL with redirect and SSRF protection.
+ * Uses safeFetch from @quillby/providers which validates URLs against
+ * private IP ranges and handles redirects.
  */
-export function fetchURL(url: string, redirects = 0): Promise<string> {
-  if (redirects > 5) return Promise.resolve("");
-
-  // Validate URL
+async function fetchURL(url: string): Promise<string> {
   try {
-    new URL(url);
-  } catch {
-    return Promise.resolve("");
-  }
-
-  return new Promise((resolve) => {
-    const protocol = url.startsWith("https") ? https : http;
-    const req = protocol.get(
-      url,
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-          Accept: "text/html,application/xhtml+xml",
-        },
-        timeout: CONFIG.ENRICHMENT.TIMEOUT,
-      },
-      (res) => {
-        // Handle redirects
-        if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          const redirectUrl = new URL(res.headers.location, url).href;
-          fetchURL(redirectUrl, redirects + 1).then(resolve);
-          return;
-        }
-
-        let data = "";
-        res.on("data", (chunk) => {
-          data += chunk;
-        });
-        res.on("end", () => resolve(data));
-        res.on("error", () => resolve(""));
-      }
-    );
-
-    req.on("error", () => resolve(""));
-    req.on("timeout", () => {
-      req.destroy();
-      resolve("");
+    const response = await safeFetch(url, {
+      timeout: CONFIG.ENRICHMENT.TIMEOUT,
     });
-  });
+    return await response.text();
+  } catch {
+    return "";
+  }
 }
 
 /**
@@ -59,12 +24,13 @@ export function fetchURL(url: string, redirects = 0): Promise<string> {
  * Falls back to basic tag stripping if Readability cannot parse the page.
  */
 export function extractTextFromHTML(html: string, url: string): string {
-  void url;
   try {
     const { document } = parseHTML(html);
     type ReadabilityDoc = ConstructorParameters<typeof Readability>[0];
-    // ARD: linkedom Document doesn't match Readability's expected type
-    const article = new Readability(document as unknown as ReadabilityDoc).parse();
+    // Pass the URL so Readability can resolve relative links
+    const article = new Readability(document as unknown as ReadabilityDoc, {
+      url,
+    }).parse();
     if (article?.textContent) {
       return article.textContent.replace(/\s+/g, " ").trim().slice(0, CONFIG.ENRICHMENT.MAX_CONTENT_LENGTH);
     }
@@ -85,8 +51,7 @@ export function extractTextFromHTML(html: string, url: string): string {
 /**
  * Fetch and extract key content from a URL
  */
-export async function enrichArticle(url: string, title: string): Promise<string> {
-  void title;
+export async function enrichArticle(url: string, _title: string): Promise<string> {
   if (!CONFIG.ENRICHMENT.ENABLED) return "";
 
   for (let attempt = 0; attempt < CONFIG.ENRICHMENT.RETRIES; attempt++) {
