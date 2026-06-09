@@ -1,4 +1,5 @@
 import type { GenerationModality } from "@quillby/core";
+import { ProviderError } from "@quillby/core";
 
 // ─── Common result types ───────────────────────────────────────────────────────
 
@@ -68,21 +69,21 @@ export type ProviderRouterOptions = {
 };
 
 export class ProviderRouter {
-  constructor(private readonly opts: ProviderRouterOptions = {}) {}
+  constructor(private opts: ProviderRouterOptions = {}) {}
 
   /** Wire the Tier 1 MCP Sampling adapter after the client connection is established. */
   setTier1(adapter: ProviderAdapter): void {
-    (this.opts as { tier1?: ProviderAdapter }).tier1 = adapter;
+    this.opts.tier1 = adapter;
   }
 
   /** Wire Tier 2 cloud adapters (typically called at startup in cloud mode). */
   setTier2(adapters: Partial<Record<GenerationModality, ProviderAdapter>>): void {
-    (this.opts as { tier2?: Partial<Record<GenerationModality, ProviderAdapter>> }).tier2 = adapters;
+    this.opts.tier2 = adapters;
   }
 
   /** Wire Tier 3 direct adapters (local/self-hosted environment configuration). */
   setTier3(adapters: Partial<Record<GenerationModality, ProviderAdapter>>): void {
-    (this.opts as { tier3?: Partial<Record<GenerationModality, ProviderAdapter>> }).tier3 = adapters;
+    this.opts.tier3 = adapters;
   }
 
   /**
@@ -114,10 +115,11 @@ export class ProviderRouter {
       return { ...result, tier: "direct" };
     }
 
-    throw new Error(
+    throw new ProviderError(
       `No provider configured for modality "${modality}". ` +
       `To generate ${modality} content, your AI client must support MCP Sampling ` +
-      `or you need a Pro plan (Cloud) or direct API keys (Self-Hosted).`
+      `or you need a Pro plan (Cloud) or direct API keys (Self-Hosted).`,
+      { modality }
     );
   }
 

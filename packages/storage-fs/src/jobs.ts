@@ -17,8 +17,7 @@ function readJobs(workspaceId?: string): GenerationJob[] {
   const file = jobsFilePath(workspaceId);
   if (!fs.existsSync(file)) return [];
   try {
-    const raw = JSON.parse(fs.readFileSync(file, "utf-8")) as unknown[];
-    return raw.map((r) => GenerationJobSchema.parse(r));
+    return GenerationJobSchema.array().parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
     // Corrupted jobs file — return empty rather than crashing
     return [];

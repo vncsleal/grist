@@ -66,14 +66,32 @@ export function createDb(url: string, authToken?: string, poolConfig?: DbPoolCon
   return { client: c, db };
 }
 
-const defaultUrl = process.env.QUILLBY_AUTH_DB_URL ?? "file:./quillby-auth.db";
-const defaultConcurrency = parsePositiveInt(process.env.QUILLBY_DB_CONCURRENCY);
-export const { client, db } = createDb(
-  defaultUrl,
-  process.env.LIBSQL_AUTH_TOKEN,
-  defaultConcurrency != null ? { concurrency: defaultConcurrency } : undefined,
-);
-export type QuillbyDb = typeof db;
+export type QuillbyDb = ReturnType<typeof drizzle<typeof schema>>;
+
+let _db: QuillbyDb | undefined;
+let _client: ReturnType<typeof createClient> | undefined;
+
+function ensureDb(): { client: ReturnType<typeof createClient>; db: QuillbyDb } {
+  if (!_client) {
+    const url = process.env.QUILLBY_AUTH_DB_URL ?? "file:./quillby-auth.db";
+    const concurrency = parsePositiveInt(process.env.QUILLBY_DB_CONCURRENCY);
+    const created = createDb(url, process.env.LIBSQL_AUTH_TOKEN, concurrency != null ? { concurrency } : undefined);
+    _client = created.client;
+    // ARD: Assignment to let variable with different initial type
+    _db = created.db as QuillbyDb;
+  }
+  return { client: _client!, db: _db! };
+}
+
+// ARD: Proxy target placeholder object
+export const client = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_, prop) { return Reflect.get(ensureDb().client, prop); },
+});
+
+// ARD: Proxy target placeholder object
+export const db = new Proxy({} as QuillbyDb, {
+  get(_, prop) { return Reflect.get(ensureDb().db, prop); },
+});
 
 /**
  * Execute a function against the database with retry logic.
@@ -111,7 +129,7 @@ export async function checkDbHealth(dbClient: QuillbyDb): Promise<boolean> {
     const result = await dbClient.run(sql.raw("SELECT 1"));
     return result.rows.length === 1;
   } catch (err) {
-    console.error("[db] Health check failed:", err instanceof Error ? err.message : String(err));
+    process.stderr.write(`[db] Health check failed: ${err instanceof Error ? err.message : String(err)}\n`);
     return false;
   }
 }

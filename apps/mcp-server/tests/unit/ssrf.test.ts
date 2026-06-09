@@ -98,7 +98,7 @@ describe("validateUrl()", () => {
     mockResolve4.mockResolvedValue(["10.0.0.5"]);
 
     await expect(validateUrl("http://internal-service.local/api")).rejects.toThrow(
-      'SSRF blocked: DNS resolved to private IP "10.0.0.5" for host "internal-service.local"',
+      'SSRF blocked: DNS resolved to private IP "10.0.0.5"',
     );
   });
 

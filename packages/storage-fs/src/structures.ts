@@ -4,12 +4,14 @@ import { ensureDir } from "@quillby/config";
 import {
   HarvestBundleSchema,
   CardInputSchema,
+  NotFoundError,
   type HarvestBundle,
   type StructureCard,
   type CardInput,
   type CurationStatus,
 } from "@quillby/core";
 import { getCurrentWorkspaceId, getWorkspacePaths, type DraftSummary } from "@quillby/workspace";
+import { logWarn } from "./log.js";
 
 function createTimestampedOutputDir(workspaceId: string): string {
   const paths = getWorkspacePaths(workspaceId);
@@ -22,7 +24,7 @@ function createTimestampedOutputDir(workspaceId: string): string {
     if (fs.existsSync(latestLink)) fs.unlinkSync(latestLink);
     fs.symlinkSync(timestamp, latestLink);
   } catch {
-    // Non-critical on filesystems that do not support symlinks.
+    logWarn("Failed to create symlink for latest/", { outputDir });
   }
 
   return outputDir;
@@ -53,7 +55,7 @@ export function saveHarvestOutput(rawCards: CardInput[], _seenUrls?: Set<string>
         // Reuse the same output directory so the pointer stays stable.
         outputDir = path.dirname(existingBundlePath);
       } catch {
-        // Corrupted harvest bundle — create fresh output dir
+        logWarn("Corrupted existing harvest bundle, creating fresh output dir", { workspaceId: wsId });
         outputDir = createTimestampedOutputDir(wsId);
       }
     } else {
@@ -134,14 +136,12 @@ function buildMarkdown(cards: StructureCard[], dateLabel: string): string {
 export function loadLatestHarvest(workspaceId?: string): HarvestBundle {
   const paths = getWorkspacePaths(workspaceId ?? getCurrentWorkspaceId());
   if (!fs.existsSync(paths.latestHarvestPointer)) {
-    throw new Error(
-      "No harvest found. Run fetch_articles then save_cards first."
-    );
+    throw new NotFoundError("No harvest found. Run fetch_articles then save_cards first.");
   }
 
   const bundlePath = fs.readFileSync(paths.latestHarvestPointer, "utf-8").trim();
   if (!bundlePath || !fs.existsSync(bundlePath)) {
-    throw new Error("Latest harvest pointer is invalid. Re-run fetch_articles.");
+    throw new NotFoundError("Latest harvest pointer is invalid. Re-run fetch_articles.");
   }
 
   const raw = JSON.parse(fs.readFileSync(bundlePath, "utf-8"));
@@ -180,11 +180,11 @@ export function saveCurationState(
 ): void {
   const paths = getWorkspacePaths(workspaceId ?? getCurrentWorkspaceId());
   if (!fs.existsSync(paths.latestHarvestPointer)) {
-    throw new Error("No harvest found. Save cards first before curating.");
+    throw new NotFoundError("No harvest found. Save cards first before curating.");
   }
   const bundlePath = fs.readFileSync(paths.latestHarvestPointer, "utf-8").trim();
   if (!bundlePath || !fs.existsSync(bundlePath)) {
-    throw new Error("Latest harvest pointer is invalid.");
+    throw new NotFoundError("Latest harvest pointer is invalid.");
   }
   const raw = JSON.parse(fs.readFileSync(bundlePath, "utf-8"));
   const bundle: HarvestBundle = HarvestBundleSchema.parse(raw);

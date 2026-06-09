@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getCurrentWorkspaceId } from "@quillby/workspace";
 import type { SessionStore, PlanStorage } from "@quillby/workspace";
 import type { Session } from "@quillby/content";
+import { logWarn } from "../logger.js";
 
 const STALE_THRESHOLD_MS = 30 * 60 * 1000;
 const WARN_THRESHOLD_MS = 15 * 60 * 1000;
@@ -92,10 +93,22 @@ const TEMPLATES: Record<string, Partial<Session>> = {
 
 async function autoCloseStaleSessions(store: SessionStore): Promise<number> {
   const stale = await store.findStaleSessions(STALE_THRESHOLD_MS);
-  for (const session of stale) {
-    await store.closeSession(session.id);
+  const results = await Promise.allSettled(
+    stale.map((session) => store.closeSession(session.id))
+  );
+  let closed = 0;
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    if (result.status === "fulfilled") {
+      closed++;
+    } else {
+      logWarn("Failed to close stale session", {
+        sessionId: stale[i].id,
+        reason: result.reason instanceof Error ? result.reason.message : String(result.reason),
+      });
+    }
   }
-  return stale.length;
+  return closed;
 }
 
 export async function handleSessionStart(

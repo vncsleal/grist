@@ -17,8 +17,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@quillby/core": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.9.0",
-    "zod": "^3.25.30"
+    "@quillby/core": "workspace:*"
   }
 }

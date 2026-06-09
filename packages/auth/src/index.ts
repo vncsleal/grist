@@ -86,6 +86,7 @@ export function createAuth(config: AuthConfig): ReturnType<typeof betterAuth> {
       maxRequests: rateLimitMax,
       timeWindow: 60_000,
     },
+  // ARD: Better Auth plugin types don't match
   }) as unknown as NonNullable<BetterAuthOptions["plugins"]>[number];
 
   const opts: Record<string, unknown> = {
@@ -112,16 +113,27 @@ export function createAuth(config: AuthConfig): ReturnType<typeof betterAuth> {
     opts.trustedOrigins = trustedOrigins;
   }
 
+  // ARD: Better Auth constructor type is too broad
   return betterAuth(opts as unknown as BetterAuthOptions);
+}
+
+interface AuthApiInternal {
+  verifyApiKey(input: { body: { key: string } }): Promise<VerifiedApiKey>;
+  createApiKey(input: { body: { userId: string; name: string; prefix: string; rateLimitEnabled: boolean; rateLimitTimeWindow: number; rateLimitMax: number } }): Promise<{ id: string; key: string }>;
+  signUpEmail(input: { body: { email: string; password: string; name: string } }): Promise<{ user: AuthUser }>;
+  getSession(input: { headers: Record<string, string> }): Promise<{ user?: { id: string } } | null>;
 }
 
 export class AuthApi {
   constructor(private auth: ReturnType<typeof betterAuth>) {}
 
+  private _api(): AuthApiInternal {
+    // ARD: Better Auth JS API lacks typed method signatures
+    return this.auth.api as unknown as AuthApiInternal;
+  }
+
   async verifyApiKey(key: string): Promise<VerifiedApiKey> {
-    return (this.auth.api as unknown as {
-      verifyApiKey(input: { body: { key: string } }): Promise<VerifiedApiKey>;
-    }).verifyApiKey({ body: { key } });
+    return this._api().verifyApiKey({ body: { key } });
   }
 
   async createApiKey(
@@ -129,18 +141,7 @@ export class AuthApi {
     name: string,
     rateLimitMax: number,
   ): Promise<{ id: string; key: string }> {
-    return (this.auth.api as unknown as {
-      createApiKey(input: {
-        body: {
-          userId: string;
-          name: string;
-          prefix: string;
-          rateLimitEnabled: boolean;
-          rateLimitTimeWindow: number;
-          rateLimitMax: number;
-        };
-      }): Promise<{ id: string; key: string }>;
-    }).createApiKey({
+    return this._api().createApiKey({
       body: {
         userId,
         name,
@@ -157,16 +158,11 @@ export class AuthApi {
     password: string,
     name: string,
   ): Promise<{ user: AuthUser }> {
-    return (this.auth.api as unknown as {
-      signUpEmail(input: { body: { email: string; password: string; name: string } }): Promise<{ user: AuthUser }>;
-    }).signUpEmail({ body: { email, password, name } });
+    return this._api().signUpEmail({ body: { email, password, name } });
   }
 
   async getSession(headers: Record<string, string>): Promise<{ user?: { id: string } } | null> {
-    const result = await (this.auth.api as unknown as {
-      getSession(input: { headers: Record<string, string> }): Promise<{ user?: { id: string } } | null>;
-    }).getSession({ headers });
-    return result;
+    return this._api().getSession({ headers });
   }
 }
 
@@ -179,6 +175,7 @@ export function listApiKeysFromDb(
   const _table = apikeyTable as { referenceId: unknown; id: unknown };
   return _db.select().from(apikeyTable).where(
     sql`${_table.referenceId} = ${userId}`,
+  // ARD: Drizzle query builder doesn't infer select types
   ) as Promise<ListedApiKey[]>;
 }
 
@@ -189,5 +186,6 @@ export async function deleteApiKeyFromDb(
 ): Promise<void> {
   const _db = db as { delete(table: unknown): { where(condition: unknown): Promise<void> } };
   const _table = apikeyTable as { id: unknown };
+  // ARD: Drizzle delete query return type is inferred as unknown
   await (_db.delete(apikeyTable).where(sql`${_table.id} = ${keyId}`) as Promise<void>);
 }

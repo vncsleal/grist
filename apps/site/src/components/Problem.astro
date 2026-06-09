@@ -1,0 +1,156 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+
+const minusIcon =
+  '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+const plusIcon =
+  '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+---
+<section class="section" aria-labelledby="problem-heading">
+  <div class="container">
+    <h2 class="section-h2 reveal" id="problem-heading">
+      {t('problem.heading')}<br /><em>{t('problem.heading-em')}</em>
+    </h2>
+    <p class="section-p reveal reveal-delay-1">
+      {t('problem.sub')}
+    </p>
+
+    <div class="compare-grid reveal reveal-delay-2">
+      <div class="compare-col compare-before">
+        <div class="compare-label">{t('problem.before-label')}</div>
+        <div class="compare-item">
+          <span class="compare-marker compare-marker--minus" aria-hidden="true" set:html={minusIcon} />
+          <div>
+            <strong>{t('problem.before-1-strong')}</strong>{t('problem.before-1-text')}
+          </div>
+        </div>
+        <div class="compare-item">
+          <span class="compare-marker compare-marker--minus" aria-hidden="true" set:html={minusIcon} />
+          <div>
+            <strong>{t('problem.before-2-strong')}</strong>{t('problem.before-2-text')}
+          </div>
+        </div>
+        <div class="compare-item">
+          <span class="compare-marker compare-marker--minus" aria-hidden="true" set:html={minusIcon} />
+          <div>
+            <strong>{t('problem.before-3-strong')}</strong>{t('problem.before-3-text')}
+          </div>
+        </div>
+        <div class="compare-item">
+          <span class="compare-marker compare-marker--minus" aria-hidden="true" set:html={minusIcon} />
+          <div>
+            <strong>{t('problem.before-4-strong')}</strong>{t('problem.before-4-text')}
+          </div>
+        </div>
+      </div>
+
+      <div class="compare-divider" aria-hidden="true"></div>
+
+      <div class="compare-col compare-after">
+        <div class="compare-label">{t('problem.after-label')}</div>
+        <div class="compare-item">
+          <span class="compare-marker compare-marker--plus" aria-hidden="true" set:html={plusIcon} />
+          <div set:html={t('problem.after-1-text')} />
+        </div>
+        <div class="compare-item">
+          <span class="compare-marker compare-marker--plus" aria-hidden="true" set:html={plusIcon} />
+          <div>
+            <strong>{t('problem.after-2-strong')}</strong>{t('problem.after-2-text')}
+          </div>
+        </div>
+        <div class="compare-item">
+          <span class="compare-marker compare-marker--plus" aria-hidden="true" set:html={plusIcon} />
+          <div>
+            <strong>{t('problem.after-3-strong')}</strong>{t('problem.after-3-text')}
+          </div>
+        </div>
+        <div class="compare-item">
+          <span class="compare-marker compare-marker--plus" aria-hidden="true" set:html={plusIcon} />
+          <div>
+            <strong>{t('problem.after-4-strong')}</strong>{t('problem.after-4-text')}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 2rem;
+    align-items: start;
+    padding-top: 0.5rem;
+  }
+
+  .compare-label {
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+
+  .compare-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .compare-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .compare-item strong { font-weight: 500; }
+
+  .compare-before .compare-item { color: var(--muted); }
+
+  .compare-marker {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.2rem;
+  }
+
+  .compare-marker--minus {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    color: var(--faint);
+  }
+
+  .compare-marker--plus {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .compare-divider {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+  }
+
+  @media (max-width: 860px) {
+    .compare-grid { gap: 1.5rem; }
+  }
+
+  @media (max-width: 720px) {
+    .compare-grid { grid-template-columns: 1fr; }
+    .compare-divider { display: none; }
+    .compare-before { padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  }
+</style>

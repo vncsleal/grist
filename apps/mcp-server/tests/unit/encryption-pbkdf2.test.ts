@@ -63,7 +63,7 @@ describe("encryptSecret / decryptSecret round-trip", () => {
   it("decryptSecret handles old 3-part format (SHA-256 backward compat)", () => {
     const key = createHash("sha256").update(TEST_KEY).digest();
     const iv = randomBytes(12);
-    const cipher = createCipheriv("aes-256-gcm", key, iv);
+    const cipher = createCipheriv("aes-256-gcm", key, iv, { authTagLength: 16 });
     const ct = Buffer.concat([
       cipher.update("backward-compat-value", "utf8"),
       cipher.final(),
@@ -87,7 +87,7 @@ describe("AAD integrity", () => {
     const parts = encrypted.split(".");
     const [saltHex, ivRaw, ctRaw, tagRaw] = parts;
     const key = pbkdf2Sync(TEST_KEY, Buffer.from(saltHex, "hex"), 100_000, 32, "sha512");
-    const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(ivRaw, "base64"));
+    const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(ivRaw, "base64"), { authTagLength: 16 });
     decipher.setAuthTag(Buffer.from(tagRaw, "base64"));
     decipher.setAAD(Buffer.from("tampered-aad", "utf8"));
     expect(() => {

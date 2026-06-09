@@ -1,6 +1,7 @@
 import Parser from "rss-parser";
 import { CONFIG } from "../config.js";
 import type { RssItem } from "../types.js";
+import { logWarn } from "../logger.js";
 
 const parser = new Parser({
   timeout: CONFIG.RSS.TIMEOUT,
@@ -40,7 +41,8 @@ export async function fetchFeeds(
               ).slice(0, 500).replace(/\s+/g, " ").trim(),
               publishedAt: item.pubDate || item.isoDate || undefined,
             } satisfies RssItem));
-        } catch {
+        } catch (e) {
+          logWarn("rss_item_parse_failed", { error: String(e) });
           return [] as RssItem[];
         }
       })

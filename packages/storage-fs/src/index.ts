@@ -49,6 +49,8 @@ import {
   type CurationStatus,
   type GenerationJob,
   type GenerationModality,
+  NotFoundError,
+  QuillbyError,
 } from "@quillby/core";
 import {
   type ContentPlan,
@@ -202,17 +204,17 @@ export class LocalWorkspaceStorage implements WorkspaceStorage, JobStorage, Plan
   async listBlueprints() { return campaignStore.listBlueprints(); }
   async deleteBlueprint(blueprintId: string) { campaignStore.deleteBlueprint(blueprintId); }
 
-  async withWorkspace(id: string): Promise<WorkspaceStorage> {
-    if (!await this.workspaceExists(id)) throw new Error(`Workspace "${id}" not found.`);
+  async withWorkspace(id: string): Promise<WorkspaceStorage & JobStorage & PlanStorage & SessionStore & CampaignStore> {
+    if (!await this.workspaceExists(id)) throw new NotFoundError(`Workspace "${id}" not found.`, { workspaceId: id });
     return new LocalPinnedStorage(id);
   }
   async getPlan(): Promise<"free" | "pro"> { return "free"; }
-  async shareWorkspace(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
-  async revokeAccess(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
+  async shareWorkspace(): Promise<void> { throw new QuillbyError("HOSTED_ONLY", "Team workspaces require hosted mode."); }
+  async revokeAccess(): Promise<void> { throw new QuillbyError("HOSTED_ONLY", "Team workspaces require hosted mode."); }
   async listWorkspaceAccess(): Promise<Array<{ userId: string; role: string }>> { return []; }
 }
 
-export const storage = new LocalWorkspaceStorage();
+export const storage: WorkspaceStorage & JobStorage & PlanStorage & SessionStore & CampaignStore = new LocalWorkspaceStorage();
 
 // ── Pinned local storage (per-tool workspace override for local mode) ─────────
 
@@ -224,8 +226,12 @@ class LocalPinnedStorage implements WorkspaceStorage, JobStorage, PlanStorage, S
   async loadWorkspace(id: string) { return wsLoadWorkspace(id); }
   async createWorkspace(input: CreateWorkspaceInput) { return wsCreateWorkspace(input); }
   async getCurrentWorkspaceId() { return this.pinnedId; }
-  async getCurrentWorkspace() { return wsLoadWorkspace(this.pinnedId) ?? wsGetCurrentWorkspace(); }
-  async setCurrentWorkspace(): Promise<WorkspaceMetadata> { throw new Error("Cannot switch workspace on a pinned storage view."); }
+  async getCurrentWorkspace(): Promise<WorkspaceMetadata> {
+    const workspace = wsLoadWorkspace(this.pinnedId);
+    if (!workspace) throw new NotFoundError(`Pinned workspace "${this.pinnedId}" not found.`, { pinnedId: this.pinnedId });
+    return workspace;
+  }
+  async setCurrentWorkspace(): Promise<WorkspaceMetadata> { throw new QuillbyError("PINNED_STORAGE", "Cannot switch workspace on a pinned storage view."); }
   async touchWorkspace(id: string) { wsTouchWorkspace(id); }
   async updateWorkspaceMetadata(patch: Partial<WorkspaceMetadata>) {
     return wsUpdateWorkspaceMetadata(this.pinnedId, patch);
@@ -289,13 +295,13 @@ class LocalPinnedStorage implements WorkspaceStorage, JobStorage, PlanStorage, S
   async listBlueprints() { return campaignStore.listBlueprints(this.pinnedId); }
   async deleteBlueprint(blueprintId: string) { campaignStore.deleteBlueprint(blueprintId, this.pinnedId); }
 
-  async withWorkspace(id: string): Promise<WorkspaceStorage> {
-    if (!await this.workspaceExists(id)) throw new Error(`Workspace "${id}" not found.`);
+  async withWorkspace(id: string): Promise<WorkspaceStorage & JobStorage & PlanStorage & SessionStore & CampaignStore> {
+    if (!await this.workspaceExists(id)) throw new NotFoundError(`Workspace "${id}" not found.`, { workspaceId: id });
     return new LocalPinnedStorage(id);
   }
   async getPlan(): Promise<"free" | "pro"> { return "free"; }
-  async shareWorkspace(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
-  async revokeAccess(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
+  async shareWorkspace(): Promise<void> { throw new QuillbyError("HOSTED_ONLY", "Team workspaces require hosted mode."); }
+  async revokeAccess(): Promise<void> { throw new QuillbyError("HOSTED_ONLY", "Team workspaces require hosted mode."); }
   async listWorkspaceAccess(): Promise<Array<{ userId: string; role: string }>> { return []; }
 }
 
@@ -383,13 +389,13 @@ export class ScopedWorkspaceStorage implements WorkspaceStorage, JobStorage, Pla
   async listBlueprints() { return withScopedHome(this.homeDir, () => campaignStore.listBlueprints()); }
   async deleteBlueprint(blueprintId: string) { withScopedHome(this.homeDir, () => campaignStore.deleteBlueprint(blueprintId)); }
 
-  async withWorkspace(id: string): Promise<WorkspaceStorage> {
+  async withWorkspace(id: string): Promise<WorkspaceStorage & JobStorage & PlanStorage & SessionStore & CampaignStore> {
     const exists = await withScopedHome(this.homeDir, () => wsWorkspaceExists(id));
-    if (!exists) throw new Error(`Workspace "${id}" not found.`);
-    return new ScopedWorkspaceStorage(this.homeDir); // scoped home already pins the env; caller switches via setCurrentWorkspace
+    if (!exists) throw new NotFoundError(`Workspace "${id}" not found.`, { workspaceId: id });
+    return new ScopedWorkspaceStorage(this.homeDir);
   }
   async getPlan(): Promise<"free" | "pro"> { return "free"; }
-  async shareWorkspace(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
-  async revokeAccess(): Promise<void> { throw new Error("Team workspaces require hosted mode."); }
+  async shareWorkspace(): Promise<void> { throw new QuillbyError("HOSTED_ONLY", "Team workspaces require hosted mode."); }
+  async revokeAccess(): Promise<void> { throw new QuillbyError("HOSTED_ONLY", "Team workspaces require hosted mode."); }
   async listWorkspaceAccess(): Promise<Array<{ userId: string; role: string }>> { return []; }
 }

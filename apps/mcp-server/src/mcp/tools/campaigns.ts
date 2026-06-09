@@ -1,18 +1,29 @@
 import { z } from "zod";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
-import type { ToolContext, ToolResult } from "./index.js";
-import type { CampaignStore } from "@quillby/workspace";
+import type { ToolContext, ToolResult, FullStorage } from "./index.js";
 import {
   CampaignSchema,
   BlueprintSchema,
-  CampaignStatusSchema,
   StageConfigSchema,
   initialExecutionLogs,
   transitionStage,
   canRetryStage,
   type Campaign as CampaignType,
   type Blueprint as BlueprintType,
+  type StageConfig,
 } from "@quillby/content";
+
+const CampaignStatusArgSchema = z.enum(["planning", "active", "paused", "completed", "failed"]);
+
+const StageConfigArgSchema = z.object({
+  name: z.string().min(1),
+  tool: z.string().min(1),
+  params: z.record(z.string(), z.unknown()).optional(),
+  dependsOn: z.array(z.string()).optional(),
+  condition: z.string().optional(),
+  retryCount: z.number().int().min(0).optional(),
+  timeout: z.number().int().optional(),
+});
 
 export const CAMPAIGN_TOOL_NAMES = new Set<string>([
   "campaign_create",
@@ -30,7 +41,7 @@ export const CAMPAIGN_TOOL_NAMES = new Set<string>([
 const CampaignCreateArgsSchema = z.object({
   name: z.string().min(1),
   blueprintId: z.string().optional(),
-  blueprint: StageConfigSchema.array().optional(),
+  blueprint: z.array(StageConfigArgSchema).optional(),
   workspaceId: z.string().optional(),
 });
 
@@ -72,7 +83,7 @@ const CampaignStageRetryArgsSchema = z.object({
 const CampaignBlueprintCreateArgsSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  stages: z.array(StageConfigSchema).min(1),
+  stages: z.array(StageConfigArgSchema).min(1),
   tags: z.array(z.string()).optional(),
   workspaceId: z.string().optional(),
 });
@@ -82,13 +93,16 @@ const CampaignBlueprintListArgsSchema = z.object({
 });
 
 const CampaignListArgsSchema = z.object({
-  status: CampaignStatusSchema.optional(),
+  status: CampaignStatusArgSchema.optional(),
   workspaceId: z.string().optional(),
 });
 
-async function resolveStore(ctx: ToolContext, workspaceId?: string): Promise<CampaignStore> {
-  const storage = workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
-  const store = storage as unknown as CampaignStore;
+function parseStageConfigs(stages: z.infer<typeof StageConfigArgSchema>[]): StageConfig[] {
+  return stages.map((stage) => StageConfigSchema.parse(stage));
+}
+
+async function resolveStore(ctx: ToolContext, workspaceId?: string): Promise<FullStorage> {
+  const store = workspaceId ? await ctx.storage.withWorkspace(workspaceId) : ctx.storage;
   if (typeof store.createCampaign !== "function") {
     throw new Error("Campaign operations not supported by this storage backend");
   }
@@ -287,7 +301,7 @@ async function handleCreate(args: Record<string, unknown>, ctx: ToolContext): Pr
   const now = new Date().toISOString();
   const wsId = inputWorkspaceId || (await ctx.storage.getCurrentWorkspaceId());
 
-  let stages = blueprint;
+  let stages = blueprint ? parseStageConfigs(blueprint) : undefined;
   if (blueprintId) {
     const saved = await store.loadBlueprint(blueprintId);
     if (!saved) {
@@ -549,9 +563,10 @@ async function handleBlueprintCreate(args: Record<string, unknown>, ctx: ToolCon
     return { content: [{ type: "text", text: `Invalid arguments: ${parsed.error.message}` }], isError: true };
   }
 
-  const { name, description, stages, tags, workspaceId } = parsed.data;
+  const { name, description, stages: stageInputs, tags, workspaceId } = parsed.data;
   const store = await resolveStore(ctx, workspaceId);
   const now = new Date().toISOString();
+  const stages = parseStageConfigs(stageInputs);
 
   const blueprint: BlueprintType = {
     id: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -608,17 +623,18 @@ async function handleList(args: Record<string, unknown>, ctx: ToolContext): Prom
   };
 }
 
+function getNextStages(campaign: CampaignType): CampaignType["stages"] {
+  return campaign.stages.filter((stage) => {
+    const execution = campaign.executions.find((e) => e.stageName === stage.name);
+    if (execution && (execution.status === "running" || execution.status === "completed" || execution.status === "skipped")) return false;
+    if (execution && execution.status === "failed") return false;
+    return stage.dependsOn.every((dep) => {
+      const depExec = campaign.executions.find((e) => e.stageName === dep);
+      return depExec && (depExec.status === "completed" || depExec.status === "skipped");
+    });
+  });
+}
+
 function getNextStagesCount(campaign: CampaignType): number {
-  const { getNextStages } = { getNextStages: (c: CampaignType) =>
-    c.stages.filter((stage) => {
-      const execution = c.executions.find((e) => e.stageName === stage.name);
-      if (execution && (execution.status === "running" || execution.status === "completed" || execution.status === "skipped")) return false;
-      if (execution && execution.status === "failed") return false;
-      return stage.dependsOn.every((dep) => {
-        const depExec = c.executions.find((e) => e.stageName === dep);
-        return depExec && (depExec.status === "completed" || depExec.status === "skipped");
-      });
-    })
-  };
   return getNextStages(campaign).length;
 }

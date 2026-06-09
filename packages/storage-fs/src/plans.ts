@@ -8,6 +8,8 @@ import {
   type ContentPlanStatus,
 } from "@quillby/content";
 import { getCurrentWorkspaceId, getWorkspacePaths } from "@quillby/workspace";
+import { NotFoundError } from "@quillby/core";
+import { logWarn } from "./log.js";
 
 function plansDir(workspaceId?: string): string {
   const wsId = workspaceId ?? getCurrentWorkspaceId();
@@ -31,7 +33,7 @@ function readPlans(workspaceId?: string): ContentPlan[] {
       try {
         return ContentPlanSchema.parse(JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")));
       } catch {
-        // Corrupted plan file — skip it
+        logWarn("Corrupted plan file, skipping", { file: f });
         return null;
       }
     })
@@ -42,10 +44,9 @@ function readTasks(planId: string, workspaceId?: string): ContentTask[] {
   const file = tasksFilePath(planId, workspaceId);
   if (!fs.existsSync(file)) return [];
   try {
-    const raw = JSON.parse(fs.readFileSync(file, "utf-8")) as unknown[];
-    return raw.map((r) => ContentTaskSchema.parse(r));
+    return ContentTaskSchema.array().parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
-    // Corrupted tasks file — return empty
+    logWarn("Corrupted tasks file, returning empty", { planId });
     return [];
   }
 }
@@ -78,7 +79,7 @@ export function listPlans(status?: ContentPlanStatus, workspaceId?: string): Con
 
 export function updatePlan(planId: string, patch: Partial<ContentPlan>, workspaceId?: string): void {
   const existing = loadPlan(planId, workspaceId);
-  if (!existing) throw new Error(`Plan "${planId}" not found.`);
+  if (!existing) throw new NotFoundError(`Plan "${planId}" not found.`, { planId });
   const updated = ContentPlanSchema.parse({
     ...existing,
     ...patch,
@@ -126,7 +127,7 @@ export function listTasks(planId: string, workspaceId?: string): ContentTask[] {
 export function deleteTask(taskId: string, workspaceId?: string): void {
   const wsId = workspaceId ?? getCurrentWorkspaceId();
   const dir = plansDir(wsId);
-  if (!fs.existsSync(dir)) throw new Error(`Task "${taskId}" not found.`);
+  if (!fs.existsSync(dir)) throw new NotFoundError(`Task "${taskId}" not found.`, { taskId });
   const planFiles = fs.readdirSync(dir).filter((f) => f.endsWith("-tasks.json"));
   for (const file of planFiles) {
     const planId = file.replace("-tasks.json", "");
@@ -138,13 +139,13 @@ export function deleteTask(taskId: string, workspaceId?: string): void {
       return;
     }
   }
-  throw new Error(`Task "${taskId}" not found.`);
+  throw new NotFoundError(`Task "${taskId}" not found.`, { taskId });
 }
 
 export function updateTask(taskId: string, patch: Partial<ContentTask>, workspaceId?: string): void {
   const wsId = workspaceId ?? getCurrentWorkspaceId();
   const dir = plansDir(wsId);
-  if (!fs.existsSync(dir)) throw new Error(`Task "${taskId}" not found.`);
+  if (!fs.existsSync(dir)) throw new NotFoundError(`Task "${taskId}" not found.`, { taskId });
   const planFiles = fs.readdirSync(dir).filter((f) => f.endsWith("-tasks.json"));
   for (const file of planFiles) {
     const planId = file.replace("-tasks.json", "");
@@ -160,7 +161,7 @@ export function updateTask(taskId: string, patch: Partial<ContentTask>, workspac
       return;
     }
   }
-  throw new Error(`Task "${taskId}" not found.`);
+  throw new NotFoundError(`Task "${taskId}" not found.`, { taskId });
 }
 
 export function getTodayQueue(workspaceId?: string): ContentTask[] {

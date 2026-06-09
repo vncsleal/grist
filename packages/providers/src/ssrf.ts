@@ -1,4 +1,5 @@
 import * as dns from "node:dns/promises";
+import { QuillbyError } from "@quillby/core";
 
 // Private and reserved IPv4 ranges (RFC 1918, RFC 6598, loopback, link-local)
 const PRIVATE_RANGES: Array<{ base: number; mask: number }> = [
@@ -53,20 +54,18 @@ function isPrivateHostname(hostname: string): boolean {
 export async function validateUrl(url: string): Promise<void> {
   const parsed = new URL(url);
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error(`SSRF blocked: non-HTTP protocol "${parsed.protocol}"`);
+    throw new QuillbyError("SSRF_PROTOCOL", `SSRF blocked: non-HTTP protocol "${parsed.protocol}"`, { protocol: parsed.protocol });
   }
   const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
   if (isPrivateHostname(hostname)) {
-    throw new Error(`SSRF blocked: private IP "${hostname}"`);
+    throw new QuillbyError("SSRF_PRIVATE_IP", `SSRF blocked: private IP "${hostname}"`, { hostname });
   }
   // Resolve DNS hostnames to check for internal IPs
   if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) && !hostname.includes(":")) {
     const addresses = await dns.resolve4(hostname);
     for (const addr of addresses) {
       if (isPrivateIPv4(addr)) {
-        throw new Error(
-          `SSRF blocked: DNS resolved to private IP "${addr}" for host "${hostname}"`
-        );
+        throw new QuillbyError("SSRF_DNS", `SSRF blocked: DNS resolved to private IP "${addr}"`, { hostname, resolvedIp: addr });
       }
     }
   }
@@ -81,9 +80,7 @@ export async function safeFetch(
   url: string,
   options: SafeFetchOptions = {}
 ): Promise<Response> {
-  const maxRedirects = options.maxRedirects ?? 5;
-  const timeout = options.timeout ?? 10_000;
-  const { maxRedirects: _mr, timeout: _to, ...fetchOptions } = options as Record<string, unknown>;
+  const { maxRedirects = 5, timeout = 10_000, ...fetchOptions } = options;
 
   await validateUrl(url);
 
@@ -95,7 +92,7 @@ export async function safeFetch(
       ...fetchOptions,
       signal: controller.signal,
       redirect: "manual",
-    } as RequestInit);
+    });
 
     if (response.status >= 300 && response.status < 400 && maxRedirects > 0) {
       const location = response.headers.get("location");

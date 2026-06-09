@@ -4,6 +4,7 @@ import { createCipheriv, createDecipheriv, createHash, pbkdf2Sync, randomBytes }
 import { execFileSync } from "node:child_process";
 import { CONFIG, ensureDataDir, getDeploymentMode, type DeploymentMode } from "@quillby/config";
 import type { GenerationModality } from "@quillby/core";
+import { ConfigError, QuillbyError, ValidationError } from "@quillby/core";
 import { logWarn } from "./logger.js";
 import type { ProviderAdapter } from "@quillby/providers";
 import {
@@ -66,6 +67,7 @@ function loadConfigFile(): ProviderConfigFile {
   const file = providerConfigPath();
   if (!fs.existsSync(file)) return {};
   try {
+    // ARD: JSON.parse result
     return JSON.parse(fs.readFileSync(file, "utf-8")) as ProviderConfigFile;
   } catch (e) {
     logWarn("Corrupt provider config file, starting fresh", { error: String(e) });
@@ -89,10 +91,11 @@ function resolveEncryptionSecret(mode: DeploymentMode): string {
       : process.env.QUILLBY_KEYRING_SECRET ?? process.env.QUILLBY_PROVIDER_ENCRYPTION_KEY
   )?.trim();
   if (!secret) {
-    throw new Error(
+    throw new ConfigError(
       mode === "self-hosted"
         ? "Self-hosted provider configuration requires QUILLBY_PROVIDER_ENCRYPTION_KEY."
-        : "Local provider configuration on this OS requires QUILLBY_KEYRING_SECRET or QUILLBY_PROVIDER_ENCRYPTION_KEY."
+        : "Local provider configuration on this OS requires QUILLBY_KEYRING_SECRET or QUILLBY_PROVIDER_ENCRYPTION_KEY.",
+      { mode }
     );
   }
   return secret;
@@ -109,7 +112,7 @@ function deriveKey(secret: string, salt?: Buffer): { keyBytes: Buffer; saltHex: 
 export function encryptSecret(secret: string, encryptionKey: string): string {
   const { keyBytes, saltHex } = deriveKey(encryptionKey);
   const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", keyBytes, iv);
+  const cipher = createCipheriv("aes-256-gcm", keyBytes, iv, { authTagLength: 16 });
   cipher.setAAD(Buffer.from("quillby-provider-config-v1", "utf8"));
   const ciphertext = Buffer.concat([cipher.update(secret, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
@@ -122,7 +125,7 @@ export function decryptSecret(payload: string, encryptionKey: string): string {
   if (parts.length === 4) {
     const [saltHex, ivRaw, ciphertextRaw, tagRaw] = parts;
     const { keyBytes } = deriveKey(encryptionKey, Buffer.from(saltHex, "hex"));
-    const decipher = createDecipheriv("aes-256-gcm", keyBytes, Buffer.from(ivRaw, "base64"));
+    const decipher = createDecipheriv("aes-256-gcm", keyBytes, Buffer.from(ivRaw, "base64"), { authTagLength: 16 });
     decipher.setAuthTag(Buffer.from(tagRaw, "base64"));
     decipher.setAAD(Buffer.from("quillby-provider-config-v1", "utf8"));
     return Buffer.concat([
@@ -133,7 +136,7 @@ export function decryptSecret(payload: string, encryptionKey: string): string {
 
   const [ivRaw, ciphertextRaw, tagRaw] = parts;
   const oldKey = createHash("sha256").update(encryptionKey).digest();
-  const decipher = createDecipheriv("aes-256-gcm", oldKey, Buffer.from(ivRaw, "base64"));
+  const decipher = createDecipheriv("aes-256-gcm", oldKey, Buffer.from(ivRaw, "base64"), { authTagLength: 16 });
   decipher.setAuthTag(Buffer.from(tagRaw, "base64"));
   return Buffer.concat([
     decipher.update(Buffer.from(ciphertextRaw, "base64")),
@@ -359,11 +362,24 @@ export function buildDirectAdaptersFromConfig(mode: DeploymentMode = getDeployme
 
 export function saveProviderConfig(input: SaveProviderConfigInput, mode: DeploymentMode = getDeploymentMode()): ProviderConfigSummaryEntry {
   if (mode === "cloud") {
-    throw new Error("Cloud mode manages providers internally. Manual provider configuration is not available.");
+    throw new QuillbyError("PROVIDER_CONFIG_CLOUD", "Cloud mode manages providers internally. Manual provider configuration is not available.", { mode });
   }
   const config = loadConfigFile();
   const now = new Date().toISOString();
   const useLocalKeychain = useKeychain(mode);
+
+  const validProviders: Record<string, readonly string[]> = {
+    image: ["replicate", "openai_gpt_image", "bfl_flux"],
+    audio: ["replicate", "elevenlabs", "minimax"],
+    video: ["replicate", "google_veo", "fal_kling"],
+  };
+  if (!validProviders[input.modality]?.includes(input.provider)) {
+    throw new ValidationError(`Invalid provider "${input.provider}" for modality "${input.modality}".`, {
+      modality: input.modality,
+      provider: input.provider,
+      validProviders: validProviders[input.modality],
+    });
+  }
 
   let entry: StoredProviderEntry;
   if (useLocalKeychain) {

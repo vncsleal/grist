@@ -130,11 +130,16 @@ export type SubscriptionMetadata = {
   trialEndsAt: Date | null;
 };
 
+type SubscriptionWithTimestamps = Stripe.Subscription & {
+  current_period_end?: number | null;
+};
+
 function getSubscriptionNumericField(
   sub: Stripe.Subscription,
   field: "current_period_end" | "trial_end",
 ): number | null {
-  return (sub as unknown as Record<string, unknown>)[field] as number | null;
+  // ARD: Stripe Subscription doesn't have a string index signature
+  return (sub as SubscriptionWithTimestamps)[field] ?? null;
 }
 
 export function extractSubscriptionMetadata(
@@ -168,14 +173,11 @@ const DEFAULT_SUBSCRIPTION_METADATA: SubscriptionMetadata = {
 export function resolveUserIdFromEvent(event: Stripe.Event): string | null {
   const object = "object" in event.data ? event.data.object : undefined;
   if (!object || typeof object !== "object") return null;
-  const obj = object as unknown as Record<string, unknown>;
 
-  const metadata = obj.metadata as Record<string, string> | undefined;
-  if (metadata?.quillbyUserId) return metadata.quillbyUserId;
-  if (metadata?.userId) return metadata.userId;
-
-  const clientRef = obj.client_reference_id;
-  if (typeof clientRef === "string") return clientRef;
+  const obj = object as { metadata?: Record<string, string>; client_reference_id?: string };
+  if (obj.metadata?.quillbyUserId) return obj.metadata.quillbyUserId;
+  if (obj.metadata?.userId) return obj.metadata.userId;
+  if (typeof obj.client_reference_id === "string") return obj.client_reference_id;
 
   return null;
 }

@@ -1,6 +1,13 @@
-export type LogLevel = "info" | "warn" | "error" | "fatal";
+const LOG_LEVELS = ["info", "warn", "error", "fatal"] as const;
+export type LogLevel = (typeof LOG_LEVELS)[number];
+
+const LEVELS: Record<LogLevel, number> = { info: 0, warn: 1, error: 2, fatal: 3 };
+
+const rawLevel = process.env.QUILLBY_LOG_LEVEL ?? "info";
+const MIN_LEVEL: LogLevel = LOG_LEVELS.find((l) => l === rawLevel) ?? "info";
 
 export function slog(level: LogLevel, msg: string, extra?: Record<string, unknown>): void {
+  if ((LEVELS[level] ?? -1) < LEVELS[MIN_LEVEL]) return;
   try {
     process.stderr.write(
       JSON.stringify({ ts: new Date().toISOString(), level, msg, ...extra }) + "\n",

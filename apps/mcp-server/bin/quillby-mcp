@@ -6,7 +6,10 @@ import { spawnSync } from 'node:child_process';
 
 const __filename = realpathSync(fileURLToPath(import.meta.url));
 const __dirname = dirname(__filename);
-const server = resolve(__dirname, '..', 'dist', 'mcp', 'server.js');
+
+const mode = (process.env.QUILLBY_DEPLOYMENT_MODE ?? "local").trim().toLowerCase();
+const modeDir = mode === "cloud" ? "cloud" : mode === "self-hosted" ? "selfhosted" : "local";
+const server = resolve(__dirname, '..', 'dist', modeDir, 'main.js');
 
 const result = spawnSync(process.execPath, [server, ...process.argv.slice(2)], { stdio: 'inherit' });
 process.exit(result.status ?? 1);

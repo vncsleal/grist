@@ -29,7 +29,7 @@ export async function handlePlanCreate(
   };
   await storage.createPlan(plan);
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(plan, null, 2) }],
+    content: [{ type: "text" as const, text: `Plan created: "${plan.name}" (${plan.id}). Status: ${plan.status}. Range: ${plan.dateStart ?? "not set"} — ${plan.dateEnd ?? "not set"}. Tags: ${plan.tags.join(", ") || "none"}.` }],
     structuredContent: plan,
   };
 }
@@ -41,7 +41,7 @@ export async function handlePlanList(
   const parsed = PlanListArgsSchema.parse(args);
   const plans = await storage.listPlans(parsed.status);
   return {
-    content: [{ type: "text" as const, text: JSON.stringify({ count: plans.length, plans }, null, 2) }],
+    content: [{ type: "text" as const, text: `${plans.length} plan(s).${plans.slice(0, 5).map(p => `\n  ${p.id}: ${p.name} [${p.status}]`).join("")}${plans.length > 5 ? `\n  ... +${plans.length - 5} more` : ""}` }],
     structuredContent: { count: plans.length, plans },
   };
 }
@@ -52,7 +52,7 @@ export async function handlePlanToday(
 ) {
   const tasks = await storage.getTodayQueue();
   return {
-    content: [{ type: "text" as const, text: JSON.stringify({ count: tasks.length, tasks }, null, 2) }],
+    content: [{ type: "text" as const, text: `${tasks.length} task(s) for today.${tasks.slice(0, 5).map(t => `\n  [${t.priority ?? "?"}] ${t.title} (${t.status ?? "?"})${t.platform ? ` — ${t.platform}` : ""}`).join("")}${tasks.length > 5 ? `\n  ... +${tasks.length - 5} more` : ""}` }],
     structuredContent: { count: tasks.length, tasks },
   };
 }
@@ -80,7 +80,7 @@ export async function handleTaskCreate(
   };
   await storage.createTask(task);
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(task, null, 2) }],
+    content: [{ type: "text" as const, text: `Task created: "${task.title}" (${task.id}) for plan ${task.planId}. Priority: ${task.priority ?? "not set"}. Due: ${task.dueDate ?? "not set"}. Type: ${task.type ?? "other"}.` }],
     structuredContent: task,
   };
 }
@@ -93,7 +93,7 @@ export async function handleTaskMove(
   await storage.updateTask(parsed.taskId, { status: parsed.status });
   const task = await storage.loadTask(parsed.taskId);
   return {
-    content: [{ type: "text" as const, text: JSON.stringify({ taskId: parsed.taskId, status: parsed.status, task }, null, 2) }],
+    content: [{ type: "text" as const, text: `Task ${parsed.taskId} moved to "${parsed.status}". Title: ${task?.title ?? "unknown"}.` }],
     structuredContent: { taskId: parsed.taskId, status: parsed.status, task },
   };
 }
@@ -105,7 +105,7 @@ export async function handleTaskDelete(
   const parsed = TaskDeleteArgsSchema.parse(args);
   await storage.deleteTask(parsed.taskId);
   return {
-    content: [{ type: "text" as const, text: JSON.stringify({ taskId: parsed.taskId, deleted: true }, null, 2) }],
+    content: [{ type: "text" as const, text: `Task ${parsed.taskId} deleted.` }],
     structuredContent: { taskId: parsed.taskId, deleted: true },
   };
 }
@@ -115,9 +115,9 @@ export async function handleCalendar(
   args: Record<string, unknown>
 ) {
   const parsed = CalendarArgsSchema.parse(args);
-  const entries = await storage.getCalendar(parsed.dateStart, parsed.dateEnd);
+  const entries = (await storage.getCalendar(parsed.dateStart, parsed.dateEnd)) ?? [];
   return {
-    content: [{ type: "text" as const, text: JSON.stringify({ dateStart: parsed.dateStart, dateEnd: parsed.dateEnd, entries }, null, 2) }],
+    content: [{ type: "text" as const, text: `Calendar from ${parsed.dateStart} to ${parsed.dateEnd}: ${entries.length} entr${entries.length === 1 ? "y" : "ies"}.${entries.slice(0, 10).map(e => `\n  ${e.date ?? "?"}: ${e.tasks.map(t => t.taskId).join(", ") || "?"}`).join("")}${entries.length > 10 ? `\n  ... +${entries.length - 10} more` : ""}` }],
     structuredContent: { dateStart: parsed.dateStart, dateEnd: parsed.dateEnd, entries },
   };
 }

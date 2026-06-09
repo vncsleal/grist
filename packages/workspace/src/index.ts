@@ -1,10 +1,13 @@
 import * as fs from "fs";
 import * as path from "path";
 import { CONFIG, ensureDataDir, ensureDir } from "@quillby/config";
+import { logWarn } from "./log.js";
 import {
   TypedMemorySchema,
   UserContextSchema,
   WorkspaceMetadataSchema,
+  NotFoundError,
+  ValidationError,
   type TypedMemory,
   type UserContext,
   type WorkspaceMetadata,
@@ -99,7 +102,7 @@ export interface WorkspaceStorage {
   saveDraft(content: string, platform: string, cardId?: number): Promise<string>;
   saveCurationState(state: Record<string, import("@quillby/core").CurationStatus>): Promise<void>;
   listDrafts(): Promise<DraftSummary[]>;
-  withWorkspace(workspaceId: string): Promise<WorkspaceStorage>;
+  withWorkspace(workspaceId: string): Promise<WorkspaceStorage & JobStorage & PlanStorage & SessionStore & CampaignStore>;
   getPlan(): Promise<"free" | "pro">;
   shareWorkspace(workspaceId: string, granteeUserId: string, role: "viewer" | "editor"): Promise<void>;
   revokeAccess(workspaceId: string, granteeUserId: string): Promise<void>;
@@ -186,7 +189,7 @@ export function listWorkspaces(): WorkspaceMetadata[] {
           const raw = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
           return WorkspaceMetadataSchema.parse(raw);
         } catch {
-          // Corrupted metadata JSON — fall through to rebuild minimal metadata
+          logWarn("Corrupted workspace metadata, rebuilding", { workspaceId: entry.name });
         }
       }
       const fallback: WorkspaceMetadata = {
@@ -213,7 +216,7 @@ export function loadWorkspace(workspaceId: string): WorkspaceMetadata | null {
   try {
     return WorkspaceMetadataSchema.parse(JSON.parse(fs.readFileSync(metaPath, "utf-8")));
   } catch {
-    // Corrupted workspace metadata — return null
+    logWarn("Corrupted workspace metadata, returning null", { workspaceId });
     return null;
   }
 }
@@ -237,7 +240,7 @@ export function setCurrentWorkspace(workspaceId: string): WorkspaceMetadata {
   ensureWorkspaceSystem();
   const workspace = loadWorkspace(workspaceId);
   if (!workspace) {
-    throw new Error(`Workspace "${workspaceId}" does not exist.`);
+    throw new NotFoundError(`Workspace "${workspaceId}" not found.`, { workspaceId });
   }
   fs.writeFileSync(CONFIG.FILES.CURRENT_WORKSPACE, workspaceId);
   return workspace;
@@ -253,7 +256,7 @@ export function createWorkspace(input: {
   ensureDataDir();
   const workspaceId = slugifyWorkspaceId(input.id ?? input.name);
   if (workspaceExists(workspaceId)) {
-    throw new Error(`Workspace "${workspaceId}" already exists.`);
+    throw new ValidationError(`Workspace "${workspaceId}" already exists.`, { workspaceId });
   }
   const createdAt = input.createdAt ?? nowIso();
   const meta: WorkspaceMetadata = {
@@ -283,7 +286,7 @@ export function touchWorkspace(workspaceId: string) {
 export function updateWorkspaceMetadata(workspaceId: string, patch: Partial<WorkspaceMetadata>): WorkspaceMetadata {
   const existing = loadWorkspace(workspaceId);
   if (!existing) {
-    throw new Error(`Workspace "${workspaceId}" does not exist.`);
+    throw new NotFoundError(`Workspace "${workspaceId}" not found.`, { workspaceId });
   }
 
   const next: WorkspaceMetadata = {
@@ -309,7 +312,7 @@ export function loadWorkspaceContext(workspaceId: string): UserContext | null {
   try {
     return UserContextSchema.parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
-    // Corrupted context file — return null
+    logWarn("Corrupted context file, returning null", { workspaceId });
     return null;
   }
 }
@@ -329,7 +332,7 @@ export function loadTypedMemory(workspaceId: string): TypedMemory {
   try {
     return TypedMemorySchema.parse(JSON.parse(fs.readFileSync(file, "utf-8")));
   } catch {
-    // Corrupted memory file — return empty
+    logWarn("Corrupted typed memory file, returning empty", { workspaceId });
     return TypedMemorySchema.parse({});
   }
 }
@@ -353,7 +356,15 @@ export function appendTypedMemory(
   const existing = current[memoryType];
   const deduped = [...new Set([...entries, ...existing].map((entry) => entry.trim()).filter(Boolean))];
   const next = limit != null ? deduped.slice(0, limit) : deduped;
-  saveTypedMemory(workspaceId, { [memoryType]: next } as Partial<TypedMemory>);
+  saveTypedMemory(workspaceId, typedMemoryPatch(memoryType, next));
+}
+
+// TypeScript cannot infer the return type from computed property keys with generics.
+// This cast is necessary because `{ [key]: value }` always evaluates to `{ [x: string]: T }`,
+// losing the specific key information. The type guard on `key` (K extends keyof TypedMemory)
+// and `value` (TypedMemory[K]) ensures runtime type safety.
+function typedMemoryPatch<K extends keyof TypedMemory>(key: K, value: TypedMemory[K]): Pick<TypedMemory, K> {
+  return { [key]: value } as Pick<TypedMemory, K>;
 }
 
 // ─── Sources ──────────────────────────────────────────────────────────────────
@@ -400,10 +411,12 @@ export function getSeenUrls(workspaceId: string): Set<string> {
   const cacheFile = getWorkspacePaths(workspaceId).cache;
   try {
     if (fs.existsSync(cacheFile)) {
-      return new Set(JSON.parse(fs.readFileSync(cacheFile, "utf-8")) as string[]);
+      const raw = JSON.parse(fs.readFileSync(cacheFile, "utf-8"));
+      const list: string[] = Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string") : [];
+      return new Set(list);
     }
   } catch {
-    // Malformed seen-URLs cache — rebuild from scratch
+    logWarn("Corrupted seen-URLs cache, rebuilding from scratch", { workspaceId });
   }
   return new Set();
 }

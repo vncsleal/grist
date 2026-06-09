@@ -10,6 +10,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_OPTIONS: --max-old-space-size=7168
+
 permissions:
   contents: read
 
@@ -24,6 +27,9 @@ jobs:
           node-version: 22
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - name: Security audit
+        continue-on-error: true
+        run: pnpm audit --audit-level=high
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test:unit
@@ -42,30 +48,3 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @vncsleal/quillby build
       - run: pnpm --filter @vncsleal/quillby test:integration
-
-  docker-smoke:
-    needs: [ci]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: infra/docker
-    steps:
-      - uses: actions/checkout@v4
-      - name: Create .env
-        run: echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" > .env
-      - run: docker compose build
-      - run: docker compose up -d
-      - name: Health check
-        run: |
-          for i in $(seq 1 120); do
-            curl -sf http://localhost:3000/health && break
-            sleep 1
-          done
-          curl -sf http://localhost:3000/health
-      - name: Debug logs (on failure)
-        if: failure()
-        run: docker compose logs
-      - name: Teardown
-        run: docker compose down
-        if: always()

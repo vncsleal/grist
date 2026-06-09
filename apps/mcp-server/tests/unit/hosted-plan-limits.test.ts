@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { eq } from "drizzle-orm";
-import { createDb, HostedDbWorkspaceStorage } from "../../src/storage.js";
+import { createDb, HostedDbWorkspaceStorage } from "@quillby/storage-db";
 import { hostedUserState } from "../../src/db/schema.js";
 import type { CardInput } from "../../src/types.js";
 

@@ -72,6 +72,7 @@ export class MiniMaxAdapter implements ProviderAdapter {
       throw new Error(`MiniMax TTS ${response.status}: ${await response.text()}`);
     }
 
+    // ARD: External HTTP API JSON response typing
     const json = await response.json() as MiniMaxT2AResponse;
 
     if (json.base_resp && json.base_resp.status_code !== 0) {
