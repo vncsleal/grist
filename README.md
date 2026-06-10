@@ -1,85 +1,107 @@
-# Quillby
+# Quillby MCP Server
 
-Quillby gives Claude a daily content briefing. It scans articles across your topics, finds what's relevant to your audience, and helps you write posts that sound like you — not generic AI.
+AI copywriting assistant for Claude Desktop. Scans the internet, delivers a daily briefing, and writes drafts in your voice.
 
-Quillby is now workspace-based: use one workspace per Claude Project, client, brand, or campaign.
-
-No extra accounts. No API keys. Everything runs on your computer, inside Claude.
-
----
-
-## What you need
-
-- **[Claude Desktop](https://claude.ai/download)** — the free desktop app from Anthropic (free tier works)
-- **[Node.js 22.12+](https://nodejs.org)** — a free one-time install (click the large **LTS** button on their site)
+[![npm version](https://img.shields.io/npm/v/@quillby/mcp?style=flat-square)](https://www.npmjs.com/package/@quillby/mcp)
+[![License](https://img.shields.io/npm/l/@quillby/mcp?style=flat-square)](LICENSE)
 
 ---
 
-## Installation
+## Features
 
-### macOS
+- **Daily Briefing** — Scans RSS feeds across your topics, finds relevant articles, and generates ready-to-use content ideas
+- **Voice System** — Learns your writing style from examples and editorial rules
+- **Multi-Workspace** — Separate workspaces per client, brand, campaign, or Claude Project
+- **Content Campaigns** — Plan, draft, and execute multi-post campaigns with dependency graphs
+- **Memory** — Persistent editorial memory, style rules, and do-not-say rules
+- **Offline-First** — Everything runs locally on your machine. No accounts, no API keys, no cloud dependency
 
-[**Download the .pkg installer**](https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg) — double-click and follow the prompts.
+---
 
-The installer validates that Claude Desktop is installed, writes the config, and shows you next steps.
+## Quickstart
 
-### Windows
+### Prerequisites
 
-[**Download the .exe installer**](https://github.com/vncsleal/quillby/releases/latest/download/quillby-windows.exe) — double-click, Next → Next → Install → Finish.
+- [Claude Desktop](https://claude.ai/download) (free tier works)
+- [Node.js 22.12+](https://nodejs.org)
 
-The installer sets up Quillby, registers it in Add/Remove Programs, and configures Claude Desktop automatically.
+### Install
 
-### Linux
+**macOS** — [Download .pkg installer](https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg)
 
-Claude Desktop is not available on Linux. Use Quillby via npx with any MCP-compatible client:
+**Windows** — [Download .exe installer](https://github.com/vncsleal/quillby/releases/latest/download/quillby-windows.exe)
 
-```bash
-npx -y @vncsleal/quillby quillby-mcp
-```
-
-### npx (any platform, technical users)
-
-Add Quillby to any MCP client config using npx — no install needed:
+**Via npx (any platform):**
 
 ```json
 {
   "mcpServers": {
     "quillby": {
       "command": "npx",
-      "args": ["-y", "@vncsleal/quillby", "quillby-mcp"]
+      "args": ["-y", "@quillby/mcp", "quillby-mcp"]
     }
   }
 }
 ```
 
-### After installing any platform
-
-**Fully quit Claude Desktop** (right-click the Dock/taskbar icon → Quit), reopen it, and start a new chat with:
+After installing, **fully quit Claude Desktop** (right-click Dock/tray icon → Quit), reopen it, and start a new chat with:
 
 > Set me up with Quillby
 
-Claude asks a few questions about your work, your audience, and what you publish. Answer naturally — that's how Quillby learns your voice.
+Claude will guide you through setting up your profile, topics, and voice.
 
 ---
 
-### VS Code
+## Usage
 
-Create `.vscode/mcp.json` in your project root:
+### Daily Briefing
 
+> Give me my Quillby daily brief
+
+Claude scans today's articles across your topics and returns ready-to-use content ideas with specific angles and hooks.
+
+### Writing
+
+> Write a LinkedIn post from idea 3
+
+> Draft this as a 150-word newsletter entry
+
+### Voice Training
+
+> Add this post to my Quillby voice examples
+
+> Remember this as a style rule: short paragraphs, no consultant tone
+
+> Remember this as a do-not-say rule: never say "unlock growth"
+
+### Workspaces
+
+> Create a Quillby workspace for my B2B SaaS brand
+
+> Switch Quillby to my newsletter workspace
+
+---
+
+## Client Configuration
+
+<details>
+<summary><b>Claude Desktop</b> (<code>claude_desktop_config.json</code>)</summary>
+
+**With installer (recommended):** the installer writes the config automatically.
+
+**Manual npx install:**
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "quillby": {
-      "command": "quillby-mcp"
+      "command": "npx",
+      "args": ["-y", "@quillby/mcp", "quillby-mcp"]
     }
   }
 }
 ```
 
-### Cursor
-
-Create `.cursor/mcp.json` in your project root:
-
+**Binary install** (after running installer or extracting binary):
 ```json
 {
   "mcpServers": {
@@ -90,119 +112,147 @@ Create `.cursor/mcp.json` in your project root:
 }
 ```
 
-### Claude Code
+Config file location:
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux:** `~/.config/Claude/claude_desktop_config.json`
+</details>
 
-```bash
-claude mcp add --transport stdio --scope project quillby -- quillby-mcp
+<details>
+<summary><b>VS Code</b> (<code>.vscode/mcp.json</code>)</summary>
+
+```json
+{
+  "servers": {
+    "quillby": {
+      "command": "npx",
+      "args": ["-y", "@quillby/mcp", "quillby-mcp"]
+    }
+  }
+}
 ```
 
----
+Or install from VS Code: `Ctrl+Shift+P` → "Add MCP Server" → enter `npx -y @quillby/mcp quillby-mcp`
+</details>
 
-## Every day
+<details>
+<summary><b>Cursor</b> (<code>.cursor/mcp.json</code>)</summary>
 
-Once set up, just talk to Claude like normal.
+```json
+{
+  "mcpServers": {
+    "quillby": {
+      "command": "npx",
+      "args": ["-y", "@quillby/mcp", "quillby-mcp"]
+    }
+  }
+}
+```
+</details>
 
-If you work across multiple contexts, start by creating or selecting a workspace:
+<details>
+<summary><b>Claude Code</b></summary>
 
-> "Create a Quillby workspace for my B2B SaaS brand"
+```bash
+claude mcp add --transport stdio --scope project quillby -- npx -y @quillby/mcp quillby-mcp
+```
+</details>
 
-> "Switch Quillby to my newsletter workspace"
+<details>
+<summary><b>Windsurf</b> (<code>~/.codeium/windsurf/mcp_config.json</code>)</summary>
 
-**Open the saved Briefing instantly:**
-
-> "Open Quillby"
-
-> "Open my daily brief"
-
-**Refresh today's content ideas when you want a new run:**
-
-> "Give me my Quillby daily brief"
-
-Claude scans today's articles across your topics, picks the most relevant ones for your audience, and gives you a set of ready-to-use ideas — each with a specific angle and hook.
-
-**Write a post from any idea:**
-
-> "Write a LinkedIn post from idea 3"
-
-Claude writes it in your voice, based on your profile.
-
-**Save it:**
-
-> "Save this draft"
-
-Quillby stores it inside your Quillby data directory, typically `~/.quillby/workspaces/<workspace-id>/output/`.
-
----
-
-## Teaching Quillby your voice
-
-The more examples Quillby has, the more accurately it writes like you.
-
-When Claude writes a post you're happy with, say:
-
-> "Add this post to my Quillby voice examples"
-
-Quillby saves it inside the current workspace. Every future post in that workspace draws on those examples.
-
-To check what Quillby knows about your style:
-
-> "Show me my Quillby Voice System"
-
-You can also save typed editorial memory:
-
-> "Remember this as a Quillby style rule: short paragraphs, no consultant tone"
-
-> "Remember this as a Quillby do-not-say rule: never say 'unlock growth'"
+```json
+{
+  "mcpServers": {
+    "quillby": {
+      "command": "npx",
+      "args": ["-y", "@quillby/mcp", "quillby-mcp"]
+    }
+  }
+}
+```
+</details>
 
 ---
 
-## Tips
+## How It Works
 
-**Updating your focus:**
-> "Update my Quillby profile — I'm focusing on [topic] now"
-
-**Adding sources:**
-> "Find good news sources for my Quillby topics and add them"
-
-**Use natural language.** Good prompts sound like: "Open Quillby", "What's worth writing about today?", "Open the second story and draft it for LinkedIn", "Show me my Voice System."
-
-**Being specific gets better results.** "Write a 150-word conversational LinkedIn post from idea 2" works much better than "write a post."
-
-**Use Claude Projects with Quillby.** Keep structured state in Quillby, keep long reference material in Claude Project knowledge, and let Claude render the working surfaces as native artifacts.
-
-**Your content stays on your computer.** Your profile, memory, drafts, and content ideas are saved locally under `~/.quillby/workspaces/`. Nothing is sent to any external service beyond the AI client you choose to use.
+1. **Workspace** — Each workspace has its own profile (topics, audience, voice examples, memory)
+2. **Harvest** — On demand, Quillby fetches recent articles from your configured RSS feeds
+3. **Brief** — Claude analyzes the articles against your profile and generates content ideas
+4. **Draft** — Each idea can be expanded into a full post in your voice
+5. **Campaign** — Multi-post campaigns with dependency graphs and auto-execution
 
 ---
 
-## Troubleshooting
+## Data Storage
 
-**Quillby doesn't appear in Claude** — Make sure you fully quit and reopened Claude Desktop after saving the config. Check the path in the config matches exactly what the terminal printed (no extra spaces or missing characters).
+Everything stays on your machine:
 
-**"No context saved" error** — Start setup for the current workspace: *"Set me up with Quillby"*
+```
+~/.quillby/
+├── workspaces/
+│   ├── <workspace-id>/
+│   │   ├── memory/
+│   │   │   └── typed-memory.json
+│   │   ├── output/
+│   │   │   └── <timestamp>/
+│   │   └── config.json
+│   └── ...
+└── config.json
+```
 
-**"No feeds configured" error** — Ask Claude to find sources: *"Find RSS feeds for my topics and add them to Quillby"*
+No data is sent to any external service beyond the AI client you choose (Claude).
 
 ---
 
-## For developers
+## For Developers
 
-HTTP transport, environment variables, scheduled harvest, the full tool reference, and integration configs for VS Code and Cursor: see [docs/MCP.md](docs/MCP.md). The implementation roadmap is in [docs/ROADMAP.md](docs/ROADMAP.md).
+### Repository Structure
 
-## Self-hosted quick start
+```
+apps/
+  mcp-server/     # MCP server (published as @quillby/mcp)
+  site/            # Astro marketing site
+  api/             # REST API (Hono)
+packages/
+  core/            # Domain logic
+  config/          # Configuration
+  workspace/       # Workspace management
+  storage-fs/      # Filesystem storage adapter
+  storage-db/      # Database storage adapter
+  providers/       # AI provider adapters
+  auth/            # Authentication
+  billing/         # Billing
+  database/        # Database schema and migrations
+  content/         # Content processing
+```
 
-If you want cross-device/team access on your own infrastructure:
+### Local Development
+
+```bash
+pnpm install
+pnpm build
+pnpm --filter @quillby/mcp dev
+```
+
+### More Docs
+
+- [Full MCP Tool Reference](docs/MCP.md)
+- [Architecture & Roadmap](docs/ROADMAP.md)
+- [Contributing](CONTRIBUTING.md)
+
+---
+
+## Self-Hosted
+
+For cross-device or team access:
 
 ```bash
 docker compose -f infra/docker/docker-compose.yml up -d --build
 ```
 
-Then point your MCP client to:
-
-- `http://localhost:3000/mcp` (local testing)
-- or your reverse-proxied HTTPS URL in production
-
-Set `QUILLBY_DEPLOYMENT_MODE=self-hosted` for user-operated deployments. This keeps
-SaaS billing/subscription logic disabled while preserving hosted features like API-key auth and shared workspaces.
+Then point your MCP client to `http://localhost:3000/mcp` with `QUILLBY_DEPLOYMENT_MODE=self-hosted`.
 
 ---
 
