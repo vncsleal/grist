@@ -796,7 +796,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
       .where(and(eq(hostedWorkspaceJob.id, jobId), eq(hostedWorkspaceJob.userId, this._effectiveUserId)))
       .limit(1);
     if (rows.length === 0) return null;
-    // ARD: Circular type reference prevents direct typing
+    // HACK: Circular type reference prevents direct typing
     return this.rowToJob(rows[0] as Parameters<typeof this.rowToJob>[0]);
   }
 
@@ -813,7 +813,7 @@ export class HostedDbWorkspaceStorage implements WorkspaceStorage, JobStorage, P
       .from(hostedWorkspaceJob)
       .where(and(...conditions))
       .orderBy(desc(hostedWorkspaceJob.createdAt));
-    // ARD: Circular type reference prevents direct typing
+    // HACK: Circular type reference prevents direct typing
     return rows.map((r) => this.rowToJob(r as Parameters<typeof this.rowToJob>[0]));
   }
 

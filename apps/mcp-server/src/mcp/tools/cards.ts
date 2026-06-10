@@ -157,7 +157,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       if (parsed.status === "clear") {
         const cleared: Partial<Record<string, CurationStatus>> = { ...bundle.curationState };
         delete cleared[key];
-        // ARD: Clear operation deletes a key from partial state
+        // HACK: Clear operation deletes a key from partial state
         await storage.saveCurationState(cleared as Record<string, CurationStatus>);
       } else {
         const statusMap: Record<"shortlist" | "skip", "shortlisted" | "skipped"> = {
@@ -199,7 +199,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
       const samplingAvailable = !!(ctx.server.server.getClientCapabilities()?.sampling);
       const bundle = await ctx.storage.loadLatestHarvest();
       const cards = bundle.cards;
-      // ARD: Non-null after contextExists() check
+      // HACK: Non-null after contextExists() check
       const userCtx = await ctx.storage.loadContext() as UserContext;
       const platforms = userCtx.platforms;
       const genPlatform = parsed.platform ?? platforms[0] ?? "linkedin";

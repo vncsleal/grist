@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../../src/workspaces.js", () => ({
+vi.mock("@quillby/workspace", () => ({
   getCurrentWorkspace: () => ({ name: "Test Workspace" }),
 }));
 

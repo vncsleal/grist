@@ -1,5 +1,17 @@
 # @vncsleal/quillby
 
+## 0.5.0
+
+- Release readiness: binary entrypoint fix, version injection, .dmg pipeline, exact deps.
+- Tool consolidation: 60 flat MCP tools → 11 domain-grouped tools with discriminated union schemas.
+- LOCAL mode: clean entrypoint, zero cloud dependencies, storage-agnostic server.ts, three-tier build targets.
+- Architecture: hexagonal decoupling — server.ts is storage-agnostic, entrypoints inject their own storage.
+- Codebase cleanup: ARD comments → proper HACK annotations, sharp dep removed, version resolution hardened.
+- Binary: bun build --compile now compiles main-local.ts — binaries actually start the server.
+- Fix: runtime fs.readFileSync of package.json replaced with compile-time version injection via --define.
+- Fix: all dependencies pinned to exact versions.
+- Site: complete landing page redesign with capabilities grid, campaigns, comparisons.
+
 ## 0.4.0
 
 - Initial pre-release. Local mode production-ready.

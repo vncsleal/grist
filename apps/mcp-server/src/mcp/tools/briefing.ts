@@ -39,7 +39,7 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
           structuredContent: { error: "no_context" },
         };
       }
-      // ARD: Non-null after contextExists() check
+      // HACK: Non-null after contextExists() check
       const userCtx = await ctx.storage.loadContext() as UserContext;
       const sources = await ctx.storage.loadSources();
       if (sources.length === 0) {

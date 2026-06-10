@@ -50,7 +50,7 @@ function outputToUrl(output: unknown): string | null {
     return typeof first === "string" ? first : null;
   }
   if (output && typeof output === "object") {
-    // ARD: Replicate API response is dynamic
+    // HACK: Replicate API response is dynamic
     const asRecord = output as Record<string, unknown>;
     if (typeof asRecord.url === "string") return asRecord.url;
   }
@@ -162,7 +162,7 @@ export class ReplicateAdapter implements ProviderAdapter {
       throw new Error(`Replicate create prediction ${res.status}: ${await res.text()}`);
     }
 
-    // ARD: fetch JSON parse
+    // HACK: fetch JSON parse
     return (await res.json()) as ReplicatePrediction;
   }
 

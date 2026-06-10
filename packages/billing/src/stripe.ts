@@ -138,7 +138,7 @@ function getSubscriptionNumericField(
   sub: Stripe.Subscription,
   field: "current_period_end" | "trial_end",
 ): number | null {
-  // ARD: Stripe Subscription doesn't have a string index signature
+  // HACK: Stripe Subscription doesn't have a string index signature
   return (sub as SubscriptionWithTimestamps)[field] ?? null;
 }
 
