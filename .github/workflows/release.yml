@@ -182,7 +182,7 @@ jobs:
 
       - name: Build and bundle
         run: |
-          pnpm --filter @vncsleal/quillby build
+          pnpm --filter @quillby/mcp build
           cd apps/mcp-server
           pnpm exec esbuild dist/local/main.js --bundle --outfile=dist/local/main.js --platform=node --target=node22 --format=esm --allow-overwrite
           test -f dist/local/main.js || { echo "bundle missing"; exit 1; }

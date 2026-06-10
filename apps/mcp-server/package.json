@@ -1,7 +1,7 @@
 {
-  "name": "@vncsleal/quillby",
-  "version": "0.4.1",
-  "mcpName": "io.github.vncsleal/quillby-mcp",
+  "name": "@quillby/mcp",
+  "version": "0.1.0",
+  "mcpName": "io.github.quillby/mcp-server",
   "description": "Quillby — AI copywriting assistant. Reads the internet and writes content in your voice.",
   "license": "MIT",
   "author": "Vinicius Leal",
