@@ -4,7 +4,7 @@ If you just cloned this repository, run:
 
 ```bash
 <install dependencies with your package manager>
-pnpm --filter @vncsleal/quillby build
+pnpm --filter @quillby/mcp build
 ./apps/mcp-server/bin/quillby-mcp
 ```
 
