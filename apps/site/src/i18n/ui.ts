@@ -154,7 +154,7 @@ export const ui = {
     'install.npx-tab': 'npx',
     'install.macos-cta': 'Download for Mac',
     'install.macos-note':
-      'Drag to Applications. Or <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg">download the .pkg installer</a> (auto-configures Claude Desktop).',
+      'Classic package installer — double-click and follow the prompts.',
     'install.windows-cta': 'Download for Windows',
     'install.npx-command': 'npx -y @quillby/mcp quillby-mcp',
     'install.copied-label': 'Copied!',
@@ -384,7 +384,7 @@ export const ui = {
     'install.npx-tab': 'npx',
     'install.macos-cta': 'Baixar para Mac',
     'install.macos-note':
-      'Arraste para Applications. Ou <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg">baixe o instalador .pkg</a> (configura o Claude Desktop automaticamente).',
+      'Instalador .pkg — clique duas vezes e siga as instruções.',
     'install.windows-cta': 'Baixar para Windows',
     'install.npx-command': 'npx -y @quillby/mcp quillby-mcp',
     'install.copied-label': 'Copiado!',
