@@ -1,5 +1,5 @@
 import * as https from "https";
-import type { RssItem } from "../types.js";
+import type { RssItem } from "@quillby/core";
 
 const ITEMS_PER_SOURCE = 25;
 

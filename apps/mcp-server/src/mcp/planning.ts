@@ -7,7 +7,7 @@ import {
   TaskDeleteArgsSchema,
   CalendarArgsSchema,
 } from "./schemas.js";
-import type { PlanStorage } from "@quillby/workspace";
+import type { PlanStorage } from "@quillby/core";
 
 export async function handlePlanCreate(
   storage: PlanStorage,

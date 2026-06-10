@@ -1,6 +1,6 @@
 import Parser from "rss-parser";
 import { CONFIG } from "../config.js";
-import type { RssItem } from "../types.js";
+import type { RssItem } from "@quillby/core";
 import { logWarn } from "../logger.js";
 
 const parser = new Parser({

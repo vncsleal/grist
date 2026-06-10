@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ToolContext, ToolResult } from "./index.js";
-import { UserContextSchema } from "../../types.js";
+import { UserContextSchema } from "@quillby/core";
 import { SetCloneIdentityArgsSchema, CloneVoiceArgsSchema } from "../schemas.js";
 import { validateUrl, ElevenLabsAdapter } from "@quillby/providers";
 import { resolveElevenLabsApiKey } from "../../provider-config.js";

@@ -4,7 +4,7 @@ import type {
   UserContext,
   StructureCard,
 } from "@quillby/core";
-import { CardInputSchema } from "../../types.js";
+import { CardInputSchema } from "@quillby/core";
 import { fetchArticles, preScoreArticles } from "../../agents/harvest.js";
 import { enrichArticle } from "../../extractors/content.js";
 import { contextToPromptText } from "../../agents/onboard.js";

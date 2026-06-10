@@ -101,7 +101,7 @@ async function runScheduledHarvest(storage: FullStorage): Promise<void> {
   const sources = await storage.loadSources();
   if (sources.length === 0) { logInfo("No feeds configured — skipping harvest", { tag }); return; }
   const { fetchArticles, preScoreArticles } = await import("../agents/harvest.js");
-  const { CardInputSchema } = await import("../types.js");
+  const { CardInputSchema } = await import("@quillby/core");
   const topN = parseInt(process.env.QUILLBY_SCHEDULE_TOP_N ?? "15", 10);
   try {
     const { articles, seenUrls } = await fetchArticles(sources, await storage.getSeenUrls(), (msg) => logInfo(msg, { tag }), true);
@@ -140,9 +140,9 @@ function scheduleDaily(timeStr: string, fn: () => Promise<void>): void {
   tick();
 }
 
-async function handleToolCall(server: McpServer, storage: FullStorage, name: string, args: Record<string, unknown> = {}): Promise<ToolResult> {
+async function handleToolCall(server: McpServer, storage: FullStorage, name: string, args: Record<string, unknown> = {}, billing?: import("@quillby/core").BillingPort): Promise<ToolResult> {
   try {
-    const ctx = { server, storage, deploymentMode, providerRouter, sample: (prompt: string, maxTokens?: number) => sample(server, prompt, maxTokens) };
+    const ctx: import("./tools/index.js").ToolContext = { server, storage, deploymentMode, providerRouter, billing, sample: (prompt: string, maxTokens?: number) => sample(server, prompt, maxTokens) };
     switch (name) {
       case "workspace": return handleWorkspaceTool(args, ctx);
       case "feeds": return handleFeedsTool(args, ctx);

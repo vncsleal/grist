@@ -19,14 +19,16 @@ import {
   appendSources as wsAppendSources,
   getSeenUrls as wsGetSeenUrls,
   saveSeenUrls as wsSaveSeenUrls,
-  type CreateWorkspaceInput,
-  type DraftSummary,
-  type WorkspaceStorage,
-  type JobStorage,
-  type PlanStorage,
-  type SessionStore,
-  type CampaignStore,
 } from "@quillby/workspace";
+import type {
+  CreateWorkspaceInput,
+  DraftSummary,
+  WorkspaceStorage,
+  JobStorage,
+  PlanStorage,
+  SessionStore,
+  CampaignStore,
+} from "@quillby/core";
 import {
   loadLatestHarvest as structsLoadLatest,
   latestHarvestExists as structsLatestExists,

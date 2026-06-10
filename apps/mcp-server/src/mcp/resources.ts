@@ -1,5 +1,5 @@
 import type { Resource } from "@modelcontextprotocol/sdk/types.js";
-import type { WorkspaceStorage, JobStorage } from "@quillby/workspace";
+import type { WorkspaceStorage, JobStorage } from "@quillby/core";
 import type { GenerationJob } from "@quillby/core";
 
 export const RESOURCES: Resource[] = [

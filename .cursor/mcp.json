@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "quillby": {
-      "type": "stdio",
-      "command": "${workspaceFolder}/bin/quillby-mcp",
-      "args": []
-    }
-  }
-}

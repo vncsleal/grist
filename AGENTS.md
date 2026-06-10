@@ -109,9 +109,7 @@ claude mcp add --transport stdio --scope project quillby -- \
   /path/to/quillby/apps/mcp-server/bin/quillby-mcp
 ```
 
-**VS Code**: `.vscode/mcp.json` with `${workspaceFolder}/apps/mcp-server/bin/quillby-mcp`
-
-**Cursor**: `.cursor/mcp.json` same pattern
+**All MCP-compatible editors**: The root `.mcp.json` is auto-detected by VS Code, Cursor, Windsurf, and other MCP-aware IDEs.
 
 ## CI/CD
 

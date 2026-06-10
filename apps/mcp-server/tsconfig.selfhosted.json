@@ -15,8 +15,6 @@
     "src/logger.ts",
     "src/config.ts",
     "src/types.ts",
-    "src/workspaces.ts",
-    "src/storage.ts",
     "src/billing.ts",
     "src/db.ts",
     "src/auth.ts",

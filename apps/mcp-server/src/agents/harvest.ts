@@ -2,7 +2,7 @@ import { fetchFeeds } from "../extractors/rss.js";
 import { fetchReddit } from "../extractors/reddit.js";
 import { enrichArticle } from "../extractors/content.js";
 import { mapWithConcurrency } from "../llm.js";
-import type { RssItem, EnrichedArticle } from "../types.js";
+import type { RssItem, EnrichedArticle } from "@quillby/core";
 import { CONFIG } from "../config.js";
 
 /**

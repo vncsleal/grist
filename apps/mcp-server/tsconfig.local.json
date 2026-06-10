@@ -4,6 +4,7 @@
     "outDir": "./dist/local",
     "rootDir": "./src"
   },
+  "exclude": ["src/mcp/middleware.ts"],
   "include": [
     "src/main.ts",
     "src/main-local.ts",
@@ -13,9 +14,6 @@
     "src/output/**/*.ts",
     "src/provider-config.ts",
     "src/logger.ts",
-    "src/config.ts",
-    "src/types.ts",
-    "src/workspaces.ts",
-    "src/storage.ts"
+    "src/config.ts"
   ]
 }

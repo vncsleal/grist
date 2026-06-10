@@ -19,6 +19,7 @@
     "clean": "rm -rf dist"
   },
   "devDependencies": {
+    "@quillby/content": "workspace:*",
     "@vitest/coverage-v8": "4.1.7",
     "vitest": "4.1.0"
   },

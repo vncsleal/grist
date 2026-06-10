@@ -166,13 +166,12 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
         };
       }
 
-      if (ctx.deploymentMode === "cloud") {
-        const b = await import("../../billing.js");
-        if (b.isPlanEnforcementEnabled()) {
-          const plan = await ctx.storage.getPlan();
-          const limits = b.getPlanLimits(plan);
+      if (ctx.billing?.isPlanEnforcementEnabled()) {
+        const plan = await ctx.storage.getPlan();
+        const limits = ctx.billing.getPlanLimits(plan);
+        if (limits) {
           const limitKey = `${modality}CreditsPerMonth` as keyof typeof limits;
-          const limit = limits[limitKey as keyof typeof limits];
+          const limit = limits[limitKey];
           if (limit !== null && limit >= 0) {
             const monthlyCount = await genStorage.getMonthlyJobCount?.(modality) ?? 0;
             if (monthlyCount >= limit) {

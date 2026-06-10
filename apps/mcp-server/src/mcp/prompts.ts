@@ -1,5 +1,5 @@
 import type { Prompt } from "@modelcontextprotocol/sdk/types.js";
-import type { WorkspaceStorage } from "@quillby/workspace";
+import type { WorkspaceStorage } from "@quillby/core";
 import { contextToPromptText, ONBOARDING_PROMPT } from "../agents/onboard.js";
 
 export const PROMPTS: Prompt[] = [

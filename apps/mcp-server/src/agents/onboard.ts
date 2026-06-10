@@ -1,5 +1,5 @@
-import { getCurrentWorkspace } from "../workspaces.js";
-import type { UserContext, TypedMemory } from "../types.js";
+import { getCurrentWorkspace } from "@quillby/workspace";
+import type { UserContext, TypedMemory } from "@quillby/core";
 
 /**
  * Render the user context as a concise text block for LLM prompts.

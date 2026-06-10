@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { ToolContext, ToolResult } from "./index.js";
 import type { UserContext, StructureCard, CurationStatus, CardInput } from "@quillby/core";
-import { CardInputSchema } from "../../types.js";
+import { CardInputSchema } from "@quillby/core";
 import { PLATFORM_GUIDES } from "../../agents/compose.js";
 import { contextToPromptText } from "../../agents/onboard.js";
 

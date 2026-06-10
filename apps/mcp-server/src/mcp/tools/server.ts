@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { ToolContext, ToolResult } from "./index.js";
 import { ONBOARDING_PROMPT } from "../../agents/onboard.js";
-import { UserContextSchema } from "../../types.js";
+import { UserContextSchema } from "@quillby/core";
 import { PKG } from "../shared.js";
 
 const ServerSchema = z.discriminatedUnion("action", [
@@ -133,26 +133,24 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
     }
 
     case "get_plan": {
-      const billing = await import("../../billing.js");
-      if (!billing.isCloudMode()) {
+      if (!ctx.billing?.isCloudMode()) {
         return { content: [{ type: "text", text: "Plan management is only available in cloud mode." }], structuredContent: { error: "not_cloud_mode" } };
       }
       const plan = await ctx.storage.getPlan();
-      const limits = billing.getPlanLimits(plan);
+      const limits = ctx.billing.getPlanLimits(plan);
       return {
-        content: [{ type: "text", text: `Plan: ${plan}. Limits: ${limits ? Object.entries(limits).map(([k, v]) => `${k}: ${v}`).join(", ") : "N/A"}. Enforcement: ${billing.isPlanEnforcementEnabled() ? "enabled" : "disabled"}.` }],
-        structuredContent: { plan, limits, enforcementEnabled: billing.isPlanEnforcementEnabled() },
+        content: [{ type: "text", text: `Plan: ${plan}. Limits: ${limits ? Object.entries(limits).map(([k, v]) => `${k}: ${v}`).join(", ") : "N/A"}. Enforcement: ${ctx.billing.isPlanEnforcementEnabled() ? "enabled" : "disabled"}.` }],
+        structuredContent: { plan, limits, enforcementEnabled: ctx.billing.isPlanEnforcementEnabled() },
       };
     }
 
     case "get_pricing": {
-      const billing = await import("../../billing.js");
-      if (!billing.isCloudMode()) {
+      if (!ctx.billing?.isCloudMode()) {
         return { content: [{ type: "text", text: "Pricing is only available in cloud mode." }], structuredContent: { error: "not_cloud_mode" } };
       }
       const plans = [
-        { name: "free", price: "$0/mo", description: "Get started with basic content tools", limits: billing.getPlanLimits("free") },
-        { name: "pro", price: "$29/mo", description: "Unlimited workspaces, drafts, and AI generation credits", limits: billing.getPlanLimits("pro") },
+        { name: "free", price: "$0/mo", description: "Get started with basic content tools", limits: ctx.billing.getPlanLimits("free") },
+        { name: "pro", price: "$29/mo", description: "Unlimited workspaces, drafts, and AI generation credits", limits: ctx.billing.getPlanLimits("pro") },
       ];
       return {
         content: [{ type: "text", text: `Available plans:\n${plans.map(p => `  ${p.name}: ${p.price} — ${p.description}`).join("\n")}` }],
@@ -161,12 +159,11 @@ export async function handleTool(raw: unknown, ctx: ToolContext): Promise<ToolRe
     }
 
     case "manage_billing": {
-      const billing = await import("../../billing.js");
-      if (!billing.isCloudMode()) {
+      if (!ctx.billing?.isCloudMode()) {
         return { content: [{ type: "text", text: "Billing is only available in cloud mode." }], structuredContent: { error: "not_cloud_mode" } };
       }
       const currentPlan = await ctx.storage.getPlan();
-      const url = billing.getBillingActionUrl(parsed.billingAction, currentPlan);
+      const url = ctx.billing.getBillingActionUrl(parsed.billingAction, currentPlan);
       if (!url) {
         return {
           content: [{ type: "text", text: `Billing action "${parsed.billingAction}" is not configured. Ensure Stripe environment variables are set.` }],

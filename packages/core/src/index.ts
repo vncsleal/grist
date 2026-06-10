@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export * from "./errors.js";
 export * from "./agents.js";
+export * from "./ports.js";
 
 // ─── User context (built during onboarding) ───────────────────────────────────
 

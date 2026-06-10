@@ -1,12 +1,12 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ProviderRouter } from "@quillby/providers";
+import type { BillingPort } from "@quillby/core";
 import type { DeploymentMode } from "@quillby/config";
 import type { SampleResult } from "../server.js";
-import type { WorkspaceStorage, JobStorage, PlanStorage, SessionStore, CampaignStore } from "@quillby/workspace";
+import type { FullStorage } from "@quillby/core";
 
+export type { FullStorage };
 export type { SampleResult };
-
-export type FullStorage = WorkspaceStorage & JobStorage & PlanStorage & SessionStore & CampaignStore;
 
 export function resolveWorkspaceStorage(storage: FullStorage, args: { workspaceId?: string }): Promise<FullStorage> {
   return args.workspaceId ? storage.withWorkspace(args.workspaceId) : Promise.resolve(storage);
@@ -18,6 +18,7 @@ export interface ToolContext {
   deploymentMode: DeploymentMode;
   providerRouter: ProviderRouter;
   sample: (prompt: string, maxTokens?: number) => Promise<SampleResult>;
+  billing?: BillingPort;
 }
 
 export type ToolResult = {

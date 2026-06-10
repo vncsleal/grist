@@ -32,14 +32,16 @@ import {
 import {
   DEFAULT_WORKSPACE_ID,
   slugifyWorkspaceId,
-  type CreateWorkspaceInput,
-  type DraftSummary,
-  type WorkspaceStorage,
-  type JobStorage,
-  type PlanStorage,
-  type SessionStore,
-  type CampaignStore,
 } from "@quillby/workspace";
+import type {
+  CreateWorkspaceInput,
+  DraftSummary,
+  WorkspaceStorage,
+  JobStorage,
+  PlanStorage,
+  SessionStore,
+  CampaignStore,
+} from "@quillby/core";
 import { db as defaultDb, createDb, type QuillbyDb } from "@quillby/database";
 import {
   hostedUserState,

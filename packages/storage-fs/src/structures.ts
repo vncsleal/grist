@@ -10,7 +10,8 @@ import {
   type CardInput,
   type CurationStatus,
 } from "@quillby/core";
-import { getCurrentWorkspaceId, getWorkspacePaths, type DraftSummary } from "@quillby/workspace";
+import { getCurrentWorkspaceId, getWorkspacePaths } from "@quillby/workspace";
+import type { DraftSummary } from "@quillby/core";
 import { logWarn } from "./log.js";
 
 function createTimestampedOutputDir(workspaceId: string): string {

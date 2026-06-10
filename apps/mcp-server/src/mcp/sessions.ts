@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getCurrentWorkspaceId } from "@quillby/workspace";
-import type { SessionStore, PlanStorage } from "@quillby/workspace";
+import type { SessionStore, PlanStorage } from "@quillby/core";
 import type { Session } from "@quillby/content";
 import { logWarn } from "../logger.js";
 
