@@ -15,17 +15,20 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - run: pnpm install --frozen-lockfile
 
       - name: Build arch binaries
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          bun build --compile --target=bun-darwin-arm64 --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-macos-arm64
-          bun build --compile --target=bun-darwin-x64  --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-macos-x64
+          cd apps/mcp-server
+          bun build --compile --target=bun-darwin-arm64 --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./src/main-local.ts --outfile ../../quillby-mcp-macos-arm64
+          bun build --compile --target=bun-darwin-x64 --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./src/main-local.ts --outfile ../../quillby-mcp-macos-x64
 
       - name: Smoke test ARM64 binary
         run: |
@@ -80,15 +83,22 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
       - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - run: pnpm install --frozen-lockfile
 
       - name: Build binary
+        shell: pwsh
         env:
           QUILLBY_BUILD_VERSION: ${{ github.ref_name }}
         run: |
           $VERSION = "$env:QUILLBY_BUILD_VERSION" -replace "^v", ""
-          bun build --compile "--define:process.env.QUILLBY_VERSION=`"$VERSION`"" --target=bun-windows-x64 ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-windows-x64.exe
+          cd apps/mcp-server
+          bun build --compile "--define:process.env.QUILLBY_VERSION=`"$VERSION`"" --target=bun-windows-x64 ./src/main-local.ts --outfile ..\..\quillby-mcp-windows-x64.exe
 
       - name: Smoke test binary
         shell: pwsh
@@ -98,12 +108,12 @@ jobs:
           Write-Host "Binary OK ($([math]::Round($size/1MB, 1)) MB)"
 
       - name: Install NSIS and build installer
+        shell: pwsh
         run: |
           choco install nsis --no-progress -y
           $env:PATH = "C:\Program Files (x86)\NSIS;" + $env:PATH
           copy quillby-mcp-windows-x64.exe infra\installers\windows\quillby-mcp-windows-x64.exe
           makensis infra\installers\windows\installer.nsi
-        shell: pwsh
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
@@ -113,36 +123,9 @@ jobs:
             quillby-windows.exe
             quillby-mcp-windows-x64.exe
 
-  # Linux: raw binary (install.sh handles config)
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
-
-      - name: Build binary
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          bun build --compile --target=bun-linux-x64 --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-linux-x64
-
-      - name: Smoke test binary
-        run: |
-          echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke","version":"0.0.1"}}}' | timeout 10 ./quillby-mcp-linux-x64 | head -1 | grep -q '"jsonrpc":"2.0"'
-          echo "Binary smoke test passed"
-
-      - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-binaries
-          path: quillby-mcp-linux-x64
-
   # Release: aggregate all artifacts and create the GitHub release
   create-release:
-    needs: [build-macos, build-windows, build-linux]
+    needs: [build-macos, build-windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -158,7 +141,7 @@ jobs:
             const fs = require('fs');
             const changelog = fs.readFileSync('apps/mcp-server/CHANGELOG.md', 'utf8');
             const version = process.env.GITHUB_REF_NAME.replace(/^v/, '');
-            const section = changelog.match(new RegExp('## ' + version.replace(/\./g, '\\.') + '[\\s\\S]*?(?=\\n## |\\n$$)'));
+            const section = changelog.match(new RegExp('## ' + version.replace(/\./g, '\\.') + '[\\s\\S]*?(?=\\n## |\\n\$)'));
             fs.writeFileSync('/tmp/release-body.md', section ? section[0].trim() : changelog.split('\\n\\n## ')[0] + '\\n');
           "
 
