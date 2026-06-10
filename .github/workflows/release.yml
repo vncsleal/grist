@@ -177,7 +177,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          registry-url: "https://registry.npmjs.org"
       - run: pnpm install --frozen-lockfile
 
       - name: Build and bundle
@@ -191,6 +190,4 @@ jobs:
       - name: Publish to npm
         run: |
           cd apps/mcp-server
-          NPM_CONFIG_USERCONFIG=/dev/null npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ""
+          npm publish --access public
