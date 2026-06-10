@@ -1,6 +1,6 @@
 # @vncsleal/quillby
 
-## 0.5.0
+## 0.4.1
 
 - Release readiness: binary entrypoint fix, version injection, .dmg pipeline, exact deps.
 - Tool consolidation: 60 flat MCP tools → 11 domain-grouped tools with discriminated union schemas.

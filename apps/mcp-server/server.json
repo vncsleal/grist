@@ -6,12 +6,12 @@
     "url": "https://github.com/vncsleal/quillby",
     "source": "github"
   },
-  "version": "0.5.0",
+      "version": "0.4.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@vncsleal/quillby",
-      "version": "0.5.0",
+  "version": "0.4.1",
       "transport": {
         "type": "stdio"
       }
