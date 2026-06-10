@@ -191,7 +191,6 @@ jobs:
       - name: Publish to npm
         run: |
           cd apps/mcp-server
-          TARBALL=$(npm pack --silent 2>/dev/null)
-          npm publish "$TARBALL" --access public
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ""
