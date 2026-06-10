@@ -38,7 +38,7 @@ const toggleLabel = t('nav.lang-label');
       <a href={toggleHref} class="nav-lang">{toggleLabel}</a>
     </li>
     <li>
-      <a href={getRelativeLocaleUrl(lang, '#install')} class="nav-cta">{t('nav.install-free')}</a>
+      <a href={getRelativeLocaleUrl(lang, '/') + '#install'} class="nav-cta">{t('nav.install-free')}</a>
     </li>
   </ul>
   <button class="nav-toggle" aria-label={t('nav.menu-toggle')} aria-expanded="false" data-nav-toggle>
