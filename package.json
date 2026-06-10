@@ -14,15 +14,13 @@
     "test": "turbo run test",
     "test:unit": "pnpm --filter @vncsleal/quillby test:unit",
     "clean": "turbo run clean --continue && rm -rf node_modules .turbo",
-    "changeset": "changeset",
-    "version": "changeset version",
     "postinstall": "lefthook install || true"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
     "@eslint/js": "^9.25.1",
     "@evilmartians/lefthook": "^2.1.8",
     "@types/node": "^20.11.24",
+    "create-dmg": "^8.1.0",
     "eslint": "^9.25.1",
     "eslint-plugin-astro": "^1.3.1",
     "eslint-plugin-react-hooks": "^5.2.0",
