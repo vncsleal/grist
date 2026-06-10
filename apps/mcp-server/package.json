@@ -3,6 +3,10 @@
   "version": "0.1.1",
   "mcpName": "io.github.quillby/mcp-server",
   "description": "Quillby — AI copywriting assistant. Reads the internet and writes content in your voice.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vncsleal/quillby"
+  },
   "license": "MIT",
   "author": "Vinicius Leal",
   "keywords": [
