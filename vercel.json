@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rootDirectory": ".",
   "buildCommand": "pnpm --filter @quillby/web build",
   "outputDirectory": "apps/site/dist",
   "framework": "astro"
