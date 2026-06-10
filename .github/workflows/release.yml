@@ -190,7 +190,8 @@ jobs:
 
       - name: Publish to npm
         run: |
-          pnpm --filter @vncsleal/quillby pack --out quillby-npm.tgz
-          npm publish quillby-npm.tgz --access public
+          cd apps/mcp-server
+          pnpm pack --out ../../quillby-npm.tgz
+          npm publish ../../quillby-npm.tgz --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
