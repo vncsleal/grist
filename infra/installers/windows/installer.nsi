@@ -22,7 +22,7 @@ Section "Install"
   nsExec::ExecToLog 'powershell.exe -NoProfile -NonInteractive -Command \
     "$config = @{}; \
      $configFile = \"$env:APPDATA\Claude\claude_desktop_config.json\"; \
-     if (Test-Path $configFile) { try { $raw = Get-Content $configFile -Raw | ConvertFrom-Json; $raw.PSObject.Properties | ForEach-Object { $config[$_.Name] = $_.Value } } catch {} }; \
+     if (Test-Path $configFile) { try { $config = Get-Content $configFile -Raw | ConvertFrom-Json -AsHashtable } catch {} }; \
      if (-not $config.ContainsKey(\"mcpServers\")) { $config[\"mcpServers\"] = @{} }; \
      $config[\"mcpServers\"][\"quillby\"] = @{ command = \"$INSTDIR\quillby-mcp.exe\" }; \
      New-Item -ItemType Directory -Force -Path \"$env:APPDATA\Claude\" | Out-Null; \

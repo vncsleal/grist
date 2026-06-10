@@ -1,7 +1,6 @@
 # Quillby Installer for Windows (PowerShell)
 # Usage: irm https://raw.githubusercontent.com/vncsleal/quillby/main/install.ps1 | iex
 $ErrorActionPreference = "Stop"
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 Write-Host ""
 Write-Host "  Quillby Installer" -ForegroundColor Magenta
@@ -37,18 +36,7 @@ if (-not (Test-Path $installDir)) {
 }
 
 $downloadUrl = "https://github.com/vncsleal/quillby/releases/download/$tag/$asset"
-$retryCount = 0
-$maxRetries = 3
-while ($retryCount -lt $maxRetries) {
-    try {
-        Invoke-WebRequest -Uri $downloadUrl -OutFile $binaryPath -UseBasicParsing
-        break
-    } catch {
-        $retryCount++
-        if ($retryCount -ge $maxRetries) { throw }
-        Start-Sleep -Seconds 2
-    }
-}
+Invoke-WebRequest -Uri $downloadUrl -OutFile $binaryPath -UseBasicParsing
 
 Write-Host "v  Quillby downloaded" -ForegroundColor Green
 
@@ -64,8 +52,7 @@ if (-not (Test-Path $configDir)) {
 $config = @{}
 if (Test-Path $configFile) {
     try {
-        $raw = Get-Content $configFile -Raw | ConvertFrom-Json
-        $raw.PSObject.Properties | ForEach-Object { $config[$_.Name] = $_.Value }
+        $config = Get-Content $configFile -Raw | ConvertFrom-Json -AsHashtable
     } catch {
         $config = @{}
     }

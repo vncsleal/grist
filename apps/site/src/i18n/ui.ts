@@ -154,7 +154,7 @@ export const ui = {
     'install.npx-tab': 'npx',
     'install.macos-cta': 'Download for Mac',
     'install.macos-note':
-      'Classic package installer — double-click and follow the prompts.',
+      'Drag to Applications. Also available as <a href="https://github.com/vncsleal/quillby/releases">.pkg installer</a>.',
     'install.windows-cta': 'Download for Windows',
     'install.npx-command': 'npx -y @vncsleal/quillby quillby-mcp',
     'install.copied-label': 'Copied!',
@@ -384,7 +384,7 @@ export const ui = {
     'install.npx-tab': 'npx',
     'install.macos-cta': 'Baixar para Mac',
     'install.macos-note':
-      'Instalador .pkg — clique duas vezes e siga as instruções.',
+      'Arraste para Applications. Também disponível como <a href="https://github.com/vncsleal/quillby/releases">instalador .pkg</a>.',
     'install.windows-cta': 'Baixar para Windows',
     'install.npx-command': 'npx -y @vncsleal/quillby quillby-mcp',
     'install.copied-label': 'Copiado!',

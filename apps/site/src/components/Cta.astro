@@ -1,7 +1,6 @@
 ---
 import { useTranslations } from '../i18n/utils';
 import { type Lang, defaultLang } from '../i18n/ui';
-import { DOWNLOAD_URLS } from '../constants';
 const { lang = defaultLang } = Astro.props as { lang?: Lang };
 const t = useTranslations(lang);
 ---
@@ -13,7 +12,7 @@ const t = useTranslations(lang);
     <p class="cta-sub reveal reveal-delay-1">{t('cta.sub')}</p>
     <div class="reveal reveal-delay-2">
       <a
-        href={DOWNLOAD_URLS.macosPkg}
+        href="https://github.com/vncsleal/quillby/releases"
         class="btn btn-primary btn-large"
       >
         {t('cta.cta')}

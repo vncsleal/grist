@@ -25,11 +25,11 @@ codesign --force --deep --sign - "$APP_DIR"
 
 # Create DMG in the output directory
 DMG_NAME="Quillby-$VERSION.dmg"
-pnpm exec create-dmg "$APP_DIR" "$OUT_DIR" \
+npx create-dmg "$APP_DIR" "$OUT_DIR" \
   --volname "Quillby $VERSION" \
   --icon-size 128 \
   --app-drop-link 380 185 \
-  --no-internet-enable 2>&1
+  --no-internet-enable
 
 # create-dmg names the file after the volname; rename to our standard name
 if [ -f "$OUT_DIR/Quillby $VERSION.dmg" ]; then

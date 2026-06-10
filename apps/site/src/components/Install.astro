@@ -1,7 +1,6 @@
 ---
 import { useTranslations } from '../i18n/utils';
 import { type Lang, defaultLang } from '../i18n/ui';
-import { DOWNLOAD_URLS } from '../constants';
 const { lang = defaultLang } = Astro.props as { lang?: Lang };
 const t = useTranslations(lang);
 ---
@@ -22,14 +21,14 @@ const t = useTranslations(lang);
 
         <div class="install-panels">
           <div class="install-panel is-active" data-panel="mac">
-            <a href={DOWNLOAD_URLS.macosPkg} class="btn btn-primary">
+            <a href="https://github.com/vncsleal/quillby/releases" class="btn btn-primary">
               {t('install.macos-cta')}
             </a>
             <p class="install-note" set:html={t('install.macos-note')} />
           </div>
 
           <div class="install-panel" data-panel="windows">
-            <a href={DOWNLOAD_URLS.windowsExe} class="btn btn-primary">
+            <a href="https://github.com/vncsleal/quillby/releases" class="btn btn-primary">
               {t('install.windows-cta')}
             </a>
           </div>
