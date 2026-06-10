@@ -180,11 +180,13 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: pnpm install --frozen-lockfile
 
-      - name: Verify dist structure
+      - name: Build and bundle
         run: |
           pnpm --filter @vncsleal/quillby build
-          test -f apps/mcp-server/dist/local/main.js || { echo "dist/local/main.js missing"; exit 1; }
-          echo "dist structure verified"
+          cd apps/mcp-server
+          npx -y esbuild dist/local/main.js --bundle --outfile=dist/local/main.js --platform=node --target=node22 --format=esm --allow-overwrite
+          test -f dist/local/main.js || { echo "bundle missing"; exit 1; }
+          echo "Bundle created and inlined"
 
       - name: Publish to npm
         run: pnpm --filter @vncsleal/quillby publish --access public --no-git-checks --provenance
