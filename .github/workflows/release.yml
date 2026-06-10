@@ -189,6 +189,9 @@ jobs:
           echo "Bundle created and inlined"
 
       - name: Publish to npm
-        run: pnpm --filter @vncsleal/quillby publish --access public --no-git-checks
+        run: |
+          cd apps/mcp-server
+          pnpm pack --filter @vncsleal/quillby --out ../../quillby-npm.tgz
+          npm publish ../../quillby-npm.tgz --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
