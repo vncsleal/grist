@@ -1,4 +1,4 @@
-name: Version Packages
+name: Auto-tag on version change
 
 on:
   push:
@@ -6,43 +6,29 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 concurrency:
-  group: version-${{ github.ref }}
+  group: tag-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  version:
+  tag:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Create or update Version Packages PR
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          version: pnpm run version
-          commit: "chore: version packages"
-          title: "Version Packages"
-          createGithubReleases: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Tag release if version changed
         run: |
           VERSION=$(node -p "require('./apps/mcp-server/package.json').version")
           if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "Tag v$VERSION already exists"
+            echo "Tag v$VERSION already exists — no version change"
           else
             git tag "v$VERSION"
             git push origin "v$VERSION"
+            echo "Created and pushed tag v$VERSION"
           fi

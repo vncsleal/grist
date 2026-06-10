@@ -28,6 +28,17 @@ jobs:
           bun build --compile --target=bun-darwin-arm64 --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-macos-arm64
           bun build --compile --target=bun-darwin-x64  --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-macos-x64
 
+      - name: Smoke test ARM64 binary
+        run: |
+          node -e "
+            const cp = require('child_process');
+            const p = cp.spawn('./quillby-mcp-macos-arm64', { stdio: ['pipe', 'pipe', 'inherit'] });
+            p.stdin.write(JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2024-11-05',capabilities:{},clientInfo:{name:'smoke',version:'0.0.1'}}}) + '\n');
+            let output = '';
+            p.stdout.on('data', d => output += d.toString());
+            setTimeout(() => { p.kill(); if (!output.includes('jsonrpc')) { console.error('Smoke test failed'); process.exit(1); } console.log('ARM64 smoke test passed'); }, 8000);
+          "
+
       - name: Create universal binary via lipo
         run: lipo -create -output quillby-mcp quillby-mcp-macos-arm64 quillby-mcp-macos-x64
 
@@ -54,9 +65,11 @@ jobs:
           bash infra/installers/macos/package-dmg.sh quillby-mcp "${GITHUB_REF_NAME#v}"
           cp Quillby-*.dmg quillby-macos.dmg
 
-      - uses: softprops/action-gh-release@v2
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
         with:
-          files: |
+          name: macos-binaries
+          path: |
             quillby-macos.pkg
             quillby-macos.dmg
             Quillby-*.dmg
@@ -83,6 +96,13 @@ jobs:
           $VERSION = "$env:QUILLBY_BUILD_VERSION" -replace "^v", ""
           bun build --compile "--define:process.env.QUILLBY_VERSION=`"$VERSION`"" --target=bun-windows-x64 ./apps/mcp-server/src/main-local.ts --outfile quillby-mcp-windows-x64.exe
 
+      - name: Smoke test binary
+        shell: pwsh
+        run: |
+          $size = (Get-Item "quillby-mcp-windows-x64.exe").Length
+          if ($size -lt 1MB) { throw "Binary too small: $size bytes" }
+          Write-Host "Binary OK ($([math]::Round($size/1MB, 1)) MB)"
+
       - name: Install NSIS and build installer
         run: |
           choco install nsis --no-progress -y
@@ -91,9 +111,11 @@ jobs:
           makensis infra\installers\windows\installer.nsi
         shell: pwsh
 
-      - uses: softprops/action-gh-release@v2
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
         with:
-          files: |
+          name: windows-binaries
+          path: |
             quillby-windows.exe
             quillby-mcp-windows-x64.exe
 
@@ -120,13 +142,49 @@ jobs:
           echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke","version":"0.0.1"}}}' | timeout 10 ./quillby-mcp-linux-x64 | head -1 | grep -q '"jsonrpc":"2.0"'
           echo "Binary smoke test passed"
 
-      - uses: softprops/action-gh-release@v2
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
         with:
-          files: quillby-mcp-linux-x64
+          name: linux-binaries
+          path: quillby-mcp-linux-x64
+
+  # Release: aggregate all artifacts and create the GitHub release
+  create-release:
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Extract release body from CHANGELOG
+        run: |
+          node -e "
+            const fs = require('fs');
+            const changelog = fs.readFileSync('apps/mcp-server/CHANGELOG.md', 'utf8');
+            const version = process.env.GITHUB_REF_NAME.replace(/^v/, '');
+            const section = changelog.match(new RegExp('## ' + version.replace(/\./g, '\\.') + '[\\s\\S]*?(?=\\n## |\\n$$)'));
+            fs.writeFileSync('/tmp/release-body.md', section ? section[0].trim() : changelog.split('\\n\\n## ')[0] + '\\n');
+          "
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: /tmp/release-body.md
+          files: release-artifacts/**/*
+
+      - name: Verify uploaded assets
+        run: |
+          gh release view "${GITHUB_REF_NAME}" --json assets --jq '.assets[].name'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # npm: publish package to npm registry
   publish-npm:
-    needs: [build-macos, build-windows, build-linux]
+    needs: [create-release]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -140,8 +198,14 @@ jobs:
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+
+      - name: Verify dist structure
+        run: |
+          pnpm --filter @vncsleal/quillby build
+          test -f apps/mcp-server/dist/local/main.js || { echo "dist/local/main.js missing"; exit 1; }
+          echo "dist structure verified"
+
       - name: Publish to npm
-        run: pnpm --filter @vncsleal/quillby publish --access public --no-git-checks
+        run: pnpm --filter @vncsleal/quillby publish --access public --no-git-checks --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

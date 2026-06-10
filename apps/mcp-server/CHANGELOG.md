@@ -11,6 +11,14 @@
 - Fix: runtime fs.readFileSync of package.json replaced with compile-time version injection via --define.
 - Fix: all dependencies pinned to exact versions.
 - Site: complete landing page redesign with capabilities grid, campaigns, comparisons.
+- Fix: DMG creation uses pinned `create-dmg` devDep instead of `npx`
+- Fix: Install scripts — remove Python dep, add curl retry, use grep+sed for JSON
+- Fix: `install.ps1` — TLS 1.2 fix, PS 5.1 compat via PSObject property enumeration
+- Fix: Windows NSIS installer — PS 5.1 compat for config write
+- Fix: Site download URLs centralized in constants file
+- Fix: README.md — remove dead .dmg link
+- Fix: Release pipeline — single release job, smoke tests for macOS/Windows, CHANGELOG as body
+- Chore: Remove changesets (config incompatible with monorepo structure)
 
 ## 0.4.0
 

@@ -19,9 +19,7 @@ No extra accounts. No API keys. Everything runs on your computer, inside Claude.
 
 ### macOS
 
-[**Download the .dmg**](https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.dmg) — drag to Applications, double-click. No terminal.
-
-Or [download the .pkg installer](https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg) — classic package, double-click and follow the prompts.
+[**Download the .pkg installer**](https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.pkg) — double-click and follow the prompts.
 
 The installer validates that Claude Desktop is installed, writes the config, and shows you next steps.
 
