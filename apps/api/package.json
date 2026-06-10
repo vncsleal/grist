@@ -1,0 +1,22 @@
+{
+  "name": "@quillby/api",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "tsx src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "hono": "4.7.7"
+  },
+  "devDependencies": {
+    "tsx": "4.7.2",
+    "typescript": "5.8.3",
+    "@types/node": "20.11.24"
+  }
+}

@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_OPTIONS: --max-old-space-size=7168
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      - run: pnpm typecheck
+
+      - run: pnpm --filter @vncsleal/quillby test:unit
+      - run: pnpm --filter @quillby/core test
+      - run: pnpm --filter @quillby/content test
+      - run: pnpm --filter @quillby/storage-fs test
+      - run: pnpm --filter @quillby/storage-db test
+
+      - run: pnpm build
+
+      - name: Build all deployment modes
+        run: |
+          pnpm --filter @vncsleal/quillby build:local
+          pnpm --filter @vncsleal/quillby build:cloud
+          pnpm --filter @vncsleal/quillby build:selfhosted
+
+      - name: Smoke test — local mode startup
+        run: |
+          echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke","version":"0.0.1"}}}' | timeout 10 node apps/mcp-server/dist/local/main.js | head -1 | grep -q '"jsonrpc":"2.0"'
+          echo "Local mode smoke test passed"
+
+  integration:
+    needs: [ci]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @vncsleal/quillby build
+      - run: pnpm --filter @vncsleal/quillby test:integration

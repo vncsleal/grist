@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.quillby/mcp-server",
+  "description": "AI content agent for copywriters and marketers. Scans the internet, delivers a daily brief, writes drafts in your voice.",
+  "repository": {
+    "url": "https://github.com/vncsleal/quillby",
+    "source": "github"
+  },
+"version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@quillby/mcp",
+  "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

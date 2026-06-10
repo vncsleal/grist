@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist/local",
+    "rootDir": "./src"
+  },
+  "exclude": ["src/mcp/middleware.ts"],
+  "include": [
+    "src/main.ts",
+    "src/main-local.ts",
+    "src/mcp/**/*.ts",
+    "src/agents/**/*.ts",
+    "src/extractors/**/*.ts",
+    "src/output/**/*.ts",
+    "src/provider-config.ts",
+    "src/logger.ts",
+    "src/config.ts"
+  ]
+}

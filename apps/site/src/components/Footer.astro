@@ -1,0 +1,138 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href={getRelativeLocaleUrl(lang, '')} class="footer-logo">
+        <img src="/favicon.png" alt="" width="24" height="24" />
+        <span>Quillby</span>
+      </a>
+      <p class="footer-tagline">{t('footer.tagline')}</p>
+    </div>
+    <nav class="footer-links" aria-label={t('footer.nav-label')}>
+      <div class="footer-col">
+        <span class="footer-col-label">{t('footer.product')}</span>
+        <a href={getRelativeLocaleUrl(lang, '/') + '#how-it-works'}>{t('footer.how-it-works')}</a>
+        <a href={getRelativeLocaleUrl(lang, '/') + '#who-its-for'}>{t('footer.who-its-for')}</a>
+        <a href={getRelativeLocaleUrl(lang, '/') + '#install'}>{t('footer.install')}</a>
+        <a href={getRelativeLocaleUrl(lang, '/') + '#faq'}>{t('footer.faq')}</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-col-label">{t('footer.resources')}</span>
+        <a href="https://github.com/vncsleal/quillby" target="_blank" rel="noopener noreferrer">{t('footer.github')}</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-col-label">{t('footer.legal')}</span>
+        <a href={getRelativeLocaleUrl(lang, 'legal/privacy')}>{t('footer.privacy')}</a>
+        <a href={getRelativeLocaleUrl(lang, 'legal/terms')}>{t('footer.terms')}</a>
+      </div>
+    </nav>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; {year} Quillby &middot; {t('footer.bottom')}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+    padding: 3.5rem clamp(0.75rem, 2vw, 1.5rem) 2rem;
+  }
+
+  .footer-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 3rem;
+    flex-wrap: wrap;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-width: 220px;
+  }
+
+  .footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    color: var(--text);
+    font-family: var(--serif);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .footer-logo img { border-radius: 5px; }
+
+  .footer-tagline {
+    font-size: 0.8125rem;
+    color: var(--faint);
+    line-height: 1.5;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 3.5rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .footer-col-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 0.25rem;
+  }
+
+  .footer-col a {
+    font-size: 0.875rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s;
+    line-height: 1.4;
+  }
+
+  .footer-col a:hover { color: var(--text); }
+
+  .footer-bottom {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding-top: 1.5rem;
+  }
+
+  .footer-bottom p {
+    font-size: 0.75rem;
+    color: var(--faint);
+  }
+
+  @media (max-width: 640px) {
+    .footer-inner {
+      flex-direction: column;
+      gap: 2rem;
+      padding-bottom: 2rem;
+    }
+    .footer-links { gap: 2rem; }
+    .footer-brand { max-width: none; }
+  }
+</style>

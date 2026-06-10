@@ -1,0 +1,187 @@
+import { z } from "zod";
+
+export * from "./errors.js";
+export * from "./agents.js";
+export * from "./ports.js";
+
+// ─── User context (built during onboarding) ───────────────────────────────────
+
+export const UserContextSchema = z.object({
+  name: z.string().optional(),
+  role: z.string().describe("Professional role (founder, marketer, engineer, etc.)"),
+  industry: z.string().describe("Industry or niche"),
+  topics: z.array(z.string()).describe("Main topics to write about"),
+  voice: z.string().describe("Voice description — e.g. 'direct, analytical, no corporate speak'"),
+  audienceDescription: z.string().describe("Who the content is for"),
+  contentGoals: z.array(z.string()).describe("What content should achieve"),
+  excludeTopics: z.array(z.string()).optional().default([]).describe("Topics to avoid"),
+  platforms: z.array(z.string()).describe("Publishing platforms: linkedin, x, blog, newsletter, medium"),
+});
+
+export type UserContext = z.infer<typeof UserContextSchema>;
+
+export const TypedMemorySchema = z.object({
+  voiceExamples: z.array(z.string()).default([]),
+  styleRules: z.array(z.string()).default([]),
+  audienceInsights: z.array(z.string()).default([]),
+  doNotSay: z.array(z.string()).default([]),
+  successfulPosts: z.array(z.string()).default([]),
+  campaignContext: z.array(z.string()).default([]),
+  sourcePreferences: z.array(z.string()).default([]),
+  /** One-time setup: visual style description used for all image generation. */
+  visualStyle: z.array(z.string()).default([]),
+  /** One-time setup: voice profile description used for all audio generation. */
+  voiceProfile: z.array(z.string()).default([]),
+  /** One-time setup: face/appearance profile used for image and video likeness consistency. */
+  faceProfile: z.array(z.string()).default([]),
+});
+
+export type TypedMemory = z.infer<typeof TypedMemorySchema>;
+
+// ─── Generation jobs ──────────────────────────────────────────────────────────
+
+export const GenerationJobStatusSchema = z.enum(["queued", "running", "done", "failed"]);
+export type GenerationJobStatus = z.infer<typeof GenerationJobStatusSchema>;
+
+export const GenerationModalitySchema = z.enum(["image", "audio", "video"]);
+export type GenerationModality = z.infer<typeof GenerationModalitySchema>;
+
+export const GenerationJobSchema = z.object({
+  id: z.string(),
+  workspaceId: z.string(),
+  modality: GenerationModalitySchema,
+  prompt: z.string(),
+  /** Provider + model used, e.g. "openai/gpt-image-1" */
+  provider: z.string().optional(),
+  status: GenerationJobStatusSchema,
+  /** Relative or absolute path / URL to the generated asset once done. */
+  outputRef: z.string().optional(),
+  error: z.string().optional(),
+  /** ISO-8601 timestamps */
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  /** Card this job is associated with, if any. */
+  cardId: z.number().optional(),
+  /** Extra metadata (mimeType, durationSecs, widthPx, heightPx…). JSON blob stored as string. */
+  meta: z.string().optional(),
+});
+
+export type GenerationJob = z.infer<typeof GenerationJobSchema>;
+
+export const WorkspaceMetadataSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().default(""),
+  /** Explicit face reference image URL for identity-consistent image/video generation. */
+  faceReferenceImageUrl: z.string().url().optional(),
+  /** Explicit voice reference audio URL for identity-consistent audio generation. */
+  voiceReferenceAudioUrl: z.string().url().optional(),
+  /** Must be true before identity-clone generation is allowed. */
+  cloneConsentGranted: z.boolean().default(false),
+  /** ISO timestamp when clone consent was granted. */
+  cloneConsentAt: z.string().optional(),
+  /** ElevenLabs persistent cloned voice ID (created once via /v1/voices/add, reused on every TTS call). */
+  elevenlabsClonedVoiceId: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type WorkspaceMetadata = z.infer<typeof WorkspaceMetadataSchema>;
+
+// ─── RSS feed item ────────────────────────────────────────────────────────────
+
+export const RssItemSchema = z.object({
+  id: z.string(),
+  source: z.string(),
+  title: z.string(),
+  link: z.string(),
+  snippet: z.string(),
+  publishedAt: z.string().optional(),
+});
+
+export type RssItem = z.infer<typeof RssItemSchema>;
+
+// ─── Enriched article (what fetch_articles returns to the host) ─────────
+// The host model reads these and does its own relevance scoring + card generation.
+
+export const EnrichedArticleSchema = z.object({
+  id: z.string(),
+  source: z.string(),
+  title: z.string(),
+  link: z.string(),
+  snippet: z.string(),
+  enrichedContent: z.string().describe("Full article text extracted from the URL, up to 6000 chars"),
+  publishedAt: z.string().optional(),
+});
+
+export type EnrichedArticle = z.infer<typeof EnrichedArticleSchema>;
+
+// ─── Structure card ───────────────────────────────────────────────────────────
+// Cards are generated by the HOST model, then saved via save_cards.
+// All fields except title/source/link/thesis are optional to accommodate
+// hosts that provide varying levels of analysis.
+
+export const CardInputSchema = z.object({
+  title: z.string(),
+  source: z.string(),
+  link: z.string(),
+  thesis: z.string().describe("Core insight in one sentence"),
+  relevanceScore: z.number().min(0).max(10).optional().default(0),
+  relevanceReason: z.string().optional().default(""),
+  keyInsights: z.array(z.string()).optional().default([]),
+  insightOptions: z.array(z.string()).optional().default([]),
+  takeOptions: z.array(z.string()).optional().default([]),
+  angleOptions: z.array(z.string()).optional().default([]),
+  hookOptions: z.array(z.string()).optional().default([]),
+  wireframeOptions: z.array(z.string()).optional().default([]),
+  trendTags: z.array(z.string()).optional().default([]),
+  transposabilityHint: z.string().optional().default(""),
+});
+
+export type CardInput = z.infer<typeof CardInputSchema>;
+
+export const StructureCardSchema = CardInputSchema.extend({
+  id: z.number(),
+  references: z.array(z.string()),
+});
+
+export type StructureCard = z.infer<typeof StructureCardSchema>;
+
+// ─── Harvest bundle ───────────────────────────────────────────────────────────
+
+export const CurationStatusSchema = z.enum(["shortlisted", "skipped"]);
+export type CurationStatus = z.infer<typeof CurationStatusSchema>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+export const HarvestBundleSchema = z.object({
+  generatedAt: z.string(),
+  dateLabel: z.string(),
+  cards: z.array(StructureCardSchema),
+  /** Map of cardId (as string) → curation status. Set by curate_card. */
+  curationState: z.preprocess(
+    (val) => {
+      if (!isRecord(val)) return {};
+      return Object.fromEntries(
+        Object.entries(val).filter(
+          ([, v]) => v === "shortlisted" || v === "skipped"
+        )
+      );
+    },
+    z.record(z.string(), CurationStatusSchema)
+  ).optional().default({}),
+});
+
+export type HarvestBundle = z.infer<typeof HarvestBundleSchema>;
+
+// ─── Draft ────────────────────────────────────────────────────────────────────
+
+export const DraftSchema = z.object({
+  platform: z.string(),
+  content: z.string(),
+  cardId: z.number().optional(),
+});
+
+export type Draft = z.infer<typeof DraftSchema>;

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BINARY_PATH="/usr/local/bin/quillby-mcp"
+
+# pkg postinstall runs as root — find the actual logged-in user
+CURRENT_USER=$(stat -f "%Su" /dev/console 2>/dev/null || true)
+[[ -z "$CURRENT_USER" || "$CURRENT_USER" == "root" ]] && CURRENT_USER="${SUDO_USER:-}"
+[[ -z "$CURRENT_USER" || "$CURRENT_USER" == "root" ]] && exit 0
+
+USER_HOME=$(dscl . -read "/Users/$CURRENT_USER" NFSHomeDirectory 2>/dev/null | awk '{print $2}' || true)
+[[ -z "$USER_HOME" ]] && USER_HOME="/Users/$CURRENT_USER"
+
+CONFIG_DIR="$USER_HOME/Library/Application Support/Claude"
+CONFIG_FILE="$CONFIG_DIR/claude_desktop_config.json"
+
+mkdir -p "$CONFIG_DIR"
+
+# Create or reset config if missing or corrupted
+if [ ! -f "$CONFIG_FILE" ] || ! plutil -lint "$CONFIG_FILE" > /dev/null 2>&1; then
+    echo '{}' > "$CONFIG_FILE"
+fi
+
+# Convert JSON → XML plist so PlistBuddy can work with it
+PLIST="/tmp/quillby-$$.plist"
+plutil -convert xml1 "$CONFIG_FILE" -o "$PLIST"
+
+# Use PlistBuddy for reliable nested key manipulation (available on all macOS)
+/usr/libexec/PlistBuddy -c "Add :mcpServers dict" "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Delete :mcpServers:quillby" "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :mcpServers:quillby dict" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :mcpServers:quillby:command string $BINARY_PATH" "$PLIST"
+
+# Convert back to JSON and clean up
+plutil -convert json "$PLIST" -o "$CONFIG_FILE"
+rm -f "$PLIST"
+
+chown -R "$CURRENT_USER" "$CONFIG_DIR"
+
+exit 0

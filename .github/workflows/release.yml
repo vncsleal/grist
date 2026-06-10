@@ -1,0 +1,166 @@
+name: Release Binaries
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  # macOS: universal .pkg installer + .dmg + raw arch binaries
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Build arch binaries
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd apps/mcp-server
+          bun build --compile --target=bun-darwin-arm64 --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./src/main-local.ts --outfile ../../quillby-mcp-macos-arm64
+          bun build --compile --target=bun-darwin-x64 --define:process.env.QUILLBY_VERSION="\"$VERSION\"" ./src/main-local.ts --outfile ../../quillby-mcp-macos-x64
+
+      - name: Smoke test ARM64 binary
+        run: |
+          node -e "
+            const cp = require('child_process');
+            const p = cp.spawn('./quillby-mcp-macos-arm64', { stdio: ['pipe', 'pipe', 'inherit'] });
+            p.stdin.write(JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2024-11-05',capabilities:{},clientInfo:{name:'smoke',version:'0.0.1'}}}) + '\n');
+            let output = '';
+            p.stdout.on('data', d => output += d.toString());
+            setTimeout(() => { p.kill(); if (!output.includes('jsonrpc')) { console.error('Smoke test failed'); process.exit(1); } console.log('ARM64 smoke test passed'); }, 8000);
+          "
+
+      - name: Create universal binary via lipo
+        run: lipo -create -output quillby-mcp quillby-mcp-macos-arm64 quillby-mcp-macos-x64
+
+      - name: Build .pkg installer
+        run: |
+          mkdir -p pkg-root/usr/local/bin
+          cp quillby-mcp pkg-root/usr/local/bin/quillby-mcp
+          chmod +x pkg-root/usr/local/bin/quillby-mcp
+
+          mkdir -p pkg-scripts
+          cp infra/installers/macos/postinstall pkg-scripts/postinstall
+          chmod +x pkg-scripts/postinstall
+
+          pkgbuild \
+            --root pkg-root \
+            --install-location / \
+            --scripts pkg-scripts \
+            --identifier com.quillby.mcp \
+            --version "${GITHUB_REF_NAME#v}" \
+            quillby-macos.pkg
+
+      - name: Build .dmg installer
+        run: |
+          bash infra/installers/macos/package-dmg.sh quillby-mcp "${GITHUB_REF_NAME#v}"
+          cp Quillby-*.dmg quillby-macos.dmg
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-binaries
+          path: |
+            quillby-macos.pkg
+            quillby-macos.dmg
+            Quillby-*.dmg
+            quillby-mcp-macos-arm64
+            quillby-mcp-macos-x64
+
+  # Windows: NSIS .exe installer
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Build binary
+        shell: pwsh
+        env:
+          QUILLBY_BUILD_VERSION: ${{ github.ref_name }}
+        run: |
+          $VERSION = "$env:QUILLBY_BUILD_VERSION" -replace "^v", ""
+          cd apps/mcp-server
+          bun build --compile "--define:process.env.QUILLBY_VERSION=`"$VERSION`"" --target=bun-windows-x64 ./src/main-local.ts --outfile ..\..\quillby-mcp-windows-x64.exe
+
+      - name: Smoke test binary
+        shell: pwsh
+        run: |
+          $size = (Get-Item "quillby-mcp-windows-x64.exe").Length
+          if ($size -lt 1MB) { throw "Binary too small: $size bytes" }
+          Write-Host "Binary OK ($([math]::Round($size/1MB, 1)) MB)"
+
+      - name: Install NSIS and build installer
+        shell: pwsh
+        run: |
+          choco install nsis --no-progress -y
+          $env:PATH = "C:\Program Files (x86)\NSIS;" + $env:PATH
+          copy quillby-mcp-windows-x64.exe infra\installers\windows\quillby-mcp-windows-x64.exe
+          makensis infra\installers\windows\installer.nsi
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries
+          path: |
+            quillby-windows.exe
+            quillby-mcp-windows-x64.exe
+
+  # Release: aggregate all artifacts and create the GitHub release
+  create-release:
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Extract release body from CHANGELOG
+        run: |
+          node -e "
+            const fs = require('fs');
+            const changelog = fs.readFileSync('apps/mcp-server/CHANGELOG.md', 'utf8');
+            const version = process.env.GITHUB_REF_NAME.replace(/^v/, '');
+            const section = changelog.match(new RegExp('## ' + version.replace(/\./g, '\\.') + '[\\s\\S]*?(?=\\n## |\\n\$)'));
+            fs.writeFileSync('/tmp/release-body.md', section ? section[0].trim() : changelog.split('\\n\\n## ')[0] + '\\n');
+          "
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: /tmp/release-body.md
+          files: release-artifacts/**/*
+
+      - name: Verify uploaded assets
+        run: |
+          gh release view "${GITHUB_REF_NAME}" --json assets --jq '.assets[].name'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+

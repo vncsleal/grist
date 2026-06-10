@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist/cloud",
+    "rootDir": "./src"
+  },
+  "include": [
+    "src/main.ts",
+    "src/main-cloud.ts",
+    "src/mcp/**/*.ts",
+    "src/agents/**/*.ts",
+    "src/extractors/**/*.ts",
+    "src/output/**/*.ts",
+    "src/provider-config.ts",
+    "src/logger.ts",
+    "src/config.ts",
+    "src/types.ts",
+    "src/billing.ts",
+    "src/db.ts",
+    "src/auth.ts",
+    "src/db/**/*.ts",
+    "src/cli/**/*.ts"
+  ]
+}

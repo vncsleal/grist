@@ -1,0 +1,64 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+---
+<div class="trust-line reveal">
+  <div class="container">
+    <div class="trust-line-inner">
+      <span class="trust-line-item">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        {t('trust.runs-local')}
+      </span>
+      <span class="trust-line-item">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        {t('trust.no-account')}
+      </span>
+      <span class="trust-line-item">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M11.667 3.5L5.25 9.917 2.333 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        {t('trust.free-open-source')}
+      </span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .trust-line {
+    padding: 2rem 0;
+  }
+
+  .trust-line-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .trust-line-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--accent);
+  }
+
+  .trust-line-item svg {
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+
+  @media (max-width: 560px) {
+    .trust-line-inner {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+</style>

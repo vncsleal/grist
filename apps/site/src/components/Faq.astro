@@ -1,0 +1,133 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { type Lang, defaultLang, ui } from '../i18n/ui';
+const { lang = defaultLang } = Astro.props as { lang?: Lang };
+const t = useTranslations(lang);
+
+const faqItems: Array<{ q: string; a: string }> = Array.from({ length: 10 }, (_, i) => ({
+  q: t(`faq.q-${i + 1}` as string as keyof typeof ui[typeof defaultLang]),
+  a: t(`faq.a-${i + 1}` as string as keyof typeof ui[typeof defaultLang]),
+}));
+---
+<section class="section section-sm" id="faq" aria-labelledby="faq-heading">
+  <div class="container">
+    <p class="label reveal">{t('faq.label')}</p>
+    <h2 class="section-h2 reveal reveal-delay-1" id="faq-heading">{t('faq.heading')}</h2>
+
+    <div class="faq-list">
+      {faqItems.map((item, i) => (
+        <details class="faq-item reveal" data-delay={i}>
+          <summary>{item.q}</summary>
+          <div class="faq-body"><p set:html={item.a} /></div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.faq-item').forEach(el => {
+    const details = el as HTMLDetailsElement;
+    const summary = details.querySelector('summary');
+    if (!summary) return;
+
+    summary.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      if (details.open) {
+        details.classList.add('is-closing');
+        const body = details.querySelector('.faq-body') as HTMLElement;
+        body.addEventListener('transitionend', () => {
+          details.open = false;
+          details.classList.remove('is-closing');
+        }, { once: true });
+      } else {
+        details.open = true;
+      }
+    });
+  });
+</script>
+
+<style>
+  .faq-list {
+    margin-top: 2.5rem;
+  }
+
+  .faq-item {
+    border-top: 1px solid var(--border);
+  }
+
+  .faq-list .faq-item:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .faq-item > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    font-weight: 400;
+    color: var(--text);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: color 0.2s;
+  }
+
+  .faq-item > summary::-webkit-details-marker { display: none; }
+
+  .faq-item > summary:hover { color: var(--accent); }
+
+  .faq-item > summary::after {
+    content: '+';
+    font-family: var(--sans);
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--faint);
+    flex-shrink: 0;
+    line-height: 1;
+    transition: transform 0.35s var(--ease-out), color 0.2s;
+  }
+
+  .faq-item[open] > summary::after {
+    transform: rotate(45deg);
+    color: var(--accent);
+  }
+
+  .faq-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.4s var(--ease-out);
+    overflow: hidden;
+  }
+
+  .faq-item[open] .faq-body,
+  .faq-item.is-opening .faq-body {
+    grid-template-rows: 1fr;
+  }
+
+  .faq-item.is-closing .faq-body {
+    grid-template-rows: 0fr;
+  }
+
+  .faq-body > p {
+    min-height: 0;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--muted);
+    padding-bottom: 1.375rem;
+    max-width: 72ch;
+  }
+
+  .faq-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: opacity 0.15s;
+  }
+
+  .faq-link:hover { opacity: 0.7; }
+</style>
