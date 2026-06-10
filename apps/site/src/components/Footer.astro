@@ -18,10 +18,10 @@ const year = new Date().getFullYear();
     <nav class="footer-links" aria-label={t('footer.nav-label')}>
       <div class="footer-col">
         <span class="footer-col-label">{t('footer.product')}</span>
-        <a href={getRelativeLocaleUrl(lang, '#how-it-works')}>{t('footer.how-it-works')}</a>
-        <a href={getRelativeLocaleUrl(lang, '#who-its-for')}>{t('footer.who-its-for')}</a>
-        <a href={getRelativeLocaleUrl(lang, '#install')}>{t('footer.install')}</a>
-        <a href={getRelativeLocaleUrl(lang, '#faq')}>{t('footer.faq')}</a>
+        <a href={getRelativeLocaleUrl(lang, '/') + '#how-it-works'}>{t('footer.how-it-works')}</a>
+        <a href={getRelativeLocaleUrl(lang, '/') + '#who-its-for'}>{t('footer.who-its-for')}</a>
+        <a href={getRelativeLocaleUrl(lang, '/') + '#install'}>{t('footer.install')}</a>
+        <a href={getRelativeLocaleUrl(lang, '/') + '#faq'}>{t('footer.faq')}</a>
       </div>
       <div class="footer-col">
         <span class="footer-col-label">{t('footer.resources')}</span>

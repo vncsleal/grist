@@ -1,6 +1,5 @@
 ---
 import { useTranslations } from '../i18n/utils';
-import { getRelativeLocaleUrl } from 'astro:i18n';
 import { type Lang, defaultLang } from '../i18n/ui';
 const { lang = defaultLang } = Astro.props as { lang?: Lang };
 const t = useTranslations(lang);
@@ -16,8 +15,8 @@ const t = useTranslations(lang);
         {t('hero.sub')}
       </p>
       <div class="hero-actions reveal reveal-delay-3">
-        <a href={getRelativeLocaleUrl(lang, '#install')} class="btn btn-primary">{t('hero.cta')}</a>
-        <a href={getRelativeLocaleUrl(lang, '#how-it-works')} class="btn btn-ghost">{t('hero.ghost')}</a>
+        <a href="#install" class="btn btn-primary">{t('hero.cta')}</a>
+        <a href="#how-it-works" class="btn btn-ghost">{t('hero.ghost')}</a>
       </div>
       <p class="hero-note reveal reveal-delay-4">{t('hero.note')}</p>
     </div>

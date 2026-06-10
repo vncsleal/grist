@@ -6,9 +6,9 @@ const { lang = defaultLang } = Astro.props as { lang?: Lang };
 const t = useTranslations(lang);
 
 const links = [
-  { href: getRelativeLocaleUrl(lang, '#how-it-works'), label: t('nav.how-it-works') },
-  { href: getRelativeLocaleUrl(lang, '#capabilities'), label: t('nav.capabilities') },
-  { href: getRelativeLocaleUrl(lang, '#who-its-for'), label: t('nav.who-its-for') },
+  { href: '#how-it-works', label: t('nav.how-it-works') },
+  { href: '#capabilities', label: t('nav.capabilities') },
+  { href: '#who-its-for', label: t('nav.who-its-for') },
   { href: 'https://github.com/vncsleal/quillby', label: t('nav.github'), external: true },
 ];
 
