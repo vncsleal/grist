@@ -45,7 +45,7 @@ All three modes share the same codebase and MCP tool surface. Only storage backe
 | Gap | Severity | Location |
 |-----|----------|----------|
 | No changesets/versioning | **HIGH** | `.changeset/` is empty stub, root version `0.0.0` |
-| SPA bundle 523KB, no code splitting | **MEDIUM** | `apps/app/vite.config.ts` |
+| SPA bundle 523KB, no code splitting | **RESOLVED** | `apps/app` removed — dashboard planned for future cloud tier |
 | 52 tools in a single 3768-line handler | **MEDIUM** | `apps/mcp-server/src/mcp/server.ts` |
 | 5 stub packages (only README.md) | **MEDIUM** | `packages/{auth,extractors,mcp-kit,observability,ui-contracts}` |
 | Rate limiting disabled by default | **MEDIUM** | `.env` → `QUILLBY_ENFORCE_PLAN_LIMITS=false` |
@@ -187,7 +187,7 @@ Quillby is **production ready** when:
 | REQ-043 | Add loading states for lazy-loaded routes | P2 |
 
 **Tasks:**
-- T-040: Add route-based `React.lazy()` + `Suspense` for dashboard routes in `apps/app`
+- T-040: (RESOLVED) `apps/app` removed — dashboard deferred to cloud tier
 - T-041: Configure `vite.config.ts` `build.rollupOptions.output.manualChunks` for vendor/code splitting
 - T-042: Add `vite-plugin-visualizer` or `rollup-plugin-visualizer` for bundle analysis
 - T-043: Add `<Suspense>` fallback with skeleton/spinner for each lazy chunk

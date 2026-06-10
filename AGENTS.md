@@ -7,11 +7,18 @@ Quillby is an MCP-based AI content assistant for daily briefings. Workspace-base
 ## Architecture
 
 **Monorepo**: pnpm workspaces + Turbo
-- `apps/`: mcp-server (main), web (Astro), app (React/Vite)
+- `apps/mcp-server`: Main MCP server (published as `@vncsleal/quillby`)
+- `apps/site`: Astro marketing site (Vercel-deployed)
+- `apps/api`: REST API server (Hono)
 - `packages/`: core, database, auth, billing, storage-*, providers, workspace, etc.
 
+**Core → Shell rule**: The shell imports the core. Core never imports shell. Framework types are shell types. Domain types are core types. Map at the boundary.
+
 **Entrypoints**
-- MCP server: `apps/mcp-server/src/mcp/server.ts` → built to `dist/mcp/server.js`
+- MCP server: `apps/mcp-server/src/main.ts` → dispatches to mode-specific entrypoint
+- Local mode: `apps/mcp-server/src/main-local.ts` — stdio + filesystem storage, no auth
+- Cloud mode: `apps/mcp-server/src/main-cloud.ts` — HTTP + DB storage + auth (future)
+- Self-hosted mode: `apps/mcp-server/src/main-selfhosted.ts` — HTTP + DB storage + auth (future)
 - Binary wrapper: `apps/mcp-server/bin/quillby-mcp` (used by clients)
 - Core lib: `packages/core/src/index.ts`
 
@@ -40,7 +47,6 @@ pnpm --filter @vncsleal/quillby test:integration # Requires build first
 ```bash
 cd apps/mcp-server
 pnpm mcp:dev              # Dev mode with tsx
-pnpm mcp:http:dev         # HTTP mode dev
 pnpm build:binaries       # Bun compile for all platforms
 
 # Database (Drizzle)
@@ -60,8 +66,8 @@ Turbo handles this, but manually: `core` → `config` → `workspace` → `datab
 ## Testing
 
 - **Unit**: `vitest run tests/unit` — fast, no build required
-- **Integration**: `pnpm run build && vitest run tests/integration`
-- **All**: `pnpm run build && vitest run`
+- **Integration**: `pnpm run build && vitest run tests/integration/mcp-protocol.test.ts tests/integration/mcp-v2-smoke.test.ts`
+- **All**: `pnpm run test:unit && pnpm run test:integration`
 
 Test config in `apps/mcp-server/vitest.config.ts`. Uses Node environment.
 
@@ -80,15 +86,9 @@ Copy `.env.example` to `.env` and fill in.
 
 ## Deployment Modes
 
-- **local** (default stdio): Personal use, no auth, filesystem storage
-- **self-hosted** (HTTP): Your own infra, DB-backed, API key auth
-- **cloud**: Managed SaaS with billing
-
-Self-hosted quick start:
-```bash
-docker compose -f infra/docker/docker-compose.yml up -d --build
-# Server at http://localhost:3000/mcp
-```
+- **local** (default stdio, implemented): Personal use, no auth, filesystem storage
+- **self-hosted** (HTTP, planned): Your own infra, DB-backed, API key auth
+- **cloud** (planned): Managed SaaS with billing
 
 ## MCP Client Config
 
@@ -133,7 +133,7 @@ Uses Bun for cross-compilation (`bun build --compile`).
 ## Gotchas
 
 1. **Must build before integration tests** — Integration tests use compiled JS
-2. **Binary changes need rebuild** — Clients use `bin/quillby-mcp` which runs `dist/mcp/server.js`
+2. **Binary changes need rebuild** — Clients use `bin/quillby-mcp` which runs `dist/local/main.js`
 3. **MCP sampling required** — `daily_brief` and `analyze_articles` need client support
 4. **HTTP mode needs `BETTER_AUTH_SECRET`** — Generate with `openssl rand -base64 32`
 
@@ -149,4 +149,4 @@ Uses Bun for cross-compilation (`bun build --compile`).
 - `README.md`: User-facing setup and usage
 - `docs/MCP.md`: Full MCP protocol, tools, environment reference
 - `docs/ROADMAP.md`: Implementation roadmap
-- `CONTRIBUTING.md`: PR guidelines (references GRIST — old name, same process)
+- `CONTRIBUTING.md`: PR guidelines

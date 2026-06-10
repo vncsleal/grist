@@ -12,12 +12,13 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@better-auth/api-key": "^1.5.6",
-    "better-auth": "^1.5.6",
-    "drizzle-orm": "^0.45.2"
+    "@better-auth/api-key": "1.5.6",
+    "better-auth": "1.5.6",
+    "drizzle-orm": "0.45.2"
   }
 }

@@ -1,8 +1,7 @@
 {
   "extends": "../../tooling/tsconfig/base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "moduleResolution": "bundler"
+    "outDir": "./dist"
   },
   "include": ["src/**/*"]
 }

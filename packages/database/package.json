@@ -17,7 +17,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.2",
-    "drizzle-orm": "^0.45.2"
+    "@libsql/client": "0.17.2",
+    "drizzle-orm": "0.45.2"
   }
 }

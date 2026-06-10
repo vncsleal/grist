@@ -19,8 +19,8 @@
     "clean": "rm -rf dist"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.1.0",
-    "vitest": "^4.1.0"
+    "@vitest/coverage-v8": "4.1.7",
+    "vitest": "4.1.0"
   },
   "dependencies": {
     "zod": "3.25.76"

@@ -11,6 +11,9 @@ costs/
 config/context.md
 config/rss_sources.txt
 .DS_Store
+*.db
+*.db-shm
+*.db-wal
 *.log
 *.pid
 *.seed
