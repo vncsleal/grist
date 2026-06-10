@@ -9,6 +9,7 @@ APP_DIR="$SCRIPT_DIR/Quillby.app"
 OUT_DIR="$PWD"
 
 # Copy binary into .app bundle
+mkdir -p "$APP_DIR/Contents/MacOS"
 cp "$BINARY" "$APP_DIR/Contents/MacOS/quillby-mcp"
 chmod +x "$APP_DIR/Contents/MacOS/quillby-mcp"
 
