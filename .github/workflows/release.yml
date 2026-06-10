@@ -184,7 +184,7 @@ jobs:
         run: |
           pnpm --filter @vncsleal/quillby build
           cd apps/mcp-server
-          npx -y esbuild dist/local/main.js --bundle --outfile=dist/local/main.js --platform=node --target=node22 --format=esm --allow-overwrite
+          pnpm exec esbuild dist/local/main.js --bundle --outfile=dist/local/main.js --platform=node --target=node22 --format=esm --allow-overwrite
           test -f dist/local/main.js || { echo "bundle missing"; exit 1; }
           echo "Bundle created and inlined"
 

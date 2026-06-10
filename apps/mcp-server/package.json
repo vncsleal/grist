@@ -90,6 +90,7 @@
     "@types/nodemailer": "8.0.0",
     "@vitest/coverage-v8": "4.1.7",
     "drizzle-kit": "0.31.10",
+    "esbuild": "^0.25.2",
     "tsx": "4.7.2",
     "typescript": "5.8.3",
     "vitest": "4.1.0"
