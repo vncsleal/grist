@@ -67,7 +67,6 @@ jobs:
 
       - name: Build .dmg installer
         run: |
-          pnpm rebuild
           bash infra/installers/macos/package-dmg.sh quillby-mcp "${GITHUB_REF_NAME#v}"
           cp Quillby-*.dmg quillby-macos.dmg
 

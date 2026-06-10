@@ -7,6 +7,9 @@ VERSION="${2:-0.4.0}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$SCRIPT_DIR/Quillby.app"
 OUT_DIR="$PWD"
+DMG_NAME="Quillby-$VERSION.dmg"
+TEMP_DMG="$OUT_DIR/.Quillby-tmp.dmg"
+STAGING_DIR="$OUT_DIR/.Quillby-staging"
 
 # Copy binary into .app bundle
 mkdir -p "$APP_DIR/Contents/MacOS"
@@ -24,17 +27,21 @@ plutil -replace CFBundleVersion -string "$VERSION" "$APP_DIR/Contents/Info.plist
 # Sign the binary (ad-hoc signature)
 codesign --force --deep --sign - "$APP_DIR"
 
-# Create DMG in the output directory
-DMG_NAME="Quillby-$VERSION.dmg"
-pnpm exec create-dmg "$APP_DIR" "$OUT_DIR" \
-  --volname "Quillby $VERSION" \
-  --icon-size 128 \
-  --app-drop-link 380 185 \
-  --no-internet-enable 2>&1
+# Create DMG using native hdiutil
+rm -rf "$STAGING_DIR" "$TEMP_DMG"
+mkdir -p "$STAGING_DIR"
+ditto "$APP_DIR" "$STAGING_DIR/Quillby.app"
+ln -s /Applications "$STAGING_DIR/Applications"
 
-# create-dmg names the file after the volname; rename to our standard name
-if [ -f "$OUT_DIR/Quillby $VERSION.dmg" ]; then
-  mv "$OUT_DIR/Quillby $VERSION.dmg" "$OUT_DIR/$DMG_NAME"
-fi
+# Create read/write DMG
+hdiutil makehybrid -hfs -hfs-volume-name "Quillby $VERSION" \
+  -hfs-openfolder "$STAGING_DIR" \
+  "$STAGING_DIR" -o "$TEMP_DMG" 2>&1
+
+# Convert to compressed, read-only DMG
+hdiutil convert "$TEMP_DMG" -format UDZO -o "$OUT_DIR/$DMG_NAME" 2>&1
+
+# Cleanup
+rm -rf "$STAGING_DIR" "$TEMP_DMG"
 
 ls -la "$OUT_DIR/$DMG_NAME"
