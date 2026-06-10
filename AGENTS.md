@@ -7,7 +7,7 @@ Quillby is an MCP-based AI content assistant for daily briefings. Workspace-base
 ## Architecture
 
 **Monorepo**: pnpm workspaces + Turbo
-- `apps/mcp-server`: Main MCP server (published as `@vncsleal/quillby`)
+- `apps/mcp-server`: Main MCP server (published as `@quillby/mcp`)
 - `apps/site`: Astro marketing site (Vercel-deployed)
 - `apps/api`: REST API server (Hono)
 - `packages/`: core, database, auth, billing, storage-*, providers, workspace, etc.
@@ -37,10 +37,10 @@ pnpm clean            # Clean all build artifacts
 
 **Single package**
 ```bash
-pnpm --filter @vncsleal/quillby build
-pnpm --filter @vncsleal/quillby test
-pnpm --filter @vncsleal/quillby test:unit        # Unit only
-pnpm --filter @vncsleal/quillby test:integration # Requires build first
+pnpm --filter @quillby/mcp build
+pnpm --filter @quillby/mcp test
+pnpm --filter @quillby/mcp test:unit        # Unit only
+pnpm --filter @quillby/mcp test:integration # Requires build first
 ```
 
 **MCP server specific**
@@ -122,7 +122,7 @@ Binary targets (via `bun build --compile`):
 - macOS: ARM64 + x64 universal binary, `.pkg` installer, `.dmg` installer
 - Windows: x64 `.exe` installer via NSIS
 - Linux: x64 raw binary
-- npm: `@vncsleal/quillby` published to npm registry
+- npm: `@quillby/mcp` published to npm registry
 
 Current version: 0.4.1 (semver, pre-1.0).
 

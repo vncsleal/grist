@@ -156,7 +156,7 @@ export const ui = {
     'install.macos-note':
       'Classic package installer — double-click and follow the prompts.',
     'install.windows-cta': 'Download for Windows',
-    'install.npx-command': 'npx -y @vncsleal/quillby quillby-mcp',
+    'install.npx-command': 'npx -y @quillby/mcp quillby-mcp',
     'install.copied-label': 'Copied!',
     'install.copy-command': 'Copy command',
     'install.npx-note':
@@ -386,7 +386,7 @@ export const ui = {
     'install.macos-note':
       'Instalador .pkg — clique duas vezes e siga as instruções.',
     'install.windows-cta': 'Baixar para Windows',
-    'install.npx-command': 'npx -y @vncsleal/quillby quillby-mcp',
+    'install.npx-command': 'npx -y @quillby/mcp quillby-mcp',
     'install.copied-label': 'Copiado!',
     'install.copy-command': 'Copiar comando',
     'install.npx-note':
