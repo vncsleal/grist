@@ -32,3 +32,4 @@ quillby-auth.db
 *.bak-*/*
 *.backup.json
 backup*.json
+*.tgz
