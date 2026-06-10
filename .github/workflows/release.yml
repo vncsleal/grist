@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 22
       - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - run: bun install
 
       - name: Build arch binaries
         run: |
@@ -81,7 +81,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - run: bun install
 
       - name: Build binary
         env:
@@ -122,7 +122,7 @@ jobs:
         with:
           node-version: 22
       - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - run: bun install
 
       - name: Build binary
         run: |
