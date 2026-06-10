@@ -1,20 +1,10 @@
-import { defineConfig } from "vitest/config";
+import { createConfig } from "../../tooling/vitest/base.js";
 
-export default defineConfig({
+export default createConfig({
   test: {
-    globals: true,
-    environment: "node",
-    include: ["tests/**/*.test.ts"],
     testTimeout: 15_000,
     coverage: {
-      provider: "v8",
-      include: ["src/**/*.ts"],
-      thresholds: {
-        statements: 40,
-        branches: 35,
-        functions: 50,
-        lines: 42,
-      },
+      thresholds: { statements: 40, branches: 35, functions: 50, lines: 42 },
     },
   },
 });

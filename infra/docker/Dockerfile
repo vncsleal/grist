@@ -7,7 +7,6 @@ RUN corepack enable
 FROM base AS deps
 COPY pnpm-lock.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps/mcp-server/package.json ./apps/mcp-server/package.json
-COPY apps/app/package.json ./apps/app/package.json
 COPY packages/auth/package.json ./packages/auth/package.json
 COPY packages/auth/tsconfig.json ./packages/auth/tsconfig.json
 COPY packages/billing/package.json ./packages/billing/package.json
@@ -37,29 +36,12 @@ COPY . .
 RUN pnpm --filter @vncsleal/quillby build
 RUN pnpm deploy --filter @vncsleal/quillby --prod --legacy /app/deploy
 
-# ─── App (SPA) build ─────────────────────────────────────────────────────────────────
-FROM base AS build-app
-COPY pnpm-lock.yaml package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
-COPY apps/app/package.json ./apps/app/package.json
-COPY tooling/tsconfig ./tooling/tsconfig
-RUN pnpm install --filter @quillby/app --frozen-lockfile
-COPY apps/app ./apps/app
-ARG VITE_QUILLBY_DEPLOYMENT_MODE=self-hosted
-ARG VITE_QUILLBY_API_BASE_URL=/
-RUN pnpm --filter @quillby/app build
-RUN pnpm deploy --filter @quillby/app --prod --legacy /app/deploy-app
-
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-ENV QUILLBY_TRANSPORT=http
 ENV PORT=3000
-ENV QUILLBY_HTTP_HOST=0.0.0.0
-ENV QUILLBY_AUTH_DB_URL=file:/data/quillby-auth.db
-ENV QUILLBY_DEPLOYMENT_MODE=self-hosted
 
 COPY --from=build /app/deploy ./
-COPY --from=build-app /app/deploy-app ./public/app
 RUN apk add --no-cache wget
 
 VOLUME ["/data"]

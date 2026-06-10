@@ -2,7 +2,7 @@
   "mcpServers": {
     "quillby": {
       "type": "stdio",
-      "command": "${workspaceFolder}/bin/quillby-mcp",
+      "command": "${workspaceFolder}/apps/mcp-server/bin/quillby-mcp",
       "args": []
     },
     "heroui-react": {
