@@ -67,7 +67,7 @@ function loadConfigFile(): ProviderConfigFile {
   const file = providerConfigPath();
   if (!fs.existsSync(file)) return {};
   try {
-    // ARD: JSON.parse result
+    // HACK: JSON.parse result
     return JSON.parse(fs.readFileSync(file, "utf-8")) as ProviderConfigFile;
   } catch (e) {
     logWarn("Corrupt provider config file, starting fresh", { error: String(e) });

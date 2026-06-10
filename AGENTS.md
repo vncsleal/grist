@@ -113,12 +113,18 @@ claude mcp add --transport stdio --scope project quillby -- \
 
 ## CI/CD
 
-GitHub Actions builds release binaries on version tags (`v*`):
-- macOS: Universal binary + `.pkg` installer
-- Windows: `.exe` installer via NSIS
-- Linux: Raw binary
+GitHub Actions:
+- **CI** (`ci.yml`): lint → typecheck → unit tests → build → smoke test on push/PR
+- **Version** (`version.yml`): Creates/updates Version Packages PR via changesets on push to main
+- **Release** (`release.yml`): On `v*` tags, builds binaries + installers + publishes npm
 
-Uses Bun for cross-compilation (`bun build --compile`).
+Binary targets (via `bun build --compile`):
+- macOS: ARM64 + x64 universal binary, `.pkg` installer, `.dmg` installer
+- Windows: x64 `.exe` installer via NSIS
+- Linux: x64 raw binary
+- npm: `@vncsleal/quillby` published to npm registry
+
+Current version: 0.4.1 (semver, pre-1.0).
 
 ## Repo Conventions
 

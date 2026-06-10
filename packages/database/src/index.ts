@@ -77,18 +77,18 @@ function ensureDb(): { client: ReturnType<typeof createClient>; db: QuillbyDb } 
     const concurrency = parsePositiveInt(process.env.QUILLBY_DB_CONCURRENCY);
     const created = createDb(url, process.env.LIBSQL_AUTH_TOKEN, concurrency != null ? { concurrency } : undefined);
     _client = created.client;
-    // ARD: Assignment to let variable with different initial type
+    // HACK: Assignment to let variable with different initial type
     _db = created.db as QuillbyDb;
   }
   return { client: _client!, db: _db! };
 }
 
-// ARD: Proxy target placeholder object
+// HACK: Proxy target placeholder object
 export const client = new Proxy({} as ReturnType<typeof createClient>, {
   get(_, prop) { return Reflect.get(ensureDb().client, prop); },
 });
 
-// ARD: Proxy target placeholder object
+// HACK: Proxy target placeholder object
 export const db = new Proxy({} as QuillbyDb, {
   get(_, prop) { return Reflect.get(ensureDb().db, prop); },
 });

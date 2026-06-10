@@ -19,7 +19,7 @@ async function main(): Promise<void> {
   if (!server.server || typeof server.server.createMessage !== "function") {
     logWarn("MCP server does not support sampling");
   } else {
-    // ARD: MCP SDK Server type doesn't expose createMessage
+    // HACK: MCP SDK Server type doesn't expose createMessage
     providerRouter.setTier1(new McpSamplingAdapter(server.server as unknown as SamplingHost, assetsDir));
   }
   const recovered = await recoverOrphanedJobs(storage);
