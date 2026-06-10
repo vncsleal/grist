@@ -163,31 +163,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # npm: publish package to npm registry
-  publish-npm:
-    needs: [create-release]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
 
-      - name: Build and bundle
-        run: |
-          pnpm --filter @quillby/mcp build
-          cd apps/mcp-server
-          pnpm exec esbuild dist/local/main.js --bundle --outfile=dist/local/main.js --platform=node --target=node22 --format=esm --allow-overwrite
-          test -f dist/local/main.js || { echo "bundle missing"; exit 1; }
-          echo "Bundle created and inlined"
-
-      - name: Publish to npm
-        run: |
-          cd apps/mcp-server
-          npm publish --access public
