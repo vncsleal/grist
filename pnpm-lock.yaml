@@ -81,36 +81,6 @@ importers:
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
-      '@quillby/auth':
-        specifier: workspace:*
-        version: link:../../packages/auth
-      '@quillby/billing':
-        specifier: workspace:*
-        version: link:../../packages/billing
-      '@quillby/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@quillby/content':
-        specifier: workspace:*
-        version: link:../../packages/content
-      '@quillby/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@quillby/database':
-        specifier: workspace:*
-        version: link:../../packages/database
-      '@quillby/providers':
-        specifier: workspace:*
-        version: link:../../packages/providers
-      '@quillby/storage-db':
-        specifier: workspace:*
-        version: link:../../packages/storage-db
-      '@quillby/storage-fs':
-        specifier: workspace:*
-        version: link:../../packages/storage-fs
-      '@quillby/workspace':
-        specifier: workspace:*
-        version: link:../../packages/workspace
       better-auth:
         specifier: 1.5.6
         version: 1.5.6(@opentelemetry/api@1.9.0)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@libsql/client@0.17.2)(@opentelemetry/api@1.9.0)(kysely@0.28.8))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vitest@4.1.0(@opentelemetry/api@1.9.0)(@types/node@20.11.24)(vite@7.3.5(@types/node@20.11.24)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.7.2)(yaml@2.8.3)))
@@ -151,6 +121,36 @@ importers:
         specifier: 3.25.1
         version: 3.25.1(zod@3.25.76)
     devDependencies:
+      '@quillby/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@quillby/billing':
+        specifier: workspace:*
+        version: link:../../packages/billing
+      '@quillby/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@quillby/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@quillby/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@quillby/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@quillby/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
+      '@quillby/storage-db':
+        specifier: workspace:*
+        version: link:../../packages/storage-db
+      '@quillby/storage-fs':
+        specifier: workspace:*
+        version: link:../../packages/storage-fs
+      '@quillby/workspace':
+        specifier: workspace:*
+        version: link:../../packages/workspace
       '@types/node':
         specifier: 20.11.24
         version: 20.11.24
