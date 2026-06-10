@@ -48,8 +48,8 @@ esac
 
 # ── 2. Fetch latest release tag ───────────────────────────────────────────────
 echo "→  Checking latest release..."
-RELEASE_JSON=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest")
-TAG=$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['tag_name'])" "$RELEASE_JSON")
+TAG=$(curl -fsSL --retry 3 "https://api.github.com/repos/${REPO}/releases/latest" \
+  | grep -o '"tag_name":"[^"]*"' | sed 's/"tag_name":"//;s/"//')
 
 if [[ -z "$TAG" ]]; then
   echo -e "${RED}✗  Could not determine latest release.${RESET}"
@@ -61,7 +61,7 @@ echo "→  Downloading Quillby ${TAG}..."
 # ── 3. Download binary ────────────────────────────────────────────────────────
 mkdir -p "$INSTALL_DIR"
 DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${ASSET}"
-curl -fsSL "$DOWNLOAD_URL" -o "$BINARY_PATH"
+curl -fsSL --retry 3 "$DOWNLOAD_URL" -o "$BINARY_PATH"
 chmod +x "$BINARY_PATH"
 
 echo -e "${GREEN}✓${RESET}  Quillby downloaded"
@@ -75,23 +75,32 @@ fi
 
 CONFIG_FILE="${CONFIG_DIR}/claude_desktop_config.json"
 
-# ── 5. Write Claude Desktop config via Python ────────────────────────────────
-python3 -c "
-import json, os, sys
-config_file, binary_path = sys.argv[1], sys.argv[2]
-config = {}
-if os.path.exists(config_file):
-    try:
-        with open(config_file) as f:
-            config = json.load(f)
-    except Exception:
-        pass
-config.setdefault('mcpServers', {})['quillby'] = {'command': binary_path}
-os.makedirs(os.path.dirname(config_file), exist_ok=True)
-with open(config_file, 'w') as f:
-    json.dump(config, f, indent=2)
-    f.write('\n')
-" "$CONFIG_FILE" "$BINARY_PATH"
+# ── 5. Write Claude Desktop config ──────────────────────────────────────────
+mkdir -p "$CONFIG_DIR"
+if command -v node >/dev/null 2>&1; then
+  node -e "
+    const fs = require('fs');
+    const configFile = '$CONFIG_FILE';
+    const binaryPath = '$BINARY_PATH';
+    let config = {};
+    try { config = JSON.parse(fs.readFileSync(configFile, 'utf8')); } catch {}
+    config.mcpServers = config.mcpServers || {};
+    config.mcpServers.quillby = { command: binaryPath };
+    fs.mkdirSync(require('path').dirname(configFile), { recursive: true });
+    fs.writeFileSync(configFile, JSON.stringify(config, null, 2) + '\n');
+  "
+else
+  # Fallback: write a minimal config (no existing MCP servers merged)
+  cat > "$CONFIG_FILE" <<-JSON
+{
+  "mcpServers": {
+    "quillby": {
+      "command": "$BINARY_PATH"
+    }
+  }
+}
+JSON
+fi
 
 echo -e "${GREEN}✓${RESET}  Claude Desktop config updated"
 echo -e "   ${CONFIG_FILE}"
