@@ -191,7 +191,7 @@ jobs:
       - name: Publish to npm
         run: |
           cd apps/mcp-server
-          pnpm pack --out ../../quillby-npm.tgz
-          npm publish ../../quillby-npm.tgz --access public
+          TARBALL=$(npm pack)
+          npm publish "$TARBALL" --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
