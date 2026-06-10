@@ -191,6 +191,6 @@ jobs:
       - name: Publish to npm
         run: |
           cd apps/mcp-server
-          npm publish --access public
+          NPM_CONFIG_USERCONFIG=/dev/null npm publish --access public
         env:
           NODE_AUTH_TOKEN: ""
