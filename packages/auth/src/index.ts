@@ -86,7 +86,7 @@ export function createAuth(config: AuthConfig): ReturnType<typeof betterAuth> {
       maxRequests: rateLimitMax,
       timeWindow: 60_000,
     },
-  // ARD: Better Auth plugin types don't match
+  // HACK: Better Auth plugin types don't match
   }) as unknown as NonNullable<BetterAuthOptions["plugins"]>[number];
 
   const opts: Record<string, unknown> = {
@@ -113,7 +113,7 @@ export function createAuth(config: AuthConfig): ReturnType<typeof betterAuth> {
     opts.trustedOrigins = trustedOrigins;
   }
 
-  // ARD: Better Auth constructor type is too broad
+  // HACK: Better Auth constructor type is too broad
   return betterAuth(opts as unknown as BetterAuthOptions);
 }
 
@@ -128,7 +128,7 @@ export class AuthApi {
   constructor(private auth: ReturnType<typeof betterAuth>) {}
 
   private _api(): AuthApiInternal {
-    // ARD: Better Auth JS API lacks typed method signatures
+    // HACK: Better Auth JS API lacks typed method signatures
     return this.auth.api as unknown as AuthApiInternal;
   }
 
@@ -175,7 +175,7 @@ export function listApiKeysFromDb(
   const _table = apikeyTable as { referenceId: unknown; id: unknown };
   return _db.select().from(apikeyTable).where(
     sql`${_table.referenceId} = ${userId}`,
-  // ARD: Drizzle query builder doesn't infer select types
+  // HACK: Drizzle query builder doesn't infer select types
   ) as Promise<ListedApiKey[]>;
 }
 
@@ -186,6 +186,6 @@ export async function deleteApiKeyFromDb(
 ): Promise<void> {
   const _db = db as { delete(table: unknown): { where(condition: unknown): Promise<void> } };
   const _table = apikeyTable as { id: unknown };
-  // ARD: Drizzle delete query return type is inferred as unknown
+  // HACK: Drizzle delete query return type is inferred as unknown
   await (_db.delete(apikeyTable).where(sql`${_table.id} = ${keyId}`) as Promise<void>);
 }

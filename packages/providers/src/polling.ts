@@ -31,13 +31,13 @@ export async function pollForCompletion<T>(options: PollOptions<T>): Promise<{ o
     const body = await response.json();
     if (!body || typeof body !== "object") throw new Error("Invalid polling response");
 
-    // ARD: Generic polling callback uses user-supplied typed check
+    // HACK: Generic polling callback uses user-supplied typed check
     if (isComplete(body as T)) {
-      // ARD: Generic polling callback uses user-supplied typed check
+      // HACK: Generic polling callback uses user-supplied typed check
       return extractResult(body as T);
     }
 
-    // ARD: Generic check response field access
+    // HACK: Generic check response field access
     const b = body as Record<string, unknown>;
     const status = typeof b.status === "string" ? b.status.toLowerCase() : "";
     if (status === "failed" || status === "error") {

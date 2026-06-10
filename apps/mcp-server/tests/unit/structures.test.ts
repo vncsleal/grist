@@ -12,9 +12,9 @@ import {
   saveHarvestOutput,
   loadLatestHarvest,
   latestHarvestExists,
-} from "../../src/output/structures.js";
-import { CardInputSchema, type CardInput } from "../../src/types.js";
-import { getWorkspacePaths } from "../../src/workspaces.js";
+} from "@quillby/storage-fs";
+import { CardInputSchema, type CardInput } from "@quillby/core";
+import { getWorkspacePaths } from "@quillby/workspace";
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 {
   "name": "@vncsleal/quillby",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "mcpName": "io.github.vncsleal/quillby-mcp",
   "description": "Quillby — AI copywriting assistant. Reads the internet and writes content in your voice.",
   "license": "MIT",
@@ -91,7 +91,7 @@
     "@vitest/coverage-v8": "4.1.7",
     "drizzle-kit": "0.31.10",
     "tsx": "4.7.2",
-    "typescript": "5.3.3",
+    "typescript": "5.8.3",
     "vitest": "4.1.0"
   }
 }
