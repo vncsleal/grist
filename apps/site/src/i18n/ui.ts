@@ -152,9 +152,9 @@ export const ui = {
     'install.macos-tab': 'macOS',
     'install.windows-tab': 'Windows',
     'install.npx-tab': 'npx',
-    'install.macos-cta': 'Download for Mac',
+    'install.macos-cta': 'Download .pkg',
     'install.macos-note':
-      'Download .pkg (double-click installer) or <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.dmg">.dmg</a> (drag to Applications).',
+      'Auto-configures Claude Desktop. Or <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.dmg">download the .dmg</a> (drag to Applications).',
     'install.windows-cta': 'Download for Windows',
     'install.npx-command': 'npx -y @quillby/mcp quillby-mcp',
     'install.copied-label': 'Copied!',
@@ -382,9 +382,9 @@ export const ui = {
     'install.macos-tab': 'macOS',
     'install.windows-tab': 'Windows',
     'install.npx-tab': 'npx',
-    'install.macos-cta': 'Baixar para Mac',
+    'install.macos-cta': 'Baixar .pkg',
     'install.macos-note':
-      'Baixe o .pkg (instalador clássico) ou <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.dmg">.dmg</a> (arraste para Applications).',
+      'Configura o Claude Desktop automaticamente. Ou <a href="https://github.com/vncsleal/quillby/releases/latest/download/quillby-macos.dmg">baixe o .dmg</a> (arraste para Applications).',
     'install.windows-cta': 'Baixar para Windows',
     'install.npx-command': 'npx -y @quillby/mcp quillby-mcp',
     'install.copied-label': 'Copiado!',
